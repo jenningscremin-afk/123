@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3.1 导数的核心概念与几何意义</title>
+  <link rel="stylesheet" href="./noto-serif-sc.css" />
+  <script src="./polyfill.min.js" defer></script>
+  <script id="MathJax-script" async src="./mathjax-tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --chalkboard-bg: #1a1a2e;
+      --chalk-text: #e0e0e0;
+      --highlight: #f1c40f;
+      --accent: #f39c12;
+      --danger: #e74c3c;
+      --control-bg: rgba(0, 0, 0, 0.35);
+      --control-text: #fefefe;
+      --control-hover: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body.blackboard {
+      font-family: 'Noto Serif SC', serif;
+      background: var(--chalkboard-bg);
+      color: var(--chalk-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #statusIndicator {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      z-index: 1000;
+      transition: background 0.3s ease;
+    }
+
+    .avatar-container {
+      position: fixed;
+      top: 50%;
+      left: 10%;
+      width: 320px;
+      height: 540px;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .avatar-container .wrapper {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(8px);
+    }
+
+    .slide-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 32px 48px 140px;
+      position: relative;
+      gap: 12px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 8px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 16px 20px;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .slide-content {
+      display: flex;
+      flex: 1;
+      gap: 24px;
+      max-width: 1440px;
+    }
+
+    .blackboard-text {
+      flex: 1 1 50%;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 18px;
+      padding: 24px 28px;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
+      overflow-y: auto;
+    }
+
+    .blackboard-text h1,
+    .blackboard-text h2 {
+      color: var(--highlight);
+      margin-bottom: 12px;
+      text-shadow: 0 0 6px rgba(241, 196, 15, 0.45);
+    }
+
+    .blackboard-text ul {
+      margin-left: 1.2rem;
+      line-height: 1.7;
+    }
+
+    .blackboard-text li {
+      margin-bottom: 0.45rem;
+    }
+
+    .animation-pane {
+      flex: 1 1 50%;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .animation-pane h3 {
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-size: 1.15rem;
+      letter-spacing: 0.08em;
+    }
+
+    .animation-canvas-wrapper {
+      flex: 1;
+      border-radius: 16px;
+      border: 1px solid rgba(241, 196, 15, 0.35);
+      background: radial-gradient(circle at top, rgba(46, 204, 113, 0.12), rgba(10, 24, 48, 0.65));
+      position: relative;
+      overflow: hidden;
+      min-height: 260px;
+    }
+
+    .animation-canvas-wrapper canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .animation-notes {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.85);
+      overflow-y: auto;
+      max-height: 220px;
+    }
+
+    .animation-notes ul {
+      margin-left: 1.15rem;
+    }
+
+    .animation-notes li {
+      margin-bottom: 0.45rem;
+    }
+
+    .subtitle-area {
+      position: fixed;
+      bottom: 92px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-height: 64px;
+      min-width: 60%;
+      max-width: 80%;
+      padding: 12px 24px;
+      background: rgba(0, 0, 0, 0.55);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+    }
+
+    .subtitle-area[aria-live="polite"] {
+      outline: none;
+    }
+
+    .control-bar {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--control-bg);
+      padding: 16px 28px;
+      border-radius: 999px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .control-bar button {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: var(--control-text);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .control-bar button:hover:not([disabled]) {
+      background: var(--control-hover);
+      transform: translateY(-1px);
+    }
+
+    .control-bar button[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .meta-bar {
+      position: fixed;
+      top: 18px;
+      left: 24px;
+      max-width: 40%;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 12px 16px;
+      border-radius: 14px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .meta-bar strong {
+      color: var(--highlight);
+    }
+
+    @media (max-width: 1200px) {
+      .slide-content {
+        flex-direction: column;
+      }
+
+      .avatar-container {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body class="blackboard">
+  <div id="statusIndicator" class="status-indicator">等待连接</div>
+  <div class="meta-bar">
+    <div><strong>第三章：导数与微分 (洞察瞬时变化)</strong></div>
+    <div>3.1 导数的核心概念与几何意义</div>
+  </div>
+  <div class="avatar-container"><div class="wrapper" id="avatarWrapper"></div></div>
+  <div id="slide-container" class="slide-container"></div>
+  <div class="subtitle-area" id="subtitleArea" aria-live="polite">欢迎来到本节课程</div>
+  <div class="control-bar">
+    <button id="prevBtn">上一页</button>
+    <button id="restartBtn">重新开始</button>
+    <button id="playBtn">开始讲解</button>
+    <button id="autoBtn">自动播放</button>
+    <button id="nextBtn">下一页</button>
+  </div>
+
+  <script type="module">
+    import AvatarPlatform from './avatar-sdk-web_3.1.2.1002/index.js';
+
+    const indicator = document.getElementById('statusIndicator');
+    const avatarWrapper = document.getElementById('avatarWrapper');
+
+    async function initAvatarPlatform() {
+      if (!AvatarPlatform) {
+        indicator.textContent = '虚拟人库缺失';
+        indicator.style.background = 'rgba(231, 76, 60, 0.55)';
+        return null;
+      }
+
+      indicator.textContent = '虚拟人连接中…';
+      indicator.style.background = 'rgba(241, 196, 15, 0.35)';
+
+      try {
+        const platform = new AvatarPlatform();
+        if (typeof platform.setApiInfo === 'function') {
+          platform.setApiInfo({
+            appId: '98c558c1',
+            apiKey: '133adcc14bda6e315040f78700b38267',
+            apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',
+            sceneId: '216155854796361728',
+            serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+          });
+        }
+
+        if (typeof platform.setGlobalParams === 'function') {
+          platform.setGlobalParams({
+            stream: { protocol: 'xrtc', fps: 25, bitrate: 1000000 },
+            avatar: { avatar_id: '110332017', width: 1920, height: 1080 },
+            tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+            avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+          });
+        }
+
+        if (typeof platform.createPlayer === 'function') {
+          const maybePlayer = platform.createPlayer({
+            container: avatarWrapper,
+            domId: 'avatarWrapper',
+            width: avatarWrapper?.clientWidth || 320,
+            height: avatarWrapper?.clientHeight || 540
+          });
+          if (maybePlayer && typeof maybePlayer.then === 'function') {
+            await maybePlayer;
+          }
+        }
+
+        if (typeof platform.start === 'function') {
+          try {
+            const maybeStart = platform.start();
+            if (maybeStart && typeof maybeStart.then === 'function') {
+              await maybeStart;
+            }
+          } catch (startError) {
+            console.warn('虚拟人启动失败', startError);
+          }
+        }
+
+        window.avatarPlatform = platform;
+        window.dispatchEvent(new CustomEvent('avatarReady'));
+        indicator.textContent = '连接成功';
+        indicator.style.background = 'rgba(46, 204, 113, 0.45)';
+        return platform;
+      } catch (error) {
+        console.error('虚拟人 SDK 初始化失败', error);
+        indicator.textContent = '虚拟人未连接';
+        indicator.style.background = 'rgba(231, 76, 60, 0.55)';
+        throw error;
+      }
+    }
+
+    window.avatarReadyPromise = initAvatarPlatform();
+  </script>
+
+  <script>
+    const videoMeta = {"identifier": "3.1", "title": "导数的核心概念与几何意义", "chapterTitle": "第三章：导数与微分 (洞察瞬时变化)"};
+    const slidesSpec = [
+  {
+    "page": 1,
+    "title": "导数引入",
+    "durationMs": 45000,
+    "boardHTML": "<ul>\n  <li>生活例子：速度表读数、温度瞬时变化</li>\n  <li>导数 = 瞬时变化率</li>\n</ul>",
+    "animationHTML": "<p>1. 汽车速度表指针实时变化。</p>\n<p>2. 温度曲线在某一时刻放大。</p>",
+    "speak": "导数告诉我们某个瞬间的变化速度，就像驾驶时看到的实时车速。",
+    "actions": [
+      "A_RLH_welcome_O"
+    ]
+  },
+  {
+    "page": 2,
+    "title": "极限定义",
+    "durationMs": 75000,
+    "boardHTML": "<ul>\n  <li>定义：$f'(x_0)=\\lim_{\\Delta x\\to0}\\frac{f(x_0+\\Delta x)-f(x_0)}{\\Delta x}$</li>\n  <li>坡度理解：割线 → 切线</li>\n</ul>",
+    "animationHTML": "<p>1. 曲线上取两个点形成割线，Δx 缩小。</p>\n<p>2. 割线逐渐逼近切线。</p>",
+    "speak": "导数就是函数值变化量与自变量变化量的比值，在Δx趋向 0 时得到切线斜率。",
+    "actions": [
+      "A_LH_introduced_O"
+    ]
+  },
+  {
+    "page": 3,
+    "title": "几何意义",
+    "durationMs": 60000,
+    "boardHTML": "<ul>\n  <li>切线斜率 = 导数值</li>\n  <li>正值表示上坡，负值表示下坡</li>\n  <li>例：y=x² 在 x=1 处导数为 2</li>\n</ul>",
+    "animationHTML": "<p>1. 在曲线 y=x² 上作切线，显示斜率 2。</p>\n<p>2. 对比 x³ 在 x=0 处导数 0（水平切线）。</p>",
+    "speak": "导数不仅是计算，更是几何直观。斜率告诉我们曲线在该点是上升还是下降。",
+    "actions": [
+      "A_RH_point_O"
+    ]
+  },
+  {
+    "page": 4,
+    "title": "数值近似",
+    "durationMs": 50000,
+    "boardHTML": "<ul>\n  <li>差商表：取 Δx=0.5、0.1、0.01 近似求导数</li>\n  <li>应用：实验数据估算瞬时速度</li>\n</ul>",
+    "animationHTML": "<p>1. 表格随 Δx 缩小而趋近真实导数。</p>\n<p>2. 现实应用：速度传感器数据点连成差商。</p>",
+    "speak": "在没有解析表达式时，我们也能用差商逼近导数，理解导数的物理意义。",
+    "actions": [
+      "A_U_No_pointing_O"
+    ]
+  },
+  {
+    "page": 5,
+    "title": "物理应用情境",
+    "durationMs": 55000,
+    "boardHTML": "<ul>\n  <li>匀加速直线运动：$s(t)=s_0+v_0t+\\frac{1}{2}at^2$</li>\n  <li>速度：$v(t)=s'(t)=v_0+at$</li>\n  <li>加速度：$a(t)=v'(t)=a$</li>\n  <li>现场演示：赛车数据图</li>\n</ul>",
+    "animationHTML": "<p>1. 展示位移-时间曲线，切线斜率对应该时刻速度。</p>\n<p>2. 同步出现速度-时间曲线，强调导数作为“变化率”。</p>",
+    "speak": "在物理中，位移对时间求导得到速度，再求导得到加速度。导数把抽象的极限概念转化为可以直接测量的物理量。",
+    "actions": [
+      "A_RH_point_O"
+    ]
+  },
+  {
+    "page": 6,
+    "title": "易错提醒与总结",
+    "durationMs": 55000,
+    "boardHTML": "<ul>\n  <li>常见误解：</li>\n  <li>仅比较两个点的平均变化率 ≠ 导数</li>\n  <li>忽略定义域导致无导数点</li>\n  <li>课堂提问：$|x|$ 在 $x=0$ 是否可导？</li>\n  <li>本节结论：导数 = 极限 + 几何 + 物理</li>\n</ul>",
+    "animationHTML": "<p>1. 对比割线斜率与切线斜率，出现“并不相同”的提示框。</p>\n<p>2. 图像展示 $|x|$ 在原点的尖点，闪烁“不可导”标签。</p>",
+    "speak": "切记导数需要极限存在。比如绝对值函数在原点有尖点，没有唯一的切线斜率，因此不可导。把这些易错点记在笔记上。",
+    "actions": [
+      "A_LH_introduced_O"
+    ]
+  }
+];
+
+    window.avatarReadyPromise = window.avatarReadyPromise || Promise.resolve(null);
+
+    const slideContainer = document.getElementById('slide-container');
+    const subtitleArea = document.getElementById('subtitleArea');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const autoBtn = document.getElementById('autoBtn');
+
+    let currentIndex = -1;
+    let autoPlaying = false;
+    let autoPlayToken = 0;
+
+    function buildSlides() {
+      slideContainer.innerHTML = '';
+      slidesSpec.forEach((slide, idx) => {
+        const slideEl = document.createElement('div');
+        slideEl.className = 'slide';
+
+        const content = document.createElement('div');
+        content.className = 'slide-content';
+
+        const board = document.createElement('div');
+        board.className = 'blackboard-text';
+        const boardTitle = '<h2>第' + slide.page + '页 · ' + slide.title + '</h2>';
+        board.innerHTML = boardTitle + (slide.boardHTML || '<p>本页暂无板书内容。</p>');
+
+        const animationPane = document.createElement('div');
+        animationPane.className = 'animation-pane';
+
+        const animationTitle = document.createElement('h3');
+        animationTitle.textContent = '动画演示';
+        animationPane.appendChild(animationTitle);
+
+        const canvasWrapper = document.createElement('div');
+        canvasWrapper.className = 'animation-canvas-wrapper';
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'animationCanvas';
+        canvas.dataset.slideIndex = String(idx);
+        canvas.setAttribute('aria-label', '第' + slide.page + '页动画演示');
+        canvasWrapper.appendChild(canvas);
+        animationPane.appendChild(canvasWrapper);
+
+        const notes = document.createElement('div');
+        notes.className = 'animation-notes';
+        notes.innerHTML = slide.animationHTML || '<p>参照蓝图补充动画。</p>';
+        animationPane.appendChild(notes);
+
+        content.appendChild(board);
+        content.appendChild(animationPane);
+        slideEl.appendChild(content);
+        slideContainer.appendChild(slideEl);
+      });
+    }
+
+    function getSlides() {
+      return Array.from(document.querySelectorAll('.slide'));
+    }
+
+    function switchToSlide(index) {
+      const slides = getSlides();
+      if (index < 0 || index >= slides.length) {
+        return;
+      }
+
+      const previous = currentIndex;
+      if (previous !== -1) {
+        const previousSlide = slides[previous];
+        if (previousSlide) {
+          previousSlide.classList.remove('active');
+        }
+        stopAnimationFor(previous);
+      }
+
+      const targetSlide = slides[index];
+      if (targetSlide) {
+        targetSlide.classList.add('active');
+      }
+      currentIndex = index;
+      subtitleArea.textContent = slidesSpec[currentIndex]?.speak || '';
+      startAnimationFor(currentIndex);
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function ensureAvatarReady() {
+      try {
+        const platform = await window.avatarReadyPromise;
+        return platform || null;
+      } catch (error) {
+        console.warn('虚拟人未就绪', error);
+        return null;
+      }
+    }
+
+    async function speakContent(slide) {
+      if (!slide) {
+        return;
+      }
+      subtitleArea.textContent = slide.speak || '';
+
+      const platform = await ensureAvatarReady();
+      if (!platform) {
+        return;
+      }
+
+      try {
+        if (Array.isArray(slide.actions)) {
+          for (const action of slide.actions) {
+            if (typeof platform.writeCmd === 'function') {
+              try {
+                const maybeAction = platform.writeCmd('action', action);
+                if (maybeAction && typeof maybeAction.then === 'function') {
+                  await maybeAction;
+                }
+              } catch (err) {
+                console.warn('动作执行失败', action, err);
+              }
+            }
+          }
+        }
+
+        if (slide.speak && typeof platform.writeText === 'function') {
+          const textResult = platform.writeText(slide.speak, { nlp: false });
+          if (textResult && typeof textResult.then === 'function') {
+            await textResult;
+          }
+        }
+      } catch (error) {
+        console.warn('虚拟人交互失败', error);
+        statusIndicator.textContent = '虚拟人未连接';
+        statusIndicator.style.background = 'rgba(231, 76, 60, 0.55)';
+      }
+    }
+
+    async function startAutoPlay() {
+      if (autoPlaying) {
+        return;
+      }
+      autoPlaying = true;
+      autoPlayToken += 1;
+      const token = autoPlayToken;
+      setControlsDisabled(true);
+      autoBtn.textContent = '停止自动播放';
+
+      let startIndex = currentIndex;
+      if (startIndex < 0) {
+        startIndex = 0;
+      }
+
+      for (let i = startIndex; i < slidesSpec.length; i += 1) {
+        if (!autoPlaying || token !== autoPlayToken) {
+          break;
+        }
+        switchToSlide(i);
+        await speakContent(slidesSpec[i]);
+        const duration = slidesSpec[i]?.durationMs ?? 5000;
+        const safeDuration = Number.isFinite(duration) ? duration : 5000;
+        await wait(safeDuration);
+      }
+
+      if (token === autoPlayToken) {
+        autoPlaying = false;
+        setControlsDisabled(false);
+        autoBtn.textContent = '自动播放';
+      }
+    }
+
+    function stopAutoPlay() {
+      if (!autoPlaying) {
+        return;
+      }
+      autoPlaying = false;
+      autoPlayToken += 1;
+      setControlsDisabled(false);
+      autoBtn.textContent = '自动播放';
+    }
+
+    function setControlsDisabled(disabled) {
+      document.querySelectorAll('.control-bar button').forEach((btn) => {
+        if (btn.id === 'autoBtn') {
+          return;
+        }
+        btn.disabled = disabled;
+      });
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      stopAutoPlay();
+      const target = currentIndex <= 0 ? 0 : currentIndex - 1;
+      switchToSlide(target);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      stopAutoPlay();
+      const target = currentIndex < slidesSpec.length - 1 ? currentIndex + 1 : slidesSpec.length - 1;
+      switchToSlide(target);
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      stopAutoPlay();
+      switchToSlide(0);
+    });
+
+    document.getElementById('playBtn').addEventListener('click', async () => {
+      stopAutoPlay();
+      if (currentIndex === -1) {
+        switchToSlide(0);
+      }
+      await speakContent(slidesSpec[currentIndex]);
+    });
+
+    autoBtn.addEventListener('click', () => {
+      if (autoPlaying) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight' || event.key === ' ') {
+        document.getElementById('nextBtn').click();
+      } else if (event.key === 'ArrowLeft') {
+        document.getElementById('prevBtn').click();
+      } else if (event.key === 'Enter') {
+        document.getElementById('playBtn').click();
+      } else if (event.key === 'Escape') {
+        stopAutoPlay();
+      }
+    });
+
+    function startAnimationFor(index) {
+      const selector = '.animationCanvas[data-slide-index="' + index + '"]';
+      const canvas = document.querySelector(selector);
+      if (!canvas) {
+        return;
+      }
+
+      if (index === 0) {
+        startAnimation0(canvas);
+        return;
+      }
+
+      else if (index === 1) {
+        startAnimation1(canvas);
+        return;
+      }
+
+      else if (index === 2) {
+        startAnimation2(canvas);
+        return;
+      }
+
+      else if (index === 3) {
+        startAnimation3(canvas);
+        return;
+      }
+
+      else if (index === 4) {
+        startAnimation4(canvas);
+        return;
+      }
+
+      else if (index === 5) {
+        startAnimation5(canvas);
+        return;
+      }
+
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width || canvas.clientWidth || 0, canvas.height || canvas.clientHeight || 0);
+      }
+
+    }
+
+    function stopAnimationFor(index) {
+
+      if (index === 0) {
+        stopAnimation0();
+        return;
+      }
+
+      else if (index === 1) {
+        stopAnimation1();
+        return;
+      }
+
+      else if (index === 2) {
+        stopAnimation2();
+        return;
+      }
+
+      else if (index === 3) {
+        stopAnimation3();
+        return;
+      }
+
+      else if (index === 4) {
+        stopAnimation4();
+        return;
+      }
+
+      else if (index === 5) {
+        stopAnimation5();
+        return;
+      }
+
+      return;
+
+    }
+
+
+    const TWO_PI = Math.PI * 2;
+
+    function createCanvasState(canvas) {
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      let logicalWidth = 0;
+      let logicalHeight = 0;
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(1, Math.floor(rect.width * dpr));
+        const height = Math.max(1, Math.floor(rect.height * dpr));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        logicalWidth = rect.width || canvas.width / dpr;
+        logicalHeight = rect.height || canvas.height / dpr;
+      }
+
+      resize();
+
+      return {
+        ctx,
+        dpr,
+        resize,
+        get width() {
+          return logicalWidth || canvas.width / dpr;
+        },
+        get height() {
+          return logicalHeight || canvas.height / dpr;
+        },
+      };
+    }
+
+    function paintChalkboard(ctx, width, height) {
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, '#061a33');
+      gradient.addColorStop(1, '#020913');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      const step = Math.max(28, Math.min(width, height) / 12);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawAxes(ctx, mapX, mapY, xRange, yRange) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(mapX(xRange[0]), mapY(0));
+      ctx.lineTo(mapX(xRange[1]), mapY(0));
+      ctx.moveTo(mapX(0), mapY(yRange[0]));
+      ctx.lineTo(mapX(0), mapY(yRange[1]));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawTextLabel(ctx, text, x, y, options = {}) {
+      const { align = 'center', baseline = 'middle', color = '#f7f1d5', size = 18 } = options;
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.font = `${size}px 'Noto Serif SC', serif`;
+      ctx.textAlign = align;
+      ctx.textBaseline = baseline;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    let animationHandle0 = null;
+    let resizeListener0 = null;
+    let animationState0 = null;
+    let animationHandle1 = null;
+    let resizeListener1 = null;
+    let animationState1 = null;
+    let animationHandle2 = null;
+    let resizeListener2 = null;
+    let animationState2 = null;
+    let animationHandle3 = null;
+    let resizeListener3 = null;
+    let animationState3 = null;
+    let animationHandle4 = null;
+    let resizeListener4 = null;
+    let animationState4 = null;
+    let animationHandle5 = null;
+    let resizeListener5 = null;
+    let animationState5 = null;
+
+    function startAnimation0(canvas) {
+      if (!canvas) return;
+      stopAnimation0();
+      const state = createCanvasState(canvas);
+      animationState0 = { state, start: null };
+
+      function drawFrame(timestamp) {
+        if (!animationState0) return;
+        if (animationState0.start === null) {
+          animationState0.start = timestamp;
+        }
+        const { ctx } = animationState0.state;
+        const width = animationState0.state.width;
+        const height = animationState0.state.height;
+        const elapsed = (timestamp - animationState0.start) / 1000;
+        ctx.clearRect(0, 0, width, height);
+        paintChalkboard(ctx, width, height);
+
+        const margin = Math.min(width, height) * 0.12;
+        const plotWidth = width * 0.6;
+        const plotHeight = height * 0.65;
+        const xMax = 5;
+        const yMax = 6;
+        const mapX = (x) => margin + (x / xMax) * plotWidth;
+        const mapY = (y) => margin + plotHeight - (y / yMax) * plotHeight;
+
+        drawAxes(ctx, mapX, mapY, [0, xMax], [0, yMax]);
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(241, 196, 15, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const carPath = (x) => 0.8 + 0.6 * x - 0.08 * x * x;
+        for (let x = 0; x <= xMax; x += 0.05) {
+          const px = mapX(x);
+          const py = mapY(carPath(x));
+          if (x === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        const travel = (elapsed % 8) / 8 * xMax;
+        const carY = carPath(travel);
+        const carX = mapX(travel);
+        const carCanvasY = mapY(carY);
+        ctx.save();
+        ctx.fillStyle = '#2ecc71';
+        ctx.strokeStyle = '#0e6655';
+        ctx.lineWidth = 2;
+        const carWidth = 36;
+        const carHeight = 22;
+        const radius = 6;
+        const left = carX - carWidth / 2;
+        const top = carCanvasY - carHeight / 2;
+        ctx.beginPath();
+        ctx.moveTo(left + radius, top);
+        ctx.lineTo(left + carWidth - radius, top);
+        ctx.quadraticCurveTo(left + carWidth, top, left + carWidth, top + radius);
+        ctx.lineTo(left + carWidth, top + carHeight - radius);
+        ctx.quadraticCurveTo(left + carWidth, top + carHeight, left + carWidth - radius, top + carHeight);
+        ctx.lineTo(left + radius, top + carHeight);
+        ctx.quadraticCurveTo(left, top + carHeight, left, top + carHeight - radius);
+        ctx.lineTo(left, top + radius);
+        ctx.quadraticCurveTo(left, top, left + radius, top);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ecf0f1';
+        ctx.beginPath();
+        ctx.arc(carX - carWidth / 2 + 10, top + carHeight, 7, 0, TWO_PI);
+        ctx.arc(carX + carWidth / 2 - 10, top + carHeight, 7, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+
+        drawTextLabel(ctx, '路程 s(t)', mapX(4.4), mapY(5.2), { align: 'right', baseline: 'bottom', size: 18 });
+        drawTextLabel(ctx, '时间 t (秒)', mapX(xMax), mapY(-0.3), { align: 'right', baseline: 'top', size: 16 });
+        drawTextLabel(ctx, '位置 s(t)', mapX(-0.1), mapY(yMax), { align: 'right', size: 16 });
+
+        const gaugeCx = width * 0.78;
+        const gaugeCy = height * 0.62;
+        const radius = Math.min(width, height) * 0.22;
+        const speed = 30 + 120 * (0.5 - 0.5 * Math.cos(elapsed * 0.6));
+        ctx.save();
+        ctx.translate(gaugeCx, gaugeCy);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + 16, 0, TWO_PI);
+        ctx.fill();
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, Math.PI * 0.75, Math.PI * 0.25, false);
+        ctx.stroke();
+        for (let i = 0; i <= 6; i += 1) {
+          const angle = Math.PI * 0.75 + (i / 6) * (Math.PI * 1.5);
+          const inner = radius - 12;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+          ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+          ctx.stroke();
+        }
+        const angle = Math.PI * 0.75 + (speed / 180) * (Math.PI * 1.5);
+        ctx.rotate(angle);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(-6, 0);
+        ctx.lineTo(radius - 18, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        drawTextLabel(ctx, `${speed.toFixed(0)} km/h`, gaugeCx, gaugeCy + radius * 0.65, { size: 22 });
+        drawTextLabel(ctx, '驾驶员实时速度感知 → 瞬时变化率', gaugeCx, gaugeCy - radius - 32, { size: 18 });
+
+        animationHandle0 = requestAnimationFrame(drawFrame);
+      }
+
+      animationHandle0 = requestAnimationFrame(drawFrame);
+      resizeListener0 = () => {
+        if (!animationState0) return;
+        animationState0.state.resize();
+      };
+      window.addEventListener('resize', resizeListener0);
+    }
+
+    function stopAnimation0() {
+      if (animationHandle0 !== null) {
+        cancelAnimationFrame(animationHandle0);
+        animationHandle0 = null;
+      }
+      if (resizeListener0) {
+        window.removeEventListener('resize', resizeListener0);
+        resizeListener0 = null;
+      }
+      animationState0 = null;
+    }
+
+    function startAnimation1(canvas) {
+      if (!canvas) return;
+      stopAnimation1();
+      const state = createCanvasState(canvas);
+      animationState1 = { state, start: null };
+
+      function drawFrame(timestamp) {
+        if (!animationState1) return;
+        if (animationState1.start === null) {
+          animationState1.start = timestamp;
+        }
+        const elapsed = (timestamp - animationState1.start) / 1000;
+        const { ctx } = animationState1.state;
+        const width = animationState1.state.width;
+        const height = animationState1.state.height;
+        ctx.clearRect(0, 0, width, height);
+        paintChalkboard(ctx, width, height);
+
+        const margin = Math.min(width, height) * 0.12;
+        const plotWidth = width * 0.7;
+        const plotHeight = height * 0.72;
+        const xMin = -1.5;
+        const xMax = 3.5;
+        const yMax = 10;
+        const mapX = (x) => margin + ((x - xMin) / (xMax - xMin)) * plotWidth;
+        const mapY = (y) => margin + plotHeight - (y / yMax) * plotHeight;
+
+        drawAxes(ctx, mapX, mapY, [xMin, xMax], [0, yMax]);
+
+        ctx.save();
+        ctx.strokeStyle = '#58d68d';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = xMin; x <= xMax; x += 0.02) {
+          const y = x * x;
+          const px = mapX(x);
+          const py = mapY(y);
+          if (x === xMin) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        const px = mapX(1);
+        const py = mapY(1);
+        ctx.save();
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(px, py, 7, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+        drawTextLabel(ctx, 'P(1,1)', px + 12, py - 16, { align: 'left', baseline: 'bottom', size: 16 });
+
+        const phase = (Math.cos(elapsed * 0.45) + 1) / 2;
+        const qx = 3 - phase * 1.8;
+        const qy = qx * qx;
+        const qpx = mapX(qx);
+        const qpy = mapY(qy);
+        ctx.save();
+        ctx.fillStyle = '#ec7063';
+        ctx.beginPath();
+        ctx.arc(qpx, qpy, 7, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+        drawTextLabel(ctx, `Q(${qx.toFixed(2)}, ${qy.toFixed(2)})`, qpx + 12, qpy - 18, { align: 'left', baseline: 'bottom', size: 16 });
+
+        const slope = (qy - 1) / (qx - 1);
+        ctx.save();
+        ctx.strokeStyle = '#f39c12';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(mapX(xMin), mapY(1 + slope * (xMin - 1)));
+        ctx.lineTo(mapX(xMax), mapY(1 + slope * (xMax - 1)));
+        ctx.stroke();
+        ctx.restore();
+
+        drawTextLabel(ctx, `割线斜率 ≈ ${(slope).toFixed(2)}`, width * 0.74, margin + 36, { align: 'center', size: 20 });
+        drawTextLabel(ctx, 'Δx = Qx - 1', width * 0.74, margin + 70, { align: 'center', size: 18, color: '#f1c40f' });
+
+        animationHandle1 = requestAnimationFrame(drawFrame);
+      }
+
+      animationHandle1 = requestAnimationFrame(drawFrame);
+      resizeListener1 = () => {
+        if (!animationState1) return;
+        animationState1.state.resize();
+      };
+      window.addEventListener('resize', resizeListener1);
+    }
+
+    function stopAnimation1() {
+      if (animationHandle1 !== null) {
+        cancelAnimationFrame(animationHandle1);
+        animationHandle1 = null;
+      }
+      if (resizeListener1) {
+        window.removeEventListener('resize', resizeListener1);
+        resizeListener1 = null;
+      }
+      animationState1 = null;
+    }
+
+    function startAnimation2(canvas) {
+      if (!canvas) return;
+      stopAnimation2();
+      const state = createCanvasState(canvas);
+      animationState2 = { state, start: null };
+
+      function drawFrame(timestamp) {
+        if (!animationState2) return;
+        if (animationState2.start === null) {
+          animationState2.start = timestamp;
+        }
+        const elapsed = (timestamp - animationState2.start) / 1000;
+        const { ctx } = animationState2.state;
+        const width = animationState2.state.width;
+        const height = animationState2.state.height;
+        ctx.clearRect(0, 0, width, height);
+        paintChalkboard(ctx, width, height);
+
+        const margin = Math.min(width, height) * 0.12;
+        const plotWidth = width * 0.7;
+        const plotHeight = height * 0.72;
+        const xMin = -1.5;
+        const xMax = 3.5;
+        const yMax = 10;
+        const mapX = (x) => margin + ((x - xMin) / (xMax - xMin)) * plotWidth;
+        const mapY = (y) => margin + plotHeight - (y / yMax) * plotHeight;
+
+        drawAxes(ctx, mapX, mapY, [xMin, xMax], [0, yMax]);
+
+        ctx.save();
+        ctx.strokeStyle = '#58d68d';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = xMin; x <= xMax; x += 0.02) {
+          const y = x * x;
+          const px = mapX(x);
+          const py = mapY(y);
+          if (x === xMin) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        const px = mapX(1);
+        const py = mapY(1);
+        ctx.save();
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(px, py, 7, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+
+        const closeness = 1 + Math.pow(0.5 * (1 - Math.cos(elapsed * 0.4)), 3) * 2.2;
+        const qx = 1 + closeness;
+        const qy = qx * qx;
+        const qpx = mapX(qx);
+        const qpy = mapY(qy);
+        ctx.save();
+        ctx.fillStyle = '#ec7063';
+        ctx.beginPath();
+        ctx.arc(qpx, qpy, 7, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+
+        const slope = (qy - 1) / (qx - 1);
+        const tangentSlope = 2;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(241, 196, 15, 0.85)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(mapX(xMin), mapY(1 + tangentSlope * (xMin - 1)));
+        ctx.lineTo(mapX(xMax), mapY(1 + tangentSlope * (xMax - 1)));
+        ctx.stroke();
+        ctx.restore();
+        drawTextLabel(ctx, '切线斜率 = 2', mapX(2.8), mapY(5.5), { align: 'left', size: 18 });
+
+        ctx.save();
+        ctx.setLineDash([12, 10]);
+        ctx.strokeStyle = '#ec7063';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(mapX(xMin), mapY(1 + slope * (xMin - 1)));
+        ctx.lineTo(mapX(xMax), mapY(1 + slope * (xMax - 1)));
+        ctx.stroke();
+        ctx.restore();
+
+        const delta = slope - tangentSlope;
+        drawTextLabel(ctx, `割线斜率 ${slope.toFixed(3)}`, width * 0.75, margin + 34, { size: 18 });
+        drawTextLabel(ctx, `误差 ${delta.toFixed(3)}`, width * 0.75, margin + 68, { size: 18, color: '#ec7063' });
+
+        animationHandle2 = requestAnimationFrame(drawFrame);
+      }
+
+      animationHandle2 = requestAnimationFrame(drawFrame);
+      resizeListener2 = () => {
+        if (!animationState2) return;
+        animationState2.state.resize();
+      };
+      window.addEventListener('resize', resizeListener2);
+    }
+
+    function stopAnimation2() {
+      if (animationHandle2 !== null) {
+        cancelAnimationFrame(animationHandle2);
+        animationHandle2 = null;
+      }
+      if (resizeListener2) {
+        window.removeEventListener('resize', resizeListener2);
+        resizeListener2 = null;
+      }
+      animationState2 = null;
+    }
+
+    function startAnimation3(canvas) {
+      if (!canvas) return;
+      stopAnimation3();
+      const state = createCanvasState(canvas);
+      animationState3 = { state, start: null };
+
+      const rows = [
+        { dx: 1, slope: 3 },
+        { dx: 0.5, slope: 2.5 },
+        { dx: 0.2, slope: 2.2 },
+        { dx: 0.1, slope: 2.1 },
+        { dx: 0.05, slope: 2.05 },
+        { dx: 0.01, slope: 2.01 },
+      ];
+
+      function drawFrame(timestamp) {
+        if (!animationState3) return;
+        if (animationState3.start === null) {
+          animationState3.start = timestamp;
+        }
+        const elapsed = (timestamp - animationState3.start) / 1000;
+        const { ctx } = animationState3.state;
+        const width = animationState3.state.width;
+        const height = animationState3.state.height;
+        ctx.clearRect(0, 0, width, height);
+        paintChalkboard(ctx, width, height);
+
+        const tableX = width * 0.12;
+        const tableY = height * 0.18;
+        const tableWidth = width * 0.76;
+        const rowHeight = Math.min(64, height * 0.12);
+        const highlightIndex = Math.floor((elapsed % (rows.length * 1.6)) / 1.6);
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(tableX, tableY, tableWidth, rowHeight * (rows.length + 1));
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(tableX, tableY, tableWidth, rowHeight * (rows.length + 1));
+
+        const columns = ['Δx', '割线斜率', '|斜率 - 2|'];
+        const colWidth = tableWidth / columns.length;
+        ctx.fillStyle = '#f1c40f';
+        ctx.font = `${Math.round(rowHeight * 0.45)}px 'Noto Serif SC', serif`;
+        for (let i = 0; i < columns.length; i += 1) {
+          drawTextLabel(ctx, columns[i], tableX + colWidth * i + colWidth / 2, tableY + rowHeight / 2, { size: Math.round(rowHeight * 0.38) });
+        }
+
+        for (let r = 0; r < rows.length; r += 1) {
+          const row = rows[r];
+          const y = tableY + rowHeight * (r + 1);
+          if (r === highlightIndex) {
+            ctx.fillStyle = 'rgba(236, 112, 99, 0.4)';
+            ctx.fillRect(tableX + 4, y + 4, tableWidth - 8, rowHeight - 8);
+          }
+          ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+          ctx.beginPath();
+          ctx.moveTo(tableX, y);
+          ctx.lineTo(tableX + tableWidth, y);
+          ctx.stroke();
+          const cells = [row.dx.toFixed(3), row.slope.toFixed(3), Math.abs(row.slope - 2).toFixed(3)];
+          ctx.fillStyle = '#ecf0f1';
+          ctx.font = `${Math.round(rowHeight * 0.38)}px 'Noto Serif SC', serif`;
+          for (let c = 0; c < cells.length; c += 1) {
+            drawTextLabel(ctx, cells[c], tableX + colWidth * c + colWidth / 2, y + rowHeight / 2, { size: Math.round(rowHeight * 0.34) });
+          }
+        }
+        ctx.restore();
+
+        drawTextLabel(ctx, 'Δx 趋近于 0 → 割线斜率逼近切线斜率 2', width / 2, tableY - 28, { size: 22 });
+
+        animationHandle3 = requestAnimationFrame(drawFrame);
+      }
+
+      animationHandle3 = requestAnimationFrame(drawFrame);
+      resizeListener3 = () => {
+        if (!animationState3) return;
+        animationState3.state.resize();
+      };
+      window.addEventListener('resize', resizeListener3);
+    }
+
+    function stopAnimation3() {
+      if (animationHandle3 !== null) {
+        cancelAnimationFrame(animationHandle3);
+        animationHandle3 = null;
+      }
+      if (resizeListener3) {
+        window.removeEventListener('resize', resizeListener3);
+        resizeListener3 = null;
+      }
+      animationState3 = null;
+    }
+
+    function startAnimation4(canvas) {
+      if (!canvas) return;
+      stopAnimation4();
+      const state = createCanvasState(canvas);
+      animationState4 = { state, start: null };
+
+      function drawFrame(timestamp) {
+        if (!animationState4) return;
+        if (animationState4.start === null) {
+          animationState4.start = timestamp;
+        }
+        const elapsed = (timestamp - animationState4.start) / 1000;
+        const { ctx } = animationState4.state;
+        const width = animationState4.state.width;
+        const height = animationState4.state.height;
+        ctx.clearRect(0, 0, width, height);
+        paintChalkboard(ctx, width, height);
+
+        const margin = Math.min(width, height) * 0.12;
+        const plotWidth = width * 0.62;
+        const plotHeight = height * 0.65;
+        const tMax = 4;
+        const sMax = 24;
+        const mapX = (t) => margin + (t / tMax) * plotWidth;
+        const mapY = (s) => margin + plotHeight - (s / sMax) * plotHeight;
+
+        drawAxes(ctx, mapX, mapY, [0, tMax], [0, sMax]);
+
+        ctx.save();
+        ctx.strokeStyle = '#5dade2';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let t = 0; t <= tMax; t += 0.02) {
+          const s = 6 * t + 1.75 * t * t;
+          const px = mapX(t);
+          const py = mapY(s);
+          if (t === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        const time = (elapsed % 6) / 6 * tMax;
+        const position = 6 * time + 1.75 * time * time;
+        const velocity = 6 + 3.5 * time;
+
+        const px = mapX(time);
+        const py = mapY(position);
+        ctx.save();
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(px, py, 8, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+
+        drawTextLabel(ctx, `t = ${time.toFixed(2)} s`, px + 12, py - 16, { align: 'left', baseline: 'bottom', size: 16 });
+        drawTextLabel(ctx, `s(t) = ${position.toFixed(2)} m`, px + 12, py + 4, { align: 'left', baseline: 'top', size: 16 });
+
+        const gaugeCx = width * 0.78;
+        const gaugeCy = height * 0.5;
+        const radius = Math.min(width, height) * 0.2;
+        ctx.save();
+        ctx.translate(gaugeCx, gaugeCy);
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + 20, 0, TWO_PI);
+        ctx.fill();
+        ctx.strokeStyle = '#27ae60';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, TWO_PI);
+        ctx.stroke();
+        ctx.rotate(-Math.PI / 2 + (velocity / 20) * TWO_PI);
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(-6, 0);
+        ctx.lineTo(radius - 18, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        drawTextLabel(ctx, `瞬时速度 v(t) = ${(velocity).toFixed(2)} m/s`, gaugeCx, gaugeCy + radius + 30, { size: 20 });
+        drawTextLabel(ctx, 's(t)=6t+1.75t² 与 v(t)=6+3.5t', gaugeCx, gaugeCy - radius - 40, { size: 18 });
+
+        animationHandle4 = requestAnimationFrame(drawFrame);
+      }
+
+      animationHandle4 = requestAnimationFrame(drawFrame);
+      resizeListener4 = () => {
+        if (!animationState4) return;
+        animationState4.state.resize();
+      };
+      window.addEventListener('resize', resizeListener4);
+    }
+
+    function stopAnimation4() {
+      if (animationHandle4 !== null) {
+        cancelAnimationFrame(animationHandle4);
+        animationHandle4 = null;
+      }
+      if (resizeListener4) {
+        window.removeEventListener('resize', resizeListener4);
+        resizeListener4 = null;
+      }
+      animationState4 = null;
+    }
+
+    function startAnimation5(canvas) {
+      if (!canvas) return;
+      stopAnimation5();
+      const state = createCanvasState(canvas);
+      animationState5 = { state, start: null };
+
+      function drawFrame(timestamp) {
+        if (!animationState5) return;
+        if (animationState5.start === null) {
+          animationState5.start = timestamp;
+        }
+        const elapsed = (timestamp - animationState5.start) / 1000;
+        const { ctx } = animationState5.state;
+        const width = animationState5.state.width;
+        const height = animationState5.state.height;
+        ctx.clearRect(0, 0, width, height);
+        paintChalkboard(ctx, width, height);
+
+        const margin = Math.min(width, height) * 0.12;
+        const plotWidth = width * 0.68;
+        const plotHeight = height * 0.7;
+        const xMin = -2.5;
+        const xMax = 2.5;
+        const yMax = 4;
+        const mapX = (x) => margin + ((x - xMin) / (xMax - xMin)) * plotWidth;
+        const mapY = (y) => margin + plotHeight - (y / yMax) * plotHeight;
+
+        drawAxes(ctx, mapX, mapY, [xMin, xMax], [0, yMax]);
+
+        ctx.save();
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = xMin; x <= xMax; x += 0.02) {
+          const y = Math.abs(x) * 1.2 + 0.2;
+          const px = mapX(x);
+          const py = mapY(y);
+          if (x === xMin) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        const qx = 1.8 * Math.sin(elapsed * 0.6);
+        const qy = Math.abs(qx) * 1.2 + 0.2;
+        const qpx = mapX(qx);
+        const qpy = mapY(qy);
+        ctx.save();
+        ctx.fillStyle = '#ec7063';
+        ctx.beginPath();
+        ctx.arc(qpx, qpy, 7, 0, TWO_PI);
+        ctx.fill();
+        ctx.restore();
+
+        const leftSlope = -1.2;
+        const rightSlope = 1.2;
+        ctx.save();
+        ctx.setLineDash([12, 10]);
+        ctx.strokeStyle = '#ec7063';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(mapX(xMin), mapY(Math.abs(xMin) * 1.2 + 0.2));
+        ctx.lineTo(mapX(0), mapY(0.2));
+        ctx.lineTo(mapX(xMax), mapY(Math.abs(xMax) * 1.2 + 0.2));
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = '#58d68d';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(mapX(xMin), mapY(0.2 + leftSlope * (xMin)));
+        ctx.lineTo(mapX(0), mapY(0.2));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(mapX(0), mapY(0.2));
+        ctx.lineTo(mapX(xMax), mapY(0.2 + rightSlope * (xMax)));
+        ctx.stroke();
+        ctx.restore();
+
+        drawTextLabel(ctx, '左侧斜率 → -1.2', width * 0.8, margin + 40, { align: 'center', size: 18 });
+        drawTextLabel(ctx, '右侧斜率 → +1.2', width * 0.8, margin + 72, { align: 'center', size: 18 });
+        drawTextLabel(ctx, '尖点处切线不存在 → 函数不可导', width * 0.78, margin + 120, { align: 'center', size: 20 });
+
+        animationHandle5 = requestAnimationFrame(drawFrame);
+      }
+
+      animationHandle5 = requestAnimationFrame(drawFrame);
+      resizeListener5 = () => {
+        if (!animationState5) return;
+        animationState5.state.resize();
+      };
+      window.addEventListener('resize', resizeListener5);
+    }
+
+    function stopAnimation5() {
+      if (animationHandle5 !== null) {
+        cancelAnimationFrame(animationHandle5);
+        animationHandle5 = null;
+      }
+      if (resizeListener5) {
+        window.removeEventListener('resize', resizeListener5);
+        resizeListener5 = null;
+      }
+      animationState5 = null;
+    }
+    buildSlides();
+    switchToSlide(0);
+  </script>
+</body>
+</html>
