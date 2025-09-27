@@ -1,142 +1,137 @@
+为虚拟人数学课程提供一个所见即所得 (WYSIWYG) 的自动化录制舞台。该系统将课程内容、复杂的可视化动画、虚拟人SDK控制以及自动播放逻辑高度整合在一个HTML文件中，通过精密的时序控制，实现“一键录制”的高效生产流程。
 
+2. 核心架构与原则
+根据基准代码分析，系统遵循以下核心设计原则：
 
-Technical Design Document: Codex-VPA (Virtual Production Assistant)
-1. Overview
-This document specifies the architecture and design of the Codex-VPA (Virtual Production Assistant), an automated system for producing virtual human video courses. The system is designed to ingest structured course data and generate perfectly synchronized, high-quality video presentations with zero manual intervention during the recording phase. It prioritizes cost-efficiency, timing precision, and production quality to create a robust, industrial-grade workflow.
+一体化设计 (Integrated Design): 课程的所有元素——结构(HTML)、样式(CSS)、逻辑(JS)和内容数据——都封装在单一的HTML文件中。这种方式确保了每个课程单元的独立性和可移植性。
 
-2. Goals and Non-Goals
-2.1. Goals
-G1: Flawless Automation: To provide a fully automated, event-driven playback mechanism that ensures perfect synchronization between virtual human speech, animations, and slide transitions.
+模块化动画 (Modular Animations): 系统的核心亮点。每一种复杂的可视化效果（如物理模拟、导数逼近、仪表盘联动）都被封装在独立的JavaScript类中，实现了动画逻辑的高度复用和可维护性。
 
-G2: Cost Elimination: To prevent all unnecessary expenditure on the paid Virtual Human API through a comprehensive, zero-cost Rehearsal Mode and a Preflight Check system.
+混合驱动模型 (Hybrid-Driven Model): 系统的自动播放流程采用“事件驱动为主，定时器为辅”的混合模型。它会优先等待虚拟人SDK的“语音播放结束”事件，以确保语音的完整性；在SDK未连接等情况下，则回退到预设的固定时长，保证流程的健壮性。
 
-G3: Visual Fidelity: To support the implementation and management of complex, varied visualizations (both Canvas-based and DOM/CSS-based) in a modular and extensible manner.
+状态驱动UI (State-Driven UI): 应用的界面（如当前页码、状态指示灯、字幕）根据内部状态变量（currentSlide, isAutoPlaying等）动态更新，确保用户界面与系统内部状态的实时同步。
 
-G4: Production Efficiency: To enable a "One-Click Record" workflow after a successful rehearsal, eliminating the need for repetitive, time-consuming error correction and re-recording.
+3. Agent规格定义 (逻辑模块)
+系统内部的复杂逻辑可被抽象为以下几个协同工作的智能体（逻辑模块）：
 
-G5: Clean Output: To guarantee that the final video output is free of any non-content user interface elements.
+Agent 3.1: UIManager (UI管理器)
 
-2.2. Non-Goals
-NG1: Content Creation GUI: This system will not provide a graphical user interface for creating or editing course content. Content is expected to be authored in JSON format.
+ID: VPA-UI-01
 
-NG2: Video Editing: This system will not perform post-production video editing (e.g., adding intros/outros, transitions between separate video files). Its scope ends at the creation of a single, complete video file for one lesson.
+描述: 负责管理和更新所有用户界面元素，响应用户的基本交互。
 
-NG3: Direct MP4 Generation: The system's final output is a perfectly choreographed real-time HTML presentation ready for screen capture by an external tool. It does not contain an MP4 encoder.
+核心职责:
 
-3. System Architecture
-The Codex-VPA employs a modular architecture composed of distinct, single-responsibility agents and modules. The interaction is managed by a central orchestrator.
+管理幻灯片的显示与切换 (showSlide, nextSlide, previousSlide)。
 
-Code snippet
+更新状态指示器 (updateStatus) 和字幕区域 (updateSubtitle)。
 
-graph TD
-    subgraph Pre-Production
-        A[course_data.json] --> B(ContentCompilerAgent);
-        B --> C{presentation.html};
-    end
+处理控制按钮的点击事件和键盘快捷键。
 
-    subgraph Production
-        D(User) -- Clicks Button --> E(PlaybackOrchestrator);
-        C --> F(PreflightCheckAgent);
-        F -- Report --> E;
-        E -- Uses --> G(AnimationFactory);
-        E -- Calls --> H{Virtual Human SDK};
-        G -- Creates --> I[Animation Modules];
-    end
+在录制模式下，管理UI元素的显示与隐藏。
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#ccf,stroke:#333,stroke-width:2px
-4. Data Models
-The entire system is driven by a master configuration object, typically loaded from course_data.json.
+实现代码: 主要由 showSlide, updateSubtitle, updateStatus 等全局函数和 DOMContentLoaded / keydown 事件监听器构成。
 
-4.1. courseData Schema
-JSON
+Agent 3.2: AnimationManager (动画管理器)
 
-{
-  "totalSlides": "number",
-  "subtitleScript": {
-    "[slideNumber: string]": "string" // Contains script and action cues, e.g., "(动作: ID) text..."
-  },
-  "pageAnimations": {
-    "[slideNumber: string]": {
-      "module": "string", // Name of the animation class to be instantiated by AnimationFactory
-      "params": "object", // Configuration for the animation (e.g., { stage: 'tangent' })
-      "duration": "number" // Estimated duration for rehearsal and timeout purposes
-    }
-  },
-  "pageBufferMs": "number" // Milliseconds to pause after a slide is fully complete
-}
-5. Agent Specifications
-This section formally defines each agent within the Codex-VPA system.
+ID: VPA-ANIM-02
 
-Agent 5.1: ContentCompilerAgent
+描述: 系统的可视化核心。负责在不同幻灯片上初始化、启动和停止对应的复杂动画模块。
 
-ID: VPA-COMPILER-01
+核心职责:
 
-Description: A pre-production agent that transforms the courseData.json into a runnable HTML presentation.
+在页面加载时，根据DOM结构初始化所有幻灯片对应的动画控制器实例 (initAnimations)。
 
-(Details as specified in the previous response)
+维护一个动画控制器映射表 (animationControllers)，将幻灯片索引与其动画实例关联。
 
-Agent 5.2: PreflightCheckAgent
+在幻灯片切换时，确保当前页的动画被启动 (controller.start())，而其他页的动画被停止 (controller.stop())。
 
-ID: VPA-DIAG-02
+实现代码: initAnimations 函数、animationControllers Map对象，以及showSlide函数内部对动画控制器的调用逻辑。
 
-Description: A critical diagnostic agent that validates the courseData configuration to prevent runtime errors and wasted resources.
+Agent 3.3: SDKCoordinator (SDK协调器)
 
-(Details as specified in the previous response, including all checks like continuity, MathJax syntax, and minimum duration)
+ID: VPA-SDK-03
 
-Agent 5.3: AnimationFactory
+描述: 专门负责与讯飞虚拟人SDK进行通信的模块。封装了所有与虚拟人相关的操作，如连接、语音合成、动作驱动等。
 
-ID: VPA-VISUAL-03
+核心职责:
 
-Description: A factory module that instantiates and returns the appropriate animation controller for a given slide based on the courseData configuration.
+处理SDK的加载和初始化流程 (waitForSDK, startTeaching)。
 
-Pain Point Addressed: This is the core component that addresses the "ignoring complex visualizations" requirement. It provides a formal, extensible entry point for all visual effects.
+管理与SDK服务器的连接状态，并处理连接、断开、错误等事件。
 
-(Details as specified in the previous response, including the switch-case logic for different animation types)
+封装语音播放指令 (speakContent)，并包含驱动虚拟人动作的逻辑。
 
-Agent 5.4: PlaybackOrchestrator
+实现一个基于Promise的事件监听器 (waitForSpeechEndOrTimeout)，这是实现混合驱动模型的关键，它能够等待SDK的SPEECH_END事件。
+
+处理付费资源的使用授权逻辑，避免意外开销。
+
+实现代码: waitForSDK, startTeaching, speakContent, waitForSpeechEndOrTimeout 等函数，以及 AvatarPlatform 实例的事件回调。
+
+Agent 3.4: PlaybackOrchestrator (播放编排器)
 
 ID: VPA-CORE-04
 
-Description: The master agent that executes the synchronized playback sequence. It operates in two modes: rehearse and record.
+描述: 系统的“大脑”，负责执行自动播放的宏观流程，按照预定时序调度其他模块协同工作。
 
-(Details as specified in the previous response)
+核心职责:
 
-6. Core Interaction Flow (Sequence Diagram)
-This diagram illustrates the event-driven logic for rendering a single slide, which is the key to achieving perfect timing.
+实现核心的 startAutoPlay 异步函数，这是自动化录制的入口。
 
-Code snippet
+循环遍历所有幻灯片，按顺序调用 UIManager 进行页面切换。
 
-sequenceDiagram
-    participant Orch as PlaybackOrchestrator
-    participant Anim as AnimationModule
-    participant SDK as VirtualHumanSDK
-    
-    Orch->>Anim: play()
-    activate Anim
-    Note right of Anim: Animation is running...
-    Anim-->>Orch: Promise resolves (animation done)
-    deactivate Anim
-    
-    Orch->>SDK: play(script)
-    activate SDK
-    Note right of SDK: Virtual human is speaking...
-    SDK-->>Orch: onPlayEnd event (speech done)
-    deactivate SDK
-    
-    Orch->>Orch: await sleep(buffer)
-    Note over Orch: Waiting for buffer time...
-    
-    Orch->>Orch: Proceed to next slide
-7. Risks and Mitigations
-Risk 1: Virtual Human SDK API Changes: The third-party SDK is a critical external dependency. If its API (e.g., event names, method signatures) changes, it could break the event-driven logic.
+调用 SDKCoordinator 播放当前页的语音，并等待其播放完成。
 
-Mitigation: All SDK interactions are isolated within the PlaybackOrchestrator. A dedicated adapter or wrapper function will be created for all SDK calls, minimizing the surface area that needs to be updated if the API changes.
+在语音播放结束后，执行固定的缓冲延时，然后进入下一个循环。
 
-Risk 2: Browser Performance Variability: On lower-end machines, complex Canvas animations or DOM updates could lag, potentially causing visual stutter even if the overall sequence timing is correct.
+实现代码: startAutoPlay 函数。
 
-Mitigation: The Rehearsal Mode allows for testing on a target machine. Animation modules will be designed with performance in mind (e.g., using requestAnimationFrame for Canvas, leveraging hardware-accelerated CSS transforms). The event-driven model is inherently resilient to minor fluctuations, as it waits for tasks to complete.
+4. 关键动画模块详解
+您的代码中包含了多个设计精良的动画模块，它们是本课件的核心特色：
 
-Risk 3: Content Errors: Typos in courseData.json (e.g., incorrect module name, bad parameters) can cause runtime failures.
+PhysicsIntroAnimation:
 
-Mitigation: The PreflightCheckAgent is the primary mitigation. It is designed to catch as many configuration errors as possible before playback begins.
+功能: 模拟汽车沿预设弯道轨迹行驶，并同步在屏幕一侧的坐标系中绘制出其非线性的位移-时间(s−t)曲线。
+
+技术: 使用Catmull-Rom样条插值算法生成平滑的赛道路径，动态计算小车位置和角度。s-t图实时绘制，并通过闪烁的点与赛车位置关联。
+
+DerivativeAnimation:
+
+功能: 演示导数几何意义的核心动画。能在Canvas上绘制函数图像、P点和Q点，并通过平滑动画将连接两点的割线转变为P点的切线。
+
+技术: 实时计算并显示割线斜率。通过缓动函数 (Easing) 控制 Δx 的变化，实现Q点向P点的平滑逼近。能够清晰地在图中标注 Δx 和 Δy。
+
+TableAnimation:
+
+功能: 以动态、逐行浮现的方式展示数值近似表。
+
+技术: 基于DOM和CSS transition，通过JavaScript的 setTimeout 控制每一行 <tr> 元素的 visible 类的添加，产生交错动画效果。
+
+SpeedometerAnimation:
+
+功能: 将物理情境推向高潮。它在一个Canvas上绘制s−t图像和切线，同时驱动另一个DOM元素构成的模拟速度计。
+
+技术: 实时计算曲线上某点的导数（瞬时速度），并将该数值映射为速度计指针的旋转角度，实现数据与UI的完美联动。
+
+ComparisonAnimation:
+
+功能: 用于对比正确与错误的概念，或展示特殊案例。
+
+技术: 主要通过DOM元素的显隐和CSS动画实现。例如，先同时展示“正确”与“错误”面板，随后“错误”面板淡出，“尖点案例”面板淡入。
+
+5. 核心工作流 (自动播放)
+用户点击“自动播放”按钮。
+
+PlaybackOrchestrator 启动，进入循环。
+
+For slide = 1 to totalSlides:
+a.  UIManager 调用 showSlide(slide)。
+b.  showSlide 激活当前幻灯片，并触发 AnimationManager 启动该页的动画控制器 (controller.start())。
+c.  PlaybackOrchestrator 调用 SDKCoordinator 的 speakContent(slide)。
+d.  SDKCoordinator 向讯飞SDK发送语音和动作指令。
+e.  PlaybackOrchestrator await 等待 speakContent 函数返回的Promise完成（即waitForSpeechEndOrTimeout完成）。
+f.  语音结束后，PlaybackOrchestrator 等待一个固定的缓冲时间 sleep(800)。
+g.  循环进入下一页。
+
+循环结束，PlaybackOrchestrator 更新状态为“播放结束”。
+
