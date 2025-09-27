@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第13章 视频 13.3 三大重要分布对比</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/noto-serif-sc.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('✅ MathJax已加载并配置完成');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="./assets/lesson-template.css">
+</head>
+<body class="blackboard">
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+    <div id="slide-container" class="slide-container flex-grow">
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>课程导入</h2>
+      <ul><li>主角：二项分布、泊松分布、正态分布</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>三条分布曲线依次现身。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>二项分布</h2>
+      <ul><li>模型：n 次独立重复试验，每次成功概率 p</li><li>概率质量函数：P(X = k) = C(n,k) p^k (1−p)^{n−k}</li><li>期望与方差：np, np(1−p)</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>条形图显示不同 k 的概率，滑块调节 n、p。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>泊松分布</h2>
+      <ul><li>模型：单位时间内事件发生次数</li><li>概率质量函数：P(X = k) = λ^k e^{−λ} / k!</li><li>期望与方差：均为 λ</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>条形图显示不同 λ 下的泊松分布。</li><li>指出当 n 大、p 小时可由二项分布近似。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>正态分布</h2>
+      <ul><li>密度函数：f(x) = (1/√(2πσ²)) exp(−(x−μ)²/(2σ²))</li><li>特点：钟形、对称、68-95-99.7 规则</li><li>中心极限定理：大量独立变量之和趋向正态</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>正态曲线随着 μ、σ 改变形态。</li><li>标示 1σ、2σ、3σ 区间面积。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>应用对比</h2>
+      <ul><li>二项：质量检测、问卷成功次数</li><li>泊松：呼叫中心电话量、事故次数</li><li>正态：身高、测量误差</li><li>转换：二项 → 泊松（n 大 p 小），泊松 → 正态（λ 大）</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>三个案例图标切换，分布曲线同步。</li><li>箭头展示分布之间的近似关系。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>小结</h2>
+      <ul><li>核心：模型假设、参数、期望方差</li><li>作业：完成分布识别练习题</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>三个分布的关键参数对比表锁定。</li></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="subtitle-area" id="subtitleArea">欢迎学习三大重要分布对比！点击开始讲课启动虚拟人讲师。</div>
+    <div class="control-bar">
+        <div class="control-title">第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">6</span> 页</div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn autoplay" onclick="startAutoPlay()" id="autoPlayBtn">🎬 自动播放</button>
+        <div class="control-hint">💡 录制提示：点击自动播放后立即开始录屏，系统会自动完成全部演示。</div>
+        <div class="control-shortcuts">💡 快捷键：空格/→ 下一页，← 上一页，Enter 播放当前页</div>
+    </div>
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+    <script>
+        const lessonTitle = "三大重要分布对比";
+        const subtitleScript = {
+    "1": "这三种分布在工程与数据分析中最常见。我们要知道它们的特点和应用场景。",
+    "2": "二项分布描述重复实验的成功次数。成功概率 p 越大，分布越偏向高 k。",
+    "3": "泊松分布刻画稀有事件的计数，参数 λ 同时是平均次数与方差。",
+    "4": "正态分布是自然界最常见的分布。多数独立随机变量的总和都会接近正态，这就是中心极限定理。",
+    "5": "选择分布时要看场景。二项适合有限次试验，泊松适合稀有事件计数，正态适合连续型自然变量。参数变化时，这些分布还可以相互近似。",
+    "6": "了解分布特征后，建模时就能快速匹配合适的概率模型。\" ---"
+};
+        const actionMap = {
+    "1": "A_RLH_welcome_O",
+    "2": "A_LH_introduced_O",
+    "3": "A_RH_point_O",
+    "4": "A_RH_emphasize_O",
+    "5": "A_RH_please_O",
+    "6": "A_RLH_welcome_O"
+};
+        const slideTitles = {
+    "1": "课程导入",
+    "2": "二项分布",
+    "3": "泊松分布",
+    "4": "正态分布",
+    "5": "应用对比",
+    "6": "小结"
+};
+        const slideDurations = {
+    "1": 30000,
+    "2": 60000,
+    "3": 55000,
+    "4": 60000,
+    "5": 70000,
+    "6": 45000
+};
+        const totalSlides = 6;
+
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+            currentSlide = index;
+            document.getElementById('currentSlide').textContent = index + 1;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([slides[index]]).catch(err => console.error(err));
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function restart() {
+            showSlide(0);
+            if (!isAutoPlaying) speakContent(1);
+        }
+
+        function updateSubtitle(text) {
+            const area = document.getElementById('subtitleArea');
+            if (area) {
+                area.textContent = text;
+            }
+        }
+
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (!indicator) return;
+            indicator.textContent = message;
+            indicator.className = 'status-indicator';
+            if (type === 'connected') indicator.classList.add('connected');
+            if (type === 'error') indicator.classList.add('error');
+            if (type === 'connecting') indicator.classList.add('connecting');
+            if (type === 'recording') indicator.classList.add('recording');
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+            try {
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                if (avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+                avatarPlatform = new AvatarPlatform({ useInlinePlayer: true });
+                avatarPlatform
+                    .on('connected', () => {
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => speakContent(currentSlide + 1), 500);
+                    })
+                    .on('disconnected', () => {
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '重新连接';
+                        startBtn.disabled = false;
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '连接失败';
+                        startBtn.disabled = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1, move_h: 0, move_v: 0, audio_format: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            const text = subtitleScript[slideNum] || '';
+            updateSubtitle(text ? `【第${slideNum}页/${totalSlides}页】` + text : `第${slideNum}页`);
+            if (!isTeaching || !isConnected || !avatarPlatform || !text) return;
+            try {
+                const action = actionMap[slideNum];
+                if (action) {
+                    await avatarPlatform.writeCmd('action', action);
+                }
+                await avatarPlatform.writeText(text, { nlp: false });
+            } catch (error) {
+                console.error('❌ 语音播报失败:', error);
+            }
+        }
+
+        async function startAutoPlay() {
+            const autoBtn = document.getElementById('autoPlayBtn');
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                autoBtn.textContent = '🎬 自动播放';
+                autoBtn.classList.remove('stop');
+                updateStatus('自动播放已停止');
+                return;
+            }
+            isAutoPlaying = true;
+            autoBtn.textContent = '⏹️ 停止播放';
+            autoBtn.classList.add('stop');
+            updateStatus('🎬 自动播放开始！', 'recording');
+
+            for (let slide = 1; slide <= totalSlides; slide++) {
+                if (!isAutoPlaying) break;
+                showSlide(slide - 1);
+                speakContent(slide);
+                const duration = slideDurations[slide] || 15000;
+                await new Promise(resolve => setTimeout(resolve, duration));
+            }
+
+            isAutoPlaying = false;
+            autoBtn.textContent = '🎬 自动播放';
+            autoBtn.classList.remove('stop');
+            updateStatus('课程播放结束');
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                event.preventDefault();
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousSlide();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                speakContent(currentSlide + 1);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('totalSlides').textContent = totalSlides;
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

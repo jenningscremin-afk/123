@@ -1,0 +1,2576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第三部分：函数基础 - 虚拟人教学系统</title>
+    
+    <!-- 本地资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- MathJax配置 -->
+    <script>
+        if (!window.MathJax) {
+            window.MathJax = {
+                tex: {
+                    inlineMath: [['$', '$'], ['\\(', '\\)']],
+                    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                    processEscapes: true,
+                    processEnvironments: true
+                },
+                svg: {
+                    fontCache: 'global'
+                },
+                startup: {
+                    pageReady: () => {
+                        return MathJax.startup.defaultPageReady().then(() => {
+                            console.log('MathJax is ready');
+                        });
+                    }
+                }
+            };
+        }
+    </script>
+    <script id="MathJax-script" async src="./mathjax-tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --chalkboard-bg: transparent;
+            --chalk-text: #ecf0f1;
+            --visualization-bg: #fdfdfd00;
+            --primary-color: #3498db;
+            --accent-color: #e67e22;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #9b59b6;
+            --text-color: #34495e;
+            --heading-font: 'Noto Serif SC', serif;
+            --handwriting-font: 'Noto Serif SC', serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--heading-font);
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+
+        /* 虚拟人显示区域 */
+        .avatar-container {
+            position: fixed;
+            top: 60%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; 
+            height: 850px;
+            overflow: hidden; 
+            z-index: 50;
+            pointer-events: none; 
+            background: transparent;
+        }
+        
+        .wrapper {
+            width: 100%; 
+            height: 100%;
+            background: transparent; 
+            pointer-events: auto;
+        }
+
+        .slide-container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+        }
+        
+        .slide { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: opacity 0.6s ease-in-out; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 2rem; 
+            background-color: transparent; 
+        }
+        
+        .slide.active { 
+            opacity: 1; 
+            visibility: visible; 
+        }
+        
+        .slide-content { 
+            display: flex; 
+            flex-direction: row; 
+            gap: 2rem; 
+            width: 100%; 
+            max-width: 1400px; 
+            height: 95%; 
+        }
+        
+        .blackboard-text {
+            font-family: 'Noto Serif SC', serif;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 1.5rem;
+            padding-top: 0.5rem;
+        }
+        
+        .blackboard-text h1 { 
+            color: #f1c40f; 
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+            font-size: 5rem;
+        }
+        
+        .blackboard-text h2 { 
+            color: #f1c40f; 
+            border-bottom: 2px solid #f39c12;
+            font-size: 3.2rem;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+        
+        .blackboard-text h3 { 
+            color: #1abc9c;
+            font-size: 2.2rem;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .blackboard-text h4 { 
+            color: #e67e22;
+            font-size: 1.8rem;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .blackboard-text strong, .highlight { 
+            color: #e74c3c; 
+            font-weight: bold;
+        }
+        
+        .blackboard-text .math-formula { 
+            background-color: rgba(0,0,0,0.2); 
+            padding: 15px; 
+            border-radius: 5px; 
+            border-left: 4px solid #f39c12; 
+            font-size: 1.6rem; 
+            color: #1abc9c;
+            text-align: center;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        .formula-rule {
+            font-size: 1.5rem;
+            color: #16a085;
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .animation-pane {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        /* 左侧控制栏 */
+        .control-bar {
+            position: fixed; 
+            left: -220px; 
+            top: 50%;
+            transform: translateY(-50%); 
+            width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            gap: 10px; 
+            z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; 
+            transition: left 0.3s ease;
+        }
+        
+        .control-bar:hover { 
+            left: 0; 
+        }
+        
+        .control-bar::before {
+            content: '▶️'; 
+            position: absolute;
+            top: 50%; 
+            right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; 
+            border-radius: 0 10px 10px 0;
+            font-size: 16px;
+            writing-mode: vertical-lr;
+        }
+        
+        .btn {
+            padding: 12px 20px; 
+            background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease; 
+            width: 100%; 
+            text-align: center;
+        }
+        
+        .btn:hover { 
+            background: linear-gradient(135deg, #555, #777); 
+            transform: translateY(-2px); 
+        }
+        
+        .btn.primary { 
+            background: linear-gradient(135deg, #FF69B4, #FF1493); 
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 字幕区域 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; 
+            left: 50px; 
+            right: 50px;
+            height: auto;
+            min-height: 50px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 8px; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            z-index: 60; 
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            padding: 15px 20px; 
+            line-height: 1.4;
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; 
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; 
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+        
+        .status-indicator.connected { 
+            background: rgba(76, 175, 80, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-indicator.error { 
+            background: rgba(244, 67, 54, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.connecting { 
+            background: rgba(255, 152, 0, 0.8); 
+            display: block;
+        }
+
+        /* 录制模式下隐藏UI元素 */
+        .recording-mode .status-indicator {
+            opacity: 0; 
+            pointer-events: none;
+        }
+        
+        .recording-mode .control-bar {
+            left: -300px; 
+            transition: left 0.5s ease;
+        }
+
+        /* 导航按钮 */
+        .nav-btn { 
+            background-color: rgba(255,255,255,0.1); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            transition: all 0.3s ease; 
+        }
+        
+        .nav-btn:hover { 
+            background-color: rgba(255,255,255,0.2); 
+            transform: translateY(-2px); 
+        }
+        
+        .nav-btn:disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+        }
+
+        .visualization {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 10%, #c3cfe2 100%);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .chalkboard {
+            flex: 0 0 35%;
+            background-color: transparent !important;
+            background: transparent !important;
+            color: var(--chalk-text);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 5px solid #bdc3c7;
+            overflow-y: auto;
+            box-sizing: border-box;
+            margin-left: -50px;
+        }
+
+        .chalkboard p, .chalkboard li {
+            font-size: 1.4rem;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .chalkboard ol {
+            padding-left: 25px;
+        }
+
+        .chalkboard ul {
+            list-style-type: '→ ';
+            padding-left: 20px;
+        }
+
+        .chalkboard h2 {
+            color: #f1c40f; 
+            border-bottom: 2px solid #f39c12;
+            font-size: 3.2rem;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+
+        .chalkboard h3 {
+            color: #1abc9c;
+            font-size: 2.2rem;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .chalkboard h4 {
+            color: #e67e22;
+            font-size: 1.8rem;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    
+    <!-- 虚拟人显示区域 -->
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+
+    <div id="slide-container" class="slide-container flex-grow">
+        
+        <!-- 第1页：标题页 -->
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="chalkboard w-full text-center" style="flex: 1; border: none; justify-content: center; padding-top: 2rem;">
+                    <h1 class="font-bold" style="color: #f1c40f; text-shadow: 0 0 20px rgba(241, 196, 15, 0.5); font-size: 6rem;">函数基础</h1>
+                    <p class="mt-4" style="color: white; font-size: 2.5rem;">从常量变量到反函数的完整体系</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第2页：常量与变量 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>常量与变量</h2>
+                    <p>在问题研究过程中，<span class="highlight">取值始终保持不变</span>的量。</p>
+                    <ul>
+                        <li>例如：圆周率 $\pi \approx 3.14159$，自然常数 $e \approx 2.718$。</li>
+                        <li>在 $y=2x+1$ 中，数字 $2$ 和 $1$ 都是常量。</li>
+                    </ul>
+                    <p>在一定范围内，<span class="highlight">可以取不同数值</span>的量。</p>
+                    <ul>
+                        <li>例如：时间 $t$，温度 $T$，速度 $v$。</li>
+                        <li>在 $y=2x+1$ 中，$x$ 和 $y$ 都是变量。$x$ 是自变量，$y$ 是因变量。</li>
+                    </ul>
+                </div>
+                <div class="visualization" id="vis-variables"></div>
+            </div>
+        </div>
+
+        <!-- 第3页：区间表示法 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>闭区间 [a, b]</h3>
+                    <p>包括端点 $a$ 和 $b$。$a \le x \le b$</p>
+                    <h3>开区间 (a, b)</h3>
+                    <p>不包括端点 $a$ 和 $b$。$a < x < b$</p>
+                    <h3>半开半闭区间</h3>
+                    <p>$[a, b)$：包括 $a$，不包括 $b$。$a \le x < b$</p>
+                    <p>$(a, b]$：不包括 $a$，包括 $b$。$a < x \le b$</p>
+                </div>
+                <div class="visualization" id="vis-intervals"></div>
+            </div>
+        </div>
+
+        <!-- 第4页：函数概念 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>函数</h2>
+                    <p>函数是一种<span class="highlight">特殊的对应关系</span>，就像一个"加工机器"。</p>
+                    <p>对于每一个输入的数值 $x$（来自一个指定的集合 A），这台机器都能产出<span class="highlight">唯一确定</span>的输出数值 $y$（来自集合 B）。</p>
+                    <div class="math-formula">
+                        $y = f(x)$
+                    </div>
+                    <ul>
+                        <li>$x$：自变量 (Input)</li>
+                        <li>$f$：对应法则 (Rule / Machine)</li>
+                        <li>$y$：因变量 (Output)</li>
+                    </ul>
+                </div>
+                <div class="visualization" id="vis-function-machine"></div>
+            </div>
+        </div>
+
+        <!-- 第5页：定义域 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>定义域</h3>
+                    <p>思考：要让函数表达式有意义，$x$ 可以取哪些值？</p>
+                    <ul>
+                        <li>分母不能为零。</li>
+                        <li>偶次根号下的数必须大于等于零。</li>
+                        <li>对数的真数必须大于零。</li>
+                    </ul>
+                    <p>$f(x) = \frac{1}{x-2}$，分母 $x-2 \neq 0$，所以定义域是 $x \neq 2$。</p>
+                    <p>$g(x) = \sqrt{x-3}$，根号下 $x-3 \ge 0$，所以定义域是 $x \ge 3$。</p>
+                </div>
+                <div class="visualization" id="vis-domain"></div>
+            </div>
+        </div>
+
+        <!-- 第6页：值域 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>值域</h3>
+                    <p>当 $x$ 取遍定义域中的所有值时，对应的 $y$ 值组成了值域。</p>
+                    <ul>
+                        <li>观察法：对于简单函数，直接观察图像。</li>
+                        <li>配方法：对于二次函数。</li>
+                        <li>反函数法：求反函数的定义域。</li>
+                    </ul>
+                    <p>$f(x) = x^2$。因为平方永远是非负数，所以值域是 $y \ge 0$。</p>
+                    <p>$g(x) = \sin(x)$。正弦函数的值在 -1 和 1 之间波动，所以值域是 $[-1, 1]$。</p>
+                </div>
+                <div class="visualization" id="vis-range"></div>
+            </div>
+        </div>
+
+        <!-- 第7页：函数性质介绍 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>函数的基本性质</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                        <div>
+                            <h4><span class="highlight">单调性</span></h4>
+                            <p>描述函数图像是"上坡"还是"下坡"</p>
+                        </div>
+                        <div>
+                            <h4><span class="highlight">奇偶性</span></h4>
+                            <p>描述函数图像的对称性</p>
+                        </div>
+                        <div>
+                            <h4><span class="highlight">周期性</span></h4>
+                            <p>描述函数图像的重复性</p>
+                        </div>
+                        <div>
+                            <h4><span class="highlight">有界性</span></h4>
+                            <p>描述函数值的范围限制</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="visualization" id="vis-properties-intro"></div>
+            </div>
+        </div>
+
+        <!-- 第8页：单调递增 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>单调递增</h3>
+                    <p>在一个区间内，如果函数值 $y$ <span class="highlight">随着 $x$ 的增大而增大</span>，那么函数在该区间上是单调递增的。</p>
+                    <p>几何上看，图像是<span class="highlight">从左到右上升的（上坡）</span>。</p>
+                    <div class="math-formula">
+                        若 $x_1 < x_2$，则 $f(x_1) < f(x_2)$
+                    </div>
+                </div>
+                <div class="visualization" id="vis-monotonicity-inc"></div>
+            </div>
+        </div>
+
+        <!-- 第9页：单调递减 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>单调递减</h3>
+                    <p>在一个区间内，如果函数值 $y$ <span class="highlight">随着 $x$ 的增大而减小</span>，那么函数在该区间上是单调递减的。</p>
+                    <p>几何上看，图像是<span class="highlight">从左到右下降的（下坡）</span>。</p>
+                    <div class="math-formula">
+                        若 $x_1 < x_2$，则 $f(x_1) > f(x_2)$
+                    </div>
+                </div>
+                <div class="visualization" id="vis-monotonicity-dec"></div>
+            </div>
+        </div>
+
+        <!-- 第10页：单调区间 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>单调区间</h3>
+                    <p>函数的单调性在不同区间可能呈现不同特征。</p>
+                    <p>分析函数性质时，需要明确划分其单调递增和单调递减的区间范围。</p>
+                    <p>$f(x) = x^2$</p>
+                    <ul>
+                        <li>在区间 $(-\infty, 0]$ 上，函数<span class="highlight">单调递减</span>。</li>
+                        <li>在区间 $[0, +\infty)$ 上，函数<span class="highlight">单调递增</span>。</li>
+                    </ul>
+                    <p>点 $x=0$ 是它的"转折点"。</p>
+                </div>
+                <div class="visualization" id="vis-monotonicity-intervals"></div>
+            </div>
+        </div>
+
+        <!-- 第11页：奇偶性介绍 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>奇偶性</h3>
+                    <p>奇偶性描述的是函数图像关于<span class="highlight">坐标轴或原点</span>的对称性。</p>
+                    <p>判断奇偶性的前提是：函数的<span class="highlight">定义域必须关于原点对称</span>。</p>
+                    <ul>
+                        <li><strong>偶函数</strong>：图像关于 Y 轴对称。</li>
+                        <li><strong>奇函数</strong>：图像关于原点对称。</li>
+                    </ul>
+                </div>
+                <div class="visualization" id="vis-parity-intro"></div>
+            </div>
+        </div>
+
+        <!-- 第12页：偶函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>偶函数</h3>
+                    <p>如果对于定义域内的任意 $x$，都满足：</p>
+                    <div class="math-formula">
+                        $f(-x) = f(x)$
+                    </div>
+                    <p>那么 $f(x)$ 就是一个偶函数。</p>
+                    <p>函数图像关于 <span class="highlight">Y 轴对称</span>。就像镜子一样。</p>
+                    <p>$f(x) = x^2$, $f(x) = |x|$, $f(x) = \cos(x)$</p>
+                </div>
+                <div class="visualization" id="vis-even-function"></div>
+            </div>
+        </div>
+
+        <!-- 第13页：奇函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>奇函数</h3>
+                    <p>如果对于定义域内的任意 $x$，都满足：</p>
+                    <div class="math-formula">
+                        $f(-x) = -f(x)$
+                    </div>
+                    <p>那么 $f(x)$ 就是一个奇函数。</p>
+                    <p>函数图像关于 <span class="highlight">原点 (0,0) 对称</span>。图像旋转180度后会与原图重合。</p>
+                    <p>$f(x) = x$, $f(x) = x^3$, $f(x) = \sin(x)$</p>
+                </div>
+                <div class="visualization" id="vis-odd-function"></div>
+            </div>
+        </div>
+
+        <!-- 第14页：反函数机器 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>反函数</h3>
+                    <p>如果函数 $f$ 把 $x$ 变成了 $y$，那么它的反函数 $f^{-1}$ 就是把 $y$ <span class="highlight">变回</span> $x$ 的操作。</p>
+                    <div class="math-formula">
+                        若 $y = f(x)$，则 $x = f^{-1}(y)$
+                    </div>
+                    <p><span class="highlight">注意</span>：只有单调函数（严格一对一的函数）才有反函数。</p>
+                </div>
+                <div class="visualization" id="vis-inverse-machine"></div>
+            </div>
+        </div>
+
+        <!-- 第15页：反函数图像 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>反函数与原函数</h3>
+                    <ul>
+                        <li>原函数 $f(x)$ 的<span class="highlight">定义域</span>是反函数 $f^{-1}(x)$ 的<span class="highlight">值域</span>。</li>
+                        <li>原函数 $f(x)$ 的<span class="highlight">值域</span>是反函数 $f^{-1}(x)$ 的<span class="highlight">定义域</span>。</li>
+                    </ul>
+                    <p>函数 $y=f(x)$ 和它的反函数 $y=f^{-1}(x)$ 的图像关于直线 <span class="highlight">$y=x$ 对称</span>。</p>
+                </div>
+                <div class="visualization" id="vis-inverse-graph"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 字幕区域 -->
+    <div class="subtitle-area" id="subtitleArea">
+        欢迎学习函数基础！点击开始讲课可启动虚拟人讲师。
+    </div>
+
+    <!-- 左侧控制栏 -->
+    <div class="control-bar">
+        <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">15</span> 页
+        </div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎤 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+        <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 16px; font-weight: bold; line-height: 1.2;">
+            💡 录制提示：<br>
+            点击自动播放后立即开始录屏<br>
+            系统会自动完成全部演示
+        </div>
+        <div style="color: #ccc; margin-top: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            💡 快捷键：空格/→下一页 ←上一页 Enter播放
+        </div>
+    </div>
+
+    <!-- 讯飞官方SDK -->
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        // === 虚拟人相关配置 ===
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+        const totalSlides = 15;
+
+        // === 【修复1】调整自动播放时间，与讲稿内容匹配 ===
+        const getSlideDuration = (slideNum) => {
+            const durations = {
+                1: 20000,   // 第1页：标题页（75字，20秒）
+                2: 31000,   // 第2页：常量与变量（115字，31秒）
+                3: 29000,   // 第3页：区间表示法（105字，29秒）
+                4: 26000,   // 第4页：函数概念（95字，26秒）
+                5: 34000,   // 第5页：定义域（125字，34秒）
+                6: 31000,   // 第6页：值域（115字，31秒）
+                7: 23000,   // 第7页：函数性质介绍（85字，23秒）
+                8: 29000,   // 第8页：单调递增（105字，29秒）
+                9: 29000,   // 第9页：单调递减（105字，29秒）
+                10: 26000,  // 第10页：单调区间（95字，26秒）
+                11: 26000,  // 第11页：奇偶性介绍（95字，26秒）
+                12: 23000,  // 第12页：偶函数（85字，23秒）
+                13: 26000,  // 第13页：奇函数（95字，26秒）
+                14: 20000,  // 第14页：反函数机器（75字，20秒）
+                15: 31000   // 第15页：反函数图像（115字，31秒）
+            };
+            return durations[slideNum] || 30000;
+        };
+
+        // === 【修复2】优化字幕脚本，确保数学术语清晰准确 ===
+        const subtitleScript = {
+            // 第1页：标题页
+            1: `大家好！欢迎来到函数基础的学习。在前面我们学习了指数和对数，现在让我们深入探讨函数这个数学中最重要的概念之一。从常量变量的基本概念，到反函数的深入理解，让我们一起构建完整的函数知识体系。`,
+
+            // 第2页：常量与变量
+            2: `首先我们来理解常量和变量。常量是在问题研究过程中，取值始终保持不变的量，比如圆周率派约等于三点一四一五九，自然常数e约等于二点七一八。而变量则是在一定范围内可以取不同数值的量，比如时间t、温度大T等。在函数表达式y等于二x加一中，二和一是常量，而x和y是变量。右边的动画展示了常量的固定性和变量的变化性。`,
+
+            // 第3页：区间表示法
+            3: `区间是函数定义域和值域的重要表示方法。闭区间用方括号表示，包括端点；开区间用圆括号表示，不包括端点；半开半闭区间则是两者的结合。例如，方括号a逗号b方括号表示包括a和b的所有实数，圆括号a逗号b圆括号表示a和b之间但不包括a和b的所有实数。右边的数轴清晰地展示了不同区间的表示方法。`,
+
+            // 第4页：函数概念
+            4: `函数是一种特殊的对应关系，我们可以把它想象成一个加工机器。对于每一个输入的数值x，这台机器都能产出唯一确定的输出数值y。记作y等于f括号x，其中x是自变量，f是对应法则，y是因变量。右边的动画生动地展示了函数这个机器的工作过程。这种一一对应的关系是函数的核心特征。`,
+
+            // 第5页：定义域
+            5: `定义域是函数可以接受的所有输入值的集合。要确定定义域，我们需要考虑：分母不能为零，偶次根号下的数必须大于等于零，对数的真数必须大于零。比如函数f括号x等于一除以括号x减二，由于分母不能为零，所以定义域是x不等于二的所有实数。右边的动画展示了有效输入如何通过函数机器，而无效输入会被弹开。`,
+
+            // 第6页：值域
+            6: `值域是当x取遍定义域中的所有值时，对应的y值组成的集合。求值域有多种方法：观察法适用于简单函数，配方法适用于二次函数，反函数法则通过求反函数的定义域来确定原函数的值域。例如f括号x等于x平方的值域是y大于等于零，因为平方永远是非负数。右边的动画展示了输入值经过函数变换后的输出分布。`,
+
+            // 第7页：函数性质介绍
+            7: `函数有四个基本性质：单调性描述函数图像是上坡还是下坡；奇偶性描述函数图像的对称性；周期性描述函数图像的重复性；有界性描述函数值的范围限制。这些性质帮助我们深入理解函数的行为特征。右边的四个象限分别展示了这四种性质的典型函数图像。`,
+
+            // 第8页：单调递增
+            8: `单调递增函数在其定义域的某个区间内，随着x的增大，y值也增大。从几何角度看，图像是从左到右上升的，就像爬坡一样。数学表达是：若x一小于x二，则f括号x一小于f括号x二。右边的动画展示了一个单调递增函数，小球沿着函数曲线向上运动，直观地体现了函数值随自变量增大而增大的特性。`,
+
+            // 第9页：单调递减
+            9: `单调递减函数则相反，在其定义域的某个区间内，随着x的增大，y值反而减小。从几何角度看，图像是从左到右下降的，就像下坡一样。数学表达是：若x一小于x二，则f括号x一大于f括号x二。右边的动画展示了一个单调递减函数，小球沿着函数曲线向下运动，体现了函数值随自变量增大而减小的特性。`,
+
+            // 第10页：单调区间
+            10: `许多函数在不同区间具有不同的单调性。以二次函数f括号x等于x平方为例，在负无穷到零的区间上单调递减，在零到正无穷的区间上单调递增，x等于零是转折点。分析函数的单调区间对理解函数的整体性质非常重要。右边的图像清晰地标出了不同的单调区间，帮助我们直观理解这个概念。`,
+
+            // 第11页：奇偶性介绍
+            11: `奇偶性描述函数图像的对称性。判断奇偶性的前提是定义域必须关于原点对称。偶函数的图像关于Y轴对称，就像照镜子一样；奇函数的图像关于原点对称，旋转一百八十度后与原图重合。右边的动画对比展示了偶函数和奇函数的对称特征，帮助大家理解这两种重要的函数性质。`,
+
+            // 第12页：偶函数
+            12: `偶函数满足f括号负x等于f括号x的条件，其图像关于Y轴对称。常见的偶函数有x平方、x的绝对值、余弦函数等。这种对称性在数学和物理中都有重要应用。右边的动画展示了偶函数的对称性验证过程，选择对称点并验证它们的函数值相等，直观地展示了偶函数的特征。`,
+
+            // 第13页：奇函数
+            13: `奇函数满足f括号负x等于负f括号x的条件，其图像关于原点对称。常见的奇函数有x、x立方、正弦函数等。奇函数具有独特的性质：如果奇函数在原点有定义，则f括号零等于零。右边的动画展示了奇函数的原点对称性，通过连接对称点对，我们可以清楚地看到它们关于原点的对称关系。`,
+
+            // 第14页：反函数机器
+            14: `反函数是原函数的逆操作。如果函数f把x变成了y，那么反函数f上标负一就是把y变回x的操作。注意只有单调函数才有反函数，因为需要保证一一对应的关系。右边的动画展示了函数和反函数的互逆关系，通过表格交换展示了这种对应关系的翻转。`,
+
+            // 第15页：反函数图像
+            15: `原函数和反函数有着密切的关系：原函数的定义域是反函数的值域，原函数的值域是反函数的定义域。最重要的是，它们的图像关于直线y等于x对称。右边的动画展示了这种对称关系，点在原函数上的位置，经过关于y等于x的对称变换，就得到了反函数上的对应点。通过今天的学习，相信大家对函数的基础知识有了全面的认识。`
+        };
+
+        // 更新幻灯片信息
+        function updateSlideInfo() {
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('totalSlides').textContent = totalSlides;
+        }
+
+        // 显示指定的幻灯片
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            // 运行对应的可视化
+            runVisualization(index);
+            
+            // 渲染数学公式
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                setTimeout(() => {
+                    window.MathJax.typesetPromise([slides[index]]).catch((err) => console.log(err.message));
+                }, 50);
+            }
+        }
+
+        // 下一页
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 上一页
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 重新开始
+        function restart() {
+            currentSlide = 0;
+            showSlide(0);
+            updateSlideInfo();
+            if (!isAutoPlaying) {
+                speakContent(1);
+            }
+        }
+
+        // 虚拟人相关函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                }
+            }
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        
+                        setTimeout(() => {
+                            speakContent(currentSlide + 1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        updateStatus('连接断开', 'error');
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',                                    
+                    apiKey: '133adcc14bda6e315040f78700b38267',             
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',       
+                    sceneId: '216155854796361728',                       
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                // === 【修复3】优化TTS参数设置 ===
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',    
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',         
+                        speed: 50,  // 恢复正常语速
+                        pitch: 50,
+                        volume: 100,
+                        rdn: 1,     // 数字读法：1-完全数值方式
+                        reg: 0      // 英文发音：0-自动判断
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+            }
+        }
+
+        // === 虚拟人动作配置 ===
+        function getActionsForPage(slideNum) {
+            const actionMap = {
+                // 第1页：标题页，欢迎姿势
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 8 }],
+                
+                // 第2页：常量与变量，强调动作
+                2: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                
+                // 第3-4页：区间和函数概念，引导动作
+                3: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 6 }],
+                4: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+                
+                // 第5-6页：定义域值域，强调动作
+                5: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                6: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],
+                
+                // 第7页：函数性质介绍，引导动作
+                7: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+                
+                // 第8-10页：单调性，强调动作
+                8: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                9: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],
+                10: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                
+                // 第11-13页：奇偶性，引导动作
+                11: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+                12: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                13: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],
+                
+                // 第14-15页：反函数，强调动作
+                14: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+                15: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }]
+            };
+            return actionMap[slideNum] || [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }];
+        }
+
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[slideNum];
+            if (!content) return;
+
+            try {
+                const actions = getActionsForPage(slideNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                await avatarPlatform.writeText(content, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 正在讲解第${slideNum}页`);
+
+                if (isAutoPlaying) {
+                    updateAutoPlaySubtitle(slideNum, content);
+                } else {
+                    updateSubtitle(content);
+                }
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function updateAutoPlaySubtitle(slideNum, text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea && isAutoPlaying) {
+                const prefix = `【第${slideNum}页/${totalSlides}页】`;
+                subtitleArea.textContent = prefix + text;
+            } else if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function getSlideTitle(slideNum) {
+            const titles = {
+                1: "函数基础",
+                2: "常量与变量",
+                3: "区间表示法",
+                4: "函数概念",
+                5: "定义域",
+                6: "值域",
+                7: "函数性质介绍",
+                8: "单调递增",
+                9: "单调递减",
+                10: "单调区间",
+                11: "奇偶性介绍",
+                12: "偶函数",
+                13: "奇函数",
+                14: "反函数机器",
+                15: "反函数图像"
+            };
+            return titles[slideNum] || `第${slideNum}页`;
+        }
+
+        function switchToSlideSilent(slideNum) {
+            if (slideNum < 1 || slideNum > totalSlides) {
+                console.log(`❌ 页面切换失败：页码${slideNum}超出范围(1-${totalSlides})`);
+                return;
+            }
+            showSlide(slideNum - 1);
+            console.log(`✅ 成功切换到第${slideNum}页`);
+        }
+
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'recording');
+                document.body.classList.add('recording-mode');
+
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                for (let slide = 1; slide <= totalSlides; slide++) {
+                    try {
+                        if (!isAutoPlaying) {
+                            console.log('🛑 自动播放被停止');
+                            break;
+                        }
+
+                        console.log(`\n🎬 === 开始播放第${slide}页/${totalSlides}页 ===`);
+                        switchToSlideSilent(slide);
+                        updateStatus(`📖 第${slide}页/${totalSlides}页 - ${getSlideTitle(slide)}`, 'recording');
+
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            try {
+                                await speakContent(slide);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            } catch (error) {
+                                console.error(`❌ 第${slide}页语音播放失败:`, error);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            }
+                        } else {
+                            const slideTime = getSlideDuration(slide);
+                            await new Promise(resolve => setTimeout(resolve, slideTime));
+                        }
+
+                        const waitTime = slide === totalSlides ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${slide}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    handleEnterKey();
+                    break;
+            }
+        });
+
+        function handleEnterKey() {
+            if (!isTeaching) {
+                startTeaching();
+            } else if (isConnected) {
+                speakContent(currentSlide + 1);
+                console.log('🎵 Enter键触发：重新播放当前页内容');
+            } else {
+                console.log('⚠️ 虚拟人未连接，无法播放');
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        // === 【修复4】运行可视化函数，确保页面索引对应正确 ===
+        function runVisualization(slideIndex) {
+            // 清理之前的可视化定时器
+            const containers = [
+                'vis-variables', 'vis-intervals', 'vis-function-machine',
+                'vis-domain', 'vis-range', 'vis-properties-intro',
+                'vis-monotonicity-inc', 'vis-monotonicity-dec', 'vis-monotonicity-intervals',
+                'vis-parity-intro', 'vis-even-function', 'vis-odd-function',
+                'vis-inverse-machine', 'vis-inverse-graph'
+            ];
+            
+            containers.forEach(id => {
+                const container = document.getElementById(id);
+                if (container && container.cleanup) {
+                    container.cleanup();
+                }
+            });
+
+            // 根据页面索引运行对应的可视化
+            switch (slideIndex) {
+                case 1: visualizeVariables('vis-variables'); break;
+                case 2: visualizeIntervals('vis-intervals'); break;
+                case 3: visualizeFunctionMachine('vis-function-machine'); break;
+                case 4: visualizeDomain('vis-domain'); break;
+                case 5: visualizeRange('vis-range'); break;
+                case 6: visualizePropertiesIntro('vis-properties-intro'); break;
+                case 7: visualizeMonotonicityInc('vis-monotonicity-inc'); break;
+                case 8: visualizeMonotonicityDec('vis-monotonicity-dec'); break;
+                case 9: visualizeMonotonicityIntervals('vis-monotonicity-intervals'); break;
+                case 10: visualizeParityIntro('vis-parity-intro'); break;
+                case 11: visualizeEvenFunction('vis-even-function'); break;
+                case 12: visualizeOddFunction('vis-odd-function'); break;
+                case 13: visualizeInverseMachine('vis-inverse-machine'); break;
+                case 14: visualizeInverseGraph('vis-inverse-graph'); break;
+            }
+            
+            console.log(`运行第${slideIndex + 1}页的可视化`);
+        }
+
+        // --- 可视化函数实现（保持原代码） ---
+        
+        // D3.js辅助函数
+        function setupD3(containerId, margins = {top: 40, right: 40, bottom: 40, left: 40}) {
+            const container = d3.select(`#${containerId}`);
+            if (container.empty()) {
+                console.error("Container not found:", containerId);
+                return null;
+            }
+            container.html('');
+            const bounds = container.node().getBoundingClientRect();
+            if (bounds.width === 0 || bounds.height === 0) return null;
+            const svg = container.append('svg')
+                .attr('width', bounds.width)
+                .attr('height', bounds.height);
+            const width = bounds.width - margins.left - margins.right;
+            const height = bounds.height - margins.top - margins.bottom;
+            const g = svg.append('g')
+                .attr('transform', `translate(${margins.left}, ${margins.top})`);
+            return { container, svg, g, width, height };
+        }
+
+        function drawAxes(g, xScale, yScale, width, height) {
+            g.append('g')
+                .attr('transform', `translate(0, ${yScale(0)})`)
+                .call(d3.axisBottom(xScale).ticks(10))
+                .call(g => g.select(".domain").attr("stroke-width", 1.5).attr("stroke", "#333"))
+                .call(g => g.selectAll(".tick line").remove());
+            g.append('g')
+                .attr('transform', `translate(${xScale(0)}, 0)`)
+                .call(d3.axisLeft(yScale).ticks(10))
+                .call(g => g.select(".domain").attr("stroke-width", 1.5).attr("stroke", "#333"))
+                .call(g => g.selectAll(".tick line").remove());
+        }
+
+        // 常量与变量可视化
+        function visualizeVariables(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { g, width, height } = setup;
+
+            g.append("circle").attr("cx", width * 0.25).attr("cy", height * 0.5).attr("r", 10).attr("fill", "var(--danger-color)");
+            g.append("text").attr("x", width * 0.25).attr("y", height * 0.5 + 40).text("常量 π").attr("text-anchor", "middle").attr("font-size", "1.2em");
+
+            g.append("line").attr("x1", width * 0.6).attr("y1", height * 0.5).attr("x2", width * 0.9).attr("y2", height * 0.5).attr("stroke", "#ccc").attr("stroke-width", 2);
+            const variablePoint = g.append("circle").attr("cy", height * 0.5).attr("r", 10).attr("fill", "var(--primary-color)");
+            g.append("text").attr("x", width * 0.75).attr("y", height * 0.5 + 40).text("变量 x").attr("text-anchor", "middle").attr("font-size", "1.2em");
+
+            function movePoint() {
+                variablePoint.attr("cx", width * 0.6)
+                    .transition().duration(2000).attr("cx", width * 0.9)
+                    .transition().duration(2000).attr("cx", width * 0.6)
+                    .on("end", movePoint);
+            }
+            movePoint();
+        }
+
+        // 区间表示法可视化
+        function visualizeIntervals(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { g, width, height } = setup;
+            const axisY = height * 0.2;
+
+            g.append("line").attr("x1", 0).attr("y1", axisY).attr("x2", width).attr("y2", axisY).attr("stroke", "black");
+            g.append("line").attr("x1", width*0.1).attr("y1", axisY).attr("x2", width*0.4).attr("y2", axisY).attr("stroke", "var(--success-color)").attr("stroke-width", 5);
+            g.append("circle").attr("cx", width*0.1).attr("cy", axisY).attr("r", 5).attr("fill", "var(--success-color)");
+            g.append("circle").attr("cx", width*0.4).attr("cy", axisY).attr("r", 5).attr("fill", "var(--success-color)");
+            g.append("text").attr("x", width*0.25).attr("y", axisY + 40).text("闭区间 [a, b]").attr("text-anchor", "middle");
+
+            const axisY2 = height * 0.5;
+            g.append("line").attr("x1", 0).attr("y1", axisY2).attr("x2", width).attr("y2", axisY2).attr("stroke", "black");
+            g.append("line").attr("x1", width*0.1).attr("y1", axisY2).attr("x2", width*0.4).attr("y2", axisY2).attr("stroke", "var(--warning-color)").attr("stroke-width", 5);
+            g.append("circle").attr("cx", width*0.1).attr("cy", axisY2).attr("r", 5).attr("fill", "white").attr("stroke", "var(--warning-color)").attr("stroke-width", 2);
+            g.append("circle").attr("cx", width*0.4).attr("cy", axisY2).attr("r", 5).attr("fill", "white").attr("stroke", "var(--warning-color)").attr("stroke-width", 2);
+            g.append("text").attr("x", width*0.25).attr("y", axisY2 + 40).text("开区间 (a, b)").attr("text-anchor", "middle");
+
+            const axisY3 = height * 0.8;
+            g.append("line").attr("x1", 0).attr("y1", axisY3).attr("x2", width).attr("y2", axisY3).attr("stroke", "black");
+            g.append("line").attr("x1", width*0.1).attr("y1", axisY3).attr("x2", width*0.4).attr("y2", axisY3).attr("stroke", "var(--info-color)").attr("stroke-width", 5);
+            g.append("circle").attr("cx", width*0.1).attr("cy", axisY3).attr("r", 5).attr("fill", "var(--info-color)");
+            g.append("circle").attr("cx", width*0.4).attr("cy", axisY3).attr("r", 5).attr("fill", "white").attr("stroke", "var(--info-color)").attr("stroke-width", 2);
+            g.append("text").attr("x", width*0.25).attr("y", axisY3 + 40).text("半开区间 [a, b)").attr("text-anchor", "middle");
+        }
+
+        // 函数机器可视化
+        function visualizeFunctionMachine(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html("");
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            const svg = container.append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const functions = {
+                'x^2': {
+                    func: x => x * x,
+                    domain: [-5, 5],
+                    range: [0, 25],
+                    display: 'x^2'
+                },
+                '\\sqrt{x}': {
+                    func: x => Math.sqrt(x),
+                    domain: [0, 25],
+                    range: [0, 5],
+                    display: '\\sqrt{x}'
+                },
+                '\\sin(x)': {
+                    func: x => Math.sin(x) * 5,
+                    domain: [-Math.PI * 2, Math.PI * 2],
+                    range: [-5, 5],
+                    display: '\\sin(x)'
+                },
+                '\\frac{1}{x}': {
+                    func: x => 10 / x,
+                    domain: [-10, 10],
+                    range: [-Infinity, Infinity],
+                    display: '\\frac{1}{x}'
+                }
+            };
+
+            let currentFunction = 'x^2';
+            let x, y;
+            let line = d3.line().x(d => x(d.x)).y(d => y(d.y));
+
+            const xAxis = svg.append("g").attr("class", "x-axis").attr("transform", `translate(0,${innerHeight})`);
+            const yAxis = svg.append("g").attr("class", "y-axis");
+            const path = svg.append("path").attr("fill", "none").attr("stroke", "#e74c3c").attr("stroke-width", 3);
+
+            function draw(name) {
+                const F = functions[name];
+                const data = [];
+                for (let i = F.domain[0]; i <= F.domain[1]; i += 0.1) {
+                    if (name === '\\frac{1}{x}' && Math.abs(i) < 0.1) continue;
+                    data.push({ x: i, y: F.func(i) });
+                }
+
+                const yDomain = name === '\\frac{1}{x}' ? [-10, 10] : d3.extent(data, d => d.y);
+
+                x = d3.scaleLinear().domain(F.domain).range([0, innerWidth]);
+                y = d3.scaleLinear().domain(yDomain).range([innerHeight, 0]);
+
+                xAxis.call(d3.axisBottom(x));
+                yAxis.call(d3.axisLeft(y));
+
+                path.datum(data).transition().duration(500).attr("d", line);
+            }
+
+            // Auto-play functionality
+            let autoPlayIndex = 0;
+            const functionNames = Object.keys(functions);
+
+            function autoPlay() {
+                const name = functionNames[autoPlayIndex];
+                currentFunction = name;
+                draw(name);
+                autoPlayIndex = (autoPlayIndex + 1) % functionNames.length;
+            }
+
+            draw('x^2');
+            const autoPlayInterval = setInterval(autoPlay, 3000);
+            container.node().cleanup = () => clearInterval(autoPlayInterval);
+        }
+
+        // 定义域可视化
+        function visualizeDomain(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html("");
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const svg = container.append("svg").attr("width", width).attr("height", height);
+
+            const machine = { x: width / 2, y: height / 2, width: 150, height: 100 };
+
+            svg.append("rect")
+                .attr("x", machine.x - machine.width / 2)
+                .attr("y", machine.y - machine.height / 2)
+                .attr("width", machine.width)
+                .attr("height", machine.height)
+                .attr("rx", 10)
+                .attr("fill", "#4a90e2")
+                .attr("stroke", "#357ABD")
+                .attr("stroke-width", 3);
+
+            svg.append("text").text("f(x) = √(x-2)")
+                .attr("x", machine.x)
+                .attr("y", machine.y)
+                .attr("text-anchor", "middle")
+                .attr("dy", ".3em")
+                .attr("fill", "white")
+                .style("font-size", "18px")
+                .style("font-weight", "bold");
+
+            svg.append("path")
+                .attr("d", `M ${machine.x - 50} ${machine.y - machine.height/2 - 50} L ${machine.x - 25} ${machine.y - machine.height/2} H ${machine.x + 25} L ${machine.x + 50} ${machine.y - machine.height/2 - 50} Z`)
+                .attr("fill", "#a2cffe");
+
+            const numLineY = height - 50;
+            const scaleX = d3.scaleLinear().domain([-2, 10]).range([50, width - 50]);
+            svg.append("line")
+                .attr("x1", scaleX.range()[0])
+                .attr("y1", numLineY)
+                .attr("x2", scaleX.range()[1])
+                .attr("y2", numLineY)
+                .attr("stroke", "#333");
+
+            scaleX.ticks(13).forEach(tick => {
+                svg.append("line")
+                    .attr("x1", scaleX(tick)).attr("y1", numLineY - 5)
+                    .attr("x2", scaleX(tick)).attr("y2", numLineY + 5)
+                    .attr("stroke", "#333");
+                svg.append("text").text(tick)
+                    .attr("x", scaleX(tick)).attr("y", numLineY + 20)
+                    .attr("text-anchor", "middle").style("font-size", "12px");
+            });
+
+            svg.append("rect")
+                .attr("x", scaleX(2))
+                .attr("y", numLineY - 10)
+                .attr("width", scaleX(20) - scaleX(2))
+                .attr("height", 20)
+                .attr("fill", "#50e3c2")
+                .attr("opacity", 0.5);
+
+            svg.append("text").text("定义域: x ≥ 2")
+                .attr("x", scaleX(6))
+                .attr("y", numLineY - 25)
+                .attr("text-anchor", "middle")
+                .style("font-weight", "bold")
+                .style("fill", "#2c3e50");
+
+            function generateParticle() {
+                const value = Math.floor(Math.random() * 12) - 1;
+                const isValid = value >= 2;
+                const particle = svg.append("g")
+                    .attr("transform", `translate(${width * 0.2}, ${height * 0.2 + (Math.random() - 0.5) * 50})`);
+
+                particle.append("circle").attr("r", 15).attr("fill", isValid ? "#50e3c2" : "#e74c3c");
+                particle.append("text").text(value)
+                    .attr("text-anchor", "middle")
+                    .attr("dy", ".3em")
+                    .attr("fill", "white")
+                    .style("font-size", "14px");
+
+                let transition = particle.transition()
+                    .duration(2000)
+                    .ease(d3.easeQuadIn)
+                    .attr("transform", `translate(${machine.x}, ${machine.y - machine.height/2 - 20})`);
+
+                if (isValid) {
+                    transition.transition()
+                        .duration(1000)
+                        .attr("transform", `translate(${machine.x}, ${machine.y + machine.height/2 + 20})`)
+                        .style("opacity", 0)
+                        .remove();
+                } else {
+                    transition.transition()
+                        .duration(1000)
+                        .ease(d3.easeBounceOut)
+                        .attr("transform", `translate(${machine.x + (Math.random() - 0.5) * 200}, ${machine.y - machine.height - 100})`)
+                        .style("opacity", 0)
+                        .remove();
+                }
+            }
+
+            const interval = setInterval(generateParticle, 1000);
+            container.node().cleanup = () => clearInterval(interval);
+        }
+
+        // 值域可视化
+        function visualizeRange(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html("");
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const svg = container.append("svg").attr("width", width).attr("height", height);
+
+            const machine = { x: width / 2, y: height / 2, width: 150, height: 100 };
+
+            svg.append("rect")
+                .attr("x", machine.x - machine.width / 2)
+                .attr("y", machine.y - machine.height / 2)
+                .attr("width", machine.width)
+                .attr("height", machine.height)
+                .attr("rx", 10)
+                .attr("fill", "#4a90e2");
+
+            svg.append("text").text("f(x) = x²")
+                .attr("x", machine.x)
+                .attr("y", machine.y)
+                .attr("text-anchor", "middle")
+                .attr("dy", ".3em")
+                .attr("fill", "white")
+                .style("font-size", "20px");
+
+            const numLineX = width - 100;
+            const scaleY = d3.scaleLinear().domain([-2, 10]).range([height - 50, 50]);
+            svg.append("line")
+                .attr("x1", numLineX).attr("y1", scaleY.range()[0])
+                .attr("x2", numLineX).attr("y2", scaleY.range()[1])
+                .attr("stroke", "#333");
+
+            scaleY.ticks(13).forEach(tick => {
+                svg.append("line")
+                    .attr("x1", numLineX - 5).attr("y1", scaleY(tick))
+                    .attr("x2", numLineX + 5).attr("y2", scaleY(tick))
+                    .attr("stroke", "#333");
+                svg.append("text").text(tick)
+                    .attr("x", numLineX + 10).attr("y", scaleY(tick) + 4)
+                    .style("font-size", "12px");
+            });
+
+            const rangeHighlight = svg.append("rect")
+                .attr("x", numLineX - 10)
+                .attr("y", scaleY(10))
+                .attr("width", 20)
+                .attr("height", scaleY(0) - scaleY(10))
+                .attr("fill", "#f5a623")
+                .attr("opacity", 0.5);
+
+            svg.append("text").text("值域: y ≥ 0")
+                .attr("x", numLineX)
+                .attr("y", scaleY(10) - 10)
+                .attr("text-anchor", "middle")
+                .style("font-weight", "bold")
+                .style("fill", "#2c3e50");
+
+            function generateParticle() {
+                const value = (Math.random() * 6) - 3;
+                const outputValue = value * value;
+
+                const particle = svg.append("g")
+                    .attr("transform", `translate(${50}, ${machine.y + (Math.random() - 0.5) * 100})`);
+
+                particle.append("circle").attr("r", 15).attr("fill", "#50e3c2");
+                particle.append("text").text(value.toFixed(1))
+                    .attr("text-anchor", "middle").attr("dy", ".3em").attr("fill", "white");
+
+                particle.transition()
+                    .duration(1500)
+                    .ease(d3.easeCubicIn)
+                    .attr("transform", `translate(${machine.x - machine.width/2 - 20}, ${machine.y})`)
+                    .transition()
+                    .duration(500)
+                    .style("opacity", 0)
+                    .remove()
+                    .on("end", () => {
+                        const outputParticle = svg.append("g")
+                            .attr("transform", `translate(${machine.x + machine.width/2 + 20}, ${machine.y})`);
+                        outputParticle.append("circle").attr("r", 15).attr("fill", "#f5a623");
+                        outputParticle.append("text").text(outputValue.toFixed(1))
+                            .attr("text-anchor", "middle").attr("dy", ".3em").attr("fill", "white");
+
+                        outputParticle.transition()
+                            .duration(1500)
+                            .ease(d3.easeCubicOut)
+                            .attr("transform", `translate(${numLineX}, ${scaleY(outputValue)})`)
+                            .transition()
+                            .duration(500)
+                            .attr("r", 5)
+                            .style("opacity", 0.7);
+                    });
+            }
+
+            const interval = setInterval(generateParticle, 1200);
+            container.node().cleanup = () => clearInterval(interval);
+        }
+
+        // 函数性质介绍可视化
+        function visualizePropertiesIntro(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { g, width, height } = setup;
+
+            const quadrantWidth = width / 2;
+            const quadrantHeight = height / 2;
+
+            // 1. 单调性 (左上)
+            const mono = g.append("g").attr("transform", `translate(0, 0)`);
+            mono.append("rect").attr("width", quadrantWidth - 10).attr("height", quadrantHeight - 10)
+                .attr("fill", "none").attr("stroke", "#3498db").attr("stroke-width", 2).attr("rx", 5);
+            mono.append("text").attr("x", quadrantWidth/2).attr("y", 25).text("单调性").attr("text-anchor", "middle")
+                .attr("font-size", "16px").attr("font-weight", "bold").attr("fill", "#3498db");
+
+            const monoData = d3.range(0, quadrantWidth - 20, 5).map(x => ({
+                x: x + 10,
+                y: quadrantHeight - 40 - (x / (quadrantWidth - 20)) * (quadrantHeight - 80)
+            }));
+            const monoLine = d3.line().x(d => d.x).y(d => d.y).curve(d3.curveCardinal);
+            mono.append("path").datum(monoData).attr("d", monoLine)
+                .attr("fill", "none").attr("stroke", "#3498db").attr("stroke-width", 3);
+            mono.append("text").attr("x", quadrantWidth/2).attr("y", quadrantHeight - 15)
+                .text("递增函数").attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", "#3498db");
+
+            // 2. 奇偶性 (右上)
+            const parity = g.append("g").attr("transform", `translate(${quadrantWidth + 10}, 0)`);
+            parity.append("rect").attr("width", quadrantWidth - 10).attr("height", quadrantHeight - 10)
+                .attr("fill", "none").attr("stroke", "#e74c3c").attr("stroke-width", 2).attr("rx", 5);
+            parity.append("text").attr("x", quadrantWidth/2).attr("y", 25).text("奇偶性").attr("text-anchor", "middle")
+                .attr("font-size", "16px").attr("font-weight", "bold").attr("fill", "#e74c3c");
+
+            const parityData = d3.range(10, quadrantWidth - 10, 3).map(x => {
+                const centerX = quadrantWidth / 2;
+                const normalizedX = (x - centerX) / (quadrantWidth / 4);
+                return {
+                    x: x,
+                    y: quadrantHeight - 40 - Math.pow(normalizedX, 2) * 30
+                };
+            });
+            const parityLine = d3.line().x(d => d.x).y(d => d.y).curve(d3.curveCardinal);
+            parity.append("path").datum(parityData).attr("d", parityLine)
+                .attr("fill", "none").attr("stroke", "#e74c3c").attr("stroke-width", 3);
+            parity.append("text").attr("x", quadrantWidth/2).attr("y", quadrantHeight - 15)
+                .text("偶函数 f(-x)=f(x)").attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", "#e74c3c");
+
+            // 3. 周期性 (左下)
+            const period = g.append("g").attr("transform", `translate(0, ${quadrantHeight + 10})`);
+            period.append("rect").attr("width", quadrantWidth - 10).attr("height", quadrantHeight - 10)
+                .attr("fill", "none").attr("stroke", "#27ae60").attr("stroke-width", 2).attr("rx", 5);
+            period.append("text").attr("x", quadrantWidth/2).attr("y", 25).text("周期性").attr("text-anchor", "middle")
+                .attr("font-size", "16px").attr("font-weight", "bold").attr("fill", "#27ae60");
+
+            const periodData = d3.range(10, quadrantWidth - 10, 2).map(x => ({
+                x: x,
+                y: quadrantHeight/2 - Math.sin((x - 10) / (quadrantWidth - 20) * 4 * Math.PI) * 30
+            }));
+            const periodLine = d3.line().x(d => d.x).y(d => d.y).curve(d3.curveCardinal);
+            period.append("path").datum(periodData).attr("d", periodLine)
+                .attr("fill", "none").attr("stroke", "#27ae60").attr("stroke-width", 3);
+            period.append("text").attr("x", quadrantWidth/2).attr("y", quadrantHeight - 15)
+                .text("sin(x) 周期函数").attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", "#27ae60");
+
+            // 4. 有界性 (右下)
+            const bounded = g.append("g").attr("transform", `translate(${quadrantWidth + 10}, ${quadrantHeight + 10})`);
+            bounded.append("rect").attr("width", quadrantWidth - 10).attr("height", quadrantHeight - 10)
+                .attr("fill", "none").attr("stroke", "#f39c12").attr("stroke-width", 2).attr("rx", 5);
+            bounded.append("text").attr("x", quadrantWidth/2).attr("y", 25).text("有界性").attr("text-anchor", "middle")
+                .attr("font-size", "16px").attr("font-weight", "bold").attr("fill", "#f39c12");
+
+            const boundedData = d3.range(10, quadrantWidth - 10, 3).map(x => {
+                const normalizedX = (x - quadrantWidth/2) / (quadrantWidth/4) * 3;
+                return {
+                    x: x,
+                    y: quadrantHeight/2 - Math.atan(normalizedX) * 40
+                };
+            });
+            const boundedLine = d3.line().x(d => d.x).y(d => d.y).curve(d3.curveCardinal);
+            bounded.append("path").datum(boundedData).attr("d", boundedLine)
+                .attr("fill", "none").attr("stroke", "#f39c12").attr("stroke-width", 3);
+
+            bounded.append("line").attr("x1", 10).attr("y1", quadrantHeight/2 - 50).attr("x2", quadrantWidth - 10).attr("y2", quadrantHeight/2 - 50)
+                .attr("stroke", "#f39c12").attr("stroke-dasharray", "3,3").attr("stroke-width", 2);
+            bounded.append("line").attr("x1", 10).attr("y1", quadrantHeight/2 + 50).attr("x2", quadrantWidth - 10).attr("y2", quadrantHeight/2 + 50)
+                .attr("stroke", "#f39c12").attr("stroke-dasharray", "3,3").attr("stroke-width", 2);
+            bounded.append("text").attr("x", quadrantWidth/2).attr("y", quadrantHeight - 15)
+                .text("有界函数").attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", "#f39c12");
+
+            setTimeout(() => {
+                [mono, parity, period, bounded].forEach((group, i) => {
+                    group.style("opacity", 0)
+                        .transition()
+                        .delay(i * 500)
+                        .duration(800)
+                        .style("opacity", 1);
+                });
+            }, 500);
+        }
+
+        // 单调递增可视化
+        function visualizeMonotonicityInc(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { container, g, width, height } = setup;
+
+            const xScale = d3.scaleLinear().domain([-5, 5]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-5, 5]).range([height, 0]);
+            drawAxes(g, xScale, yScale, width, height);
+
+            const data = d3.range(-5, 5.1, 0.1).map(x => ({x: x, y: 0.5 * x + 1}));
+            const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y));
+
+            const path = g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "var(--success-color)")
+                .attr("stroke-width", 3)
+                .attr("d", line);
+
+            const totalLength = path.node().getTotalLength();
+            path.attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(2000)
+                .attr("stroke-dashoffset", 0);
+
+            const circle = g.append("circle")
+                .attr("r", 0)
+                .attr("fill", "var(--success-color)")
+                .style("filter", "drop-shadow(0 0 10px rgba(46, 204, 113, 0.8))")
+                .attr("cx", xScale(-5))
+                .attr("cy", yScale(-1.5))
+                .transition()
+                .delay(2500)
+                .duration(500)
+                .attr("r", 8);
+
+            const traceGroup = g.append("g");
+
+            let animationFrame;
+            function continuousAnimation() {
+                let t = 0;
+                let lastTraceTime = 0;
+
+                function animate() {
+                    t += 0.003;
+                    if (t > 1) t = 0;
+
+                    const currentData = data[Math.floor(t * data.length)];
+                    if (!currentData) return;
+
+                    const currentX = currentData.x;
+                    const currentY = currentData.y;
+
+                    circle.attr("cx", xScale(currentX))
+                        .attr("cy", yScale(currentY));
+
+                    if (t - lastTraceTime > 0.02) {
+                        lastTraceTime = t;
+                        traceGroup.append("circle")
+                            .attr("cx", xScale(currentX))
+                            .attr("cy", yScale(currentY))
+                            .attr("r", 3)
+                            .attr("fill", "var(--success-color)")
+                            .attr("opacity", 0.6)
+                            .transition()
+                            .duration(3000)
+                            .attr("opacity", 0)
+                            .attr("r", 1)
+                            .remove();
+                    }
+
+                    animationFrame = requestAnimationFrame(animate);
+                }
+
+                setTimeout(() => animate(), 3000);
+            }
+
+            continuousAnimation();
+            container.node().cleanup = () => {
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+            };
+        }
+
+        // 单调递减可视化
+        function visualizeMonotonicityDec(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { container, g, width, height } = setup;
+
+            const xScale = d3.scaleLinear().domain([-5, 5]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-5, 5]).range([height, 0]);
+            drawAxes(g, xScale, yScale, width, height);
+
+            const data = d3.range(-5, 5.1, 0.1).map(x => ({x: x, y: -0.5 * x - 1}));
+            const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y));
+
+            const path = g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "var(--danger-color)")
+                .attr("stroke-width", 3)
+                .attr("d", line);
+
+            const totalLength = path.node().getTotalLength();
+            path.attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(2000)
+                .attr("stroke-dashoffset", 0);
+
+            const circle = g.append("circle")
+                .attr("r", 0)
+                .attr("fill", "var(--danger-color)")
+                .style("filter", "drop-shadow(0 0 10px rgba(231, 76, 60, 0.8))")
+                .attr("cx", xScale(-5))
+                .attr("cy", yScale(1.5))
+                .transition()
+                .delay(2500)
+                .duration(500)
+                .attr("r", 8);
+
+            const traceGroup = g.append("g");
+
+            let animationFrame;
+            function continuousAnimation() {
+                let t = 0;
+                let lastTraceTime = 0;
+
+                function animate() {
+                    t += 0.003;
+                    if (t > 1) t = 0;
+
+                    const currentData = data[Math.floor(t * data.length)];
+                    if (!currentData) return;
+
+                    const currentX = currentData.x;
+                    const currentY = currentData.y;
+
+                    circle.attr("cx", xScale(currentX))
+                        .attr("cy", yScale(currentY));
+
+                    if (t - lastTraceTime > 0.02) {
+                        lastTraceTime = t;
+                        traceGroup.append("circle")
+                            .attr("cx", xScale(currentX))
+                            .attr("cy", yScale(currentY))
+                            .attr("r", 3)
+                            .attr("fill", "var(--danger-color)")
+                            .attr("opacity", 0.6)
+                            .transition()
+                            .duration(3000)
+                            .attr("opacity", 0)
+                            .attr("r", 1)
+                            .remove();
+                    }
+
+                    animationFrame = requestAnimationFrame(animate);
+                }
+
+                setTimeout(() => animate(), 3000);
+            }
+
+            continuousAnimation();
+            container.node().cleanup = () => {
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+            };
+        }
+
+        // 单调区间可视化
+        function visualizeMonotonicityIntervals(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { svg, g, width, height } = setup;
+
+            const margins = {top: 40, right: 40, bottom: 40, left: 40};
+            const xScale = d3.scaleLinear().domain([-3, 3]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-1, 9]).range([height, 0]);
+
+            drawAxes(g, xScale, yScale, width, height);
+
+            g.insert("rect", ":first-child").attr("x", 0).attr("y", 0).attr("width", width/2).attr("height", height).attr("fill", "var(--danger-color)").attr("opacity", 0.2);
+            g.insert("rect", ":first-child").attr("x", width/2).attr("y", 0).attr("width", width/2).attr("height", height).attr("fill", "var(--success-color)").attr("opacity", 0.2);
+
+            const data = d3.range(-3, 3.1, 0.1).map(x => ({x: x, y: x*x}));
+            const line = d3.line()
+                .x(d => xScale(d.x))
+                .y(d => yScale(d.y))
+                .curve(d3.curveCardinal);
+
+            g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "var(--primary-color)")
+                .attr("stroke-width", 3)
+                .attr("d", line);
+
+            g.append("text").attr("x", xScale(-1.5)).attr("y", yScale(8)).text("递减区间").attr("text-anchor", "middle");
+            g.append("text").attr("x", xScale(1.5)).attr("y", yScale(8)).text("递增区间").attr("text-anchor", "middle");
+        }
+
+        // 奇偶性介绍可视化
+        function visualizeParityIntro(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { g, width, height } = setup;
+
+            const leftWidth = width / 2 - 10;
+            const rightWidth = width / 2 - 10;
+
+            // 左侧：偶函数演示
+            const evenGroup = g.append("g").attr("transform", "translate(0, 0)");
+
+            evenGroup.append("text")
+                .attr("x", leftWidth / 2)
+                .attr("y", 30)
+                .style("text-align", "center")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("color", "#e74c3c")
+                .text("偶函数：f(-x) = f(x)");
+
+            const evenXScale = d3.scaleLinear().domain([-4, 4]).range([20, leftWidth - 20]);
+            const evenYScale = d3.scaleLinear().domain([-2, 16]).range([height - 40, 40]);
+
+            evenGroup.append("line")
+                .attr("x1", evenXScale(-4)).attr("y1", evenYScale(0))
+                .attr("x2", evenXScale(4)).attr("y2", evenYScale(0))
+                .attr("stroke", "#ccc").attr("stroke-width", 1);
+            evenGroup.append("line")
+                .attr("x1", evenXScale(0)).attr("y1", evenYScale(-2))
+                .attr("x2", evenXScale(0)).attr("y2", evenYScale(16))
+                .attr("stroke", "#ccc").attr("stroke-width", 1);
+
+            const evenData = d3.range(-4, 4.1, 0.1).map(x => ({x: x, y: x * x}));
+            const evenLine = d3.line().x(d => evenXScale(d.x)).y(d => evenYScale(d.y));
+
+            evenGroup.append("path").datum(evenData)
+                .attr("fill", "none").attr("stroke", "#ccc").attr("stroke-width", 2)
+                .attr("d", evenLine);
+
+            evenGroup.append("path").datum(evenData.filter(d => d.x <= 0))
+                .attr("fill", "none").attr("stroke", "#3498db").attr("stroke-width", 3)
+                .attr("d", evenLine);
+
+            const evenRightPath = evenGroup.append("path").datum(evenData.filter(d => d.x >= 0))
+                .attr("fill", "none").attr("stroke", "#e67e22").attr("stroke-width", 3)
+                .attr("d", evenLine);
+
+            // 右侧：奇函数演示
+            const oddGroup = g.append("g").attr("transform", `translate(${width / 2 + 10}, 0)`);
+
+            oddGroup.append("text")
+                .attr("x", rightWidth / 2)
+                .attr("y", 30)
+                .style("text-align", "center")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("color", "#27ae60")
+                .text("奇函数：f(-x) = -f(x)");
+
+            const oddXScale = d3.scaleLinear().domain([-4, 4]).range([20, rightWidth - 20]);
+            const oddYScale = d3.scaleLinear().domain([-10, 10]).range([height - 40, 40]);
+
+            oddGroup.append("line")
+                .attr("x1", oddXScale(-4)).attr("y1", oddYScale(0))
+                .attr("x2", oddXScale(4)).attr("y2", oddYScale(0))
+                .attr("stroke", "#ccc").attr("stroke-width", 1);
+            oddGroup.append("line")
+                .attr("x1", oddXScale(0)).attr("y1", oddYScale(-10))
+                .attr("x2", oddXScale(0)).attr("y2", oddYScale(10))
+                .attr("stroke", "#ccc").attr("stroke-width", 1);
+
+            const oddData = d3.range(-4, 4.1, 0.1).map(x => ({x: x, y: (x * x * x) / 3}));
+            const oddLine = d3.line().x(d => oddXScale(d.x)).y(d => oddYScale(d.y));
+
+            oddGroup.append("path").datum(oddData)
+                .attr("fill", "none").attr("stroke", "#ccc").attr("stroke-width", 2)
+                .attr("d", oddLine);
+
+            oddGroup.append("path").datum(oddData.filter(d => d.x <= 0))
+                .attr("fill", "none").attr("stroke", "#27ae60").attr("stroke-width", 3)
+                .attr("d", oddLine);
+
+            const oddRightPath = oddGroup.append("path").datum(oddData.filter(d => d.x >= 0))
+                .attr("fill", "none").attr("stroke", "#9b59b6").attr("stroke-width", 3)
+                .attr("d", oddLine);
+
+            function playEvenAnimation() {
+                const originX = evenXScale(0);
+                evenRightPath.style('transform-origin', `${originX}px center`);
+
+                evenRightPath.transition().delay(1000).duration(1500).ease(d3.easeCubicInOut)
+                    .style("transform", "scaleX(-1)")
+                    .attr("stroke", "#3498db")
+                    .transition().delay(1000).duration(1500).ease(d3.easeCubicInOut)
+                    .style("transform", "scaleX(1)")
+                    .attr("stroke", "#e67e22")
+                    .on("end", playEvenAnimation);
+            }
+
+            function playOddAnimation() {
+                const originX = oddXScale(0);
+                const originY = oddYScale(0);
+                oddRightPath.style('transform-origin', `${originX}px ${originY}px`);
+
+                oddRightPath.transition().delay(1000).duration(1500).ease(d3.easeCubicInOut)
+                    .style("transform", "scaleX(-1)")
+                    .transition().duration(1500).ease(d3.easeCubicInOut)
+                    .style("transform", "scale(-1, -1)")
+                    .attr("stroke", "#27ae60")
+                    .transition().delay(1000).duration(1500).ease(d3.easeCubicInOut)
+                    .style("transform", "scale(1, 1)")
+                    .attr("stroke", "#9b59b6")
+                    .on("end", playOddAnimation);
+            }
+
+            setTimeout(() => {
+                playEvenAnimation();
+                playOddAnimation();
+            }, 500);
+        }
+
+        // 偶函数可视化
+        function visualizeEvenFunction(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { container, g, width, height } = setup;
+
+            const xScale = d3.scaleLinear().domain([-4, 4]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-2, 16]).range([height, 0]);
+            drawAxes(g, xScale, yScale, width, height);
+
+            const data = d3.range(-4, 4.1, 0.1).map(x => ({x: x, y: x * x}));
+            const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y));
+
+            const curve = g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "var(--info-color)")
+                .attr("stroke-width", 3)
+                .attr("d", line);
+
+            const yAxisLine = g.append("line")
+                .attr("x1", xScale(0))
+                .attr("y1", 0)
+                .attr("x2", xScale(0))
+                .attr("y2", height)
+                .attr("stroke", "var(--warning-color)")
+                .attr("stroke-width", 3)
+                .attr("opacity", 0);
+
+            function autoDemo() {
+                setTimeout(() => {
+                    const pairs = [
+                        {x: 2, y: 4, delay: 0},
+                        {x: -2, y: 4, delay: 500},
+                        {x: 3, y: 9, delay: 1500},
+                        {x: -3, y: 9, delay: 2000}
+                    ];
+
+                    pairs.forEach(point => {
+                        const circle = g.append("circle")
+                            .attr("cx", xScale(point.x))
+                            .attr("cy", yScale(point.y))
+                            .attr("r", 0)
+                            .attr("fill", point.x > 0 ? "#e74c3c" : "#3498db")
+                            .transition()
+                            .delay(1000 + point.delay)
+                            .duration(300)
+                            .attr("r", 6);
+
+                        g.append("text")
+                            .attr("x", xScale(point.x) + (point.x > 0 ? 10 : -35))
+                            .attr("y", yScale(point.y) - 10)
+                            .text(`(${point.x}, ${point.y})`)
+                            .attr("fill", point.x > 0 ? "#e74c3c" : "#3498db")
+                            .style("font-size", "12px")
+                            .style("opacity", 0)
+                            .transition()
+                            .delay(1000 + point.delay)
+                            .duration(500)
+                            .style("opacity", 1);
+                    });
+                }, 1000);
+
+                setTimeout(() => {
+                    yAxisLine.transition()
+                        .duration(1000)
+                        .attr("opacity", 0.5)
+                        .transition()
+                        .duration(500)
+                        .attr("opacity", 0.2);
+
+                    const lines = [
+                        {x1: 2, x2: -2, y: 4},
+                        {x1: 3, x2: -3, y: 9}
+                    ];
+
+                    lines.forEach((line, i) => {
+                        g.append("line")
+                            .attr("x1", xScale(line.x1))
+                            .attr("y1", yScale(line.y))
+                            .attr("x2", xScale(line.x1))
+                            .attr("y2", yScale(line.y))
+                            .attr("stroke", "#95a5a6")
+                            .attr("stroke-width", 2)
+                            .attr("stroke-dasharray", "5,5")
+                            .transition()
+                            .delay(i * 500)
+                            .duration(1000)
+                            .attr("x2", xScale(line.x2));
+                    });
+
+                    g.append("text")
+                        .attr("x", xScale(0))
+                        .attr("y", yScale(6))
+                        .text("f(-x) = f(x)")
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "black")
+                        .style("font-size", "20px")
+                        .style("font-weight", "bold")
+                        .style("opacity", 0)
+                        .transition()
+                        .delay(1500)
+                        .duration(1000)
+                        .style("opacity", 1)
+                        .transition()
+                        .duration(1000)
+                        .style("opacity", 0.5);
+                }, 4500);
+
+                setTimeout(() => {
+                    g.selectAll("*").transition().duration(1000).style("opacity", 0)
+                        .on("end", function() {
+                            d3.select(this).remove();
+                        });
+                    setTimeout(() => autoDemo(), 1500);
+                }, 10000);
+            }
+
+            autoDemo();
+        }
+
+        // 奇函数可视化
+        function visualizeOddFunction(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) return;
+            const { container, g, width, height } = setup;
+
+            const xScale = d3.scaleLinear().domain([-4, 4]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-10, 10]).range([height, 0]);
+            drawAxes(g, xScale, yScale, width, height);
+
+            const data = d3.range(-4, 4.1, 0.1).map(x => ({x: x, y: (x * x * x) / 3}));
+            const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y));
+
+            const curve = g.append("path")
+                .datum(data)
+                .attr("fill", "none")
+                .attr("stroke", "var(--accent-color)")
+                .attr("stroke-width", 3)
+                .attr("d", line);
+
+            const origin = g.append("circle")
+                .attr("cx", xScale(0))
+                .attr("cy", yScale(0))
+                .attr("r", 0)
+                .attr("fill", "var(--warning-color)");
+
+            function autoDemo() {
+                setTimeout(() => {
+                    origin.transition()
+                        .duration(500)
+                        .attr("r", 10)
+                        .transition()
+                        .duration(500)
+                        .attr("r", 8)
+                        .style("filter", "drop-shadow(0 0 10px rgba(243, 156, 18, 0.8))");
+
+                    g.append("text")
+                        .attr("x", xScale(0) + 15)
+                        .attr("y", yScale(0) - 15)
+                        .text("原点 (0,0)")
+                        .attr("fill", "var(--warning-color)")
+                        .style("font-size", "14px")
+                        .style("opacity", 0)
+                        .transition()
+                        .duration(500)
+                        .style("opacity", 1);
+                }, 1000);
+
+                setTimeout(() => {
+                    const pairs = [
+                        {x: 2, y: 8/3},
+                        {x: -2, y: -8/3},
+                        {x: 3, y: 9},
+                        {x: -3, y: -9}
+                    ];
+
+                    pairs.forEach((point, i) => {
+                        const circle = g.append("circle")
+                            .attr("cx", xScale(point.x))
+                            .attr("cy", yScale(point.y))
+                            .attr("r", 0)
+                            .attr("fill", point.x > 0 ? "#e74c3c" : "#3498db")
+                            .transition()
+                            .delay(500 * i)
+                            .duration(300)
+                            .attr("r", 6);
+
+                        const yDisplay = Math.abs(point.y) > 5 ? point.y.toFixed(1) : point.y.toFixed(2);
+                        g.append("text")
+                            .attr("x", xScale(point.x) + (point.x > 0 ? 10 : -50))
+                            .attr("y", yScale(point.y) + (point.y > 0 ? -10 : 10))
+                            .text(`(${point.x}, ${yDisplay})`)
+                            .attr("fill", point.x > 0 ? "#e74c3c" : "#3498db")
+                            .style("font-size", "11px")
+                            .style("opacity", 0)
+                            .transition()
+                            .delay(500 * i)
+                            .duration(500)
+                            .style("opacity", 1);
+
+                        if (i % 2 === 0) {
+                            g.append("line")
+                                .attr("x1", xScale(point.x))
+                                .attr("y1", yScale(point.y))
+                                .attr("x2", xScale(point.x))
+                                .attr("y2", yScale(point.y))
+                                .attr("stroke", "#95a5a6")
+                                .attr("stroke-width", 1)
+                                .attr("stroke-dasharray", "3,3")
+                                .transition()
+                                .delay(500 * i + 300)
+                                .duration(1000)
+                                .attr("x2", xScale(pairs[i+1].x))
+                                .attr("y2", yScale(pairs[i+1].y));
+                        }
+                    });
+                }, 3000);
+
+                setTimeout(() => {
+                    g.append("text")
+                        .attr("x", xScale(0))
+                        .attr("y", yScale(-8))
+                        .text("f(-x) = -f(x)")
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "black")
+                        .style("font-size", "20px")
+                        .style("font-weight", "bold")
+                        .style("opacity", 0)
+                        .transition()
+                        .duration(1000)
+                        .style("opacity", 1)
+                        .transition()
+                        .duration(1000)
+                        .style("opacity", 0.5);
+                }, 6000);
+
+                setTimeout(() => {
+                    g.selectAll("*").transition().duration(1000).style("opacity", 0)
+                        .on("end", function() {
+                            d3.select(this).remove();
+                        });
+                    setTimeout(() => autoDemo(), 1500);
+                }, 10000);
+            }
+
+            autoDemo();
+        }
+
+ // 反函数机器可视化
+ function visualizeInverseMachine(containerId) {
+            const setup = setupD3(containerId, { top: 20, right: 20, bottom: 20, left: 20 });
+            if (!setup) return;
+            const { g, width, height, svg } = setup;
+
+            // --- 表格部分 ---
+            const tableGroup = g.append('g').attr('class', 'table-group');
+            const tableData = [ { x: 1, y: 4 }, { x: 2, y: 5 }, { x: 3, y: 6 } ];
+            const tableWidth = 300, cellHeight = 50, headerHeight = 60, cellWidth = tableWidth/2;
+            const tableX = (width - tableWidth) / 2; // Center in the whole visualization area
+            const tableY = (height - (tableData.length + 1) * cellHeight) / 2;
+            const table = tableGroup.append('g').attr('transform', `translate(${tableX}, ${tableY})`);
+
+            const headerX = table.append('g');
+            headerX.append('rect').attr('width', cellWidth).attr('height', headerHeight).attr('fill', 'var(--primary-color)');
+            headerX.append('text').text('输入 x').attr('x', cellWidth/2).attr('y', headerHeight/2).attr('text-anchor', 'middle').attr('dy', '.3em').attr('fill', 'white').style('font-size', '24px');
+
+            const headerY = table.append('g').attr('transform', `translate(${cellWidth}, 0)`);
+            headerY.append('rect').attr('width', cellWidth).attr('height', headerHeight).attr('fill', 'var(--accent-color)');
+            headerY.append('text').text('输出 y').attr('x', cellWidth/2).attr('y', headerHeight/2).attr('text-anchor', 'middle').attr('dy', '.3em').attr('fill', 'white').style('font-size', '24px');
+
+            const rows = table.selectAll('.row').data(tableData).enter().append('g').attr('transform', (d, i) => `translate(0, ${(i+1) * cellHeight})`);
+            const cellsX = rows.append('g');
+            cellsX.append('rect').attr('width', cellWidth).attr('height', cellHeight).attr('fill', '#f0f0f0').attr('stroke', '#ccc');
+            cellsX.append('text').attr('x', cellWidth/2).attr('y', cellHeight/2).attr('text-anchor', 'middle').attr('dy', '.3em').text(d => d.x);
+
+            const cellsY = rows.append('g').attr('transform', `translate(${cellWidth}, 0)`);
+            cellsY.append('rect').attr('width', cellWidth).attr('height', cellHeight).attr('fill', '#f0f0f0').attr('stroke', '#ccc');
+            cellsY.append('text').attr('x', cellWidth/2).attr('y', cellHeight/2).attr('text-anchor', 'middle').attr('dy', '.3em').text(d => d.y);
+
+            const title = svg.append('text').attr('x', width / 2).attr('y', tableY - 40).attr('text-anchor', 'middle').style('font-size', '24px');
+
+            // --- 动画循环 ---
+            function playAnimation() {
+                title.text('函数');
+
+                // Reset positions
+                headerX.attr('transform', 'translate(0, 0)');
+                headerY.attr('transform', `translate(${cellWidth}, 0)`);
+                cellsX.attr('transform', 'translate(0, 0)');
+                cellsY.attr('transform', `translate(${cellWidth}, 0)`);
+
+                g.transition("swap-anim").delay(2000).duration(1500)
+                    .on('start', () => {
+                        title.text('反函数 (交换 x 和 y)');
+                    })
+                    .tween('swap', () => t => {
+                        headerX.attr('transform', `translate(${t * cellWidth}, 0)`);
+                        headerY.attr('transform', `translate(${(1-t) * cellWidth}, 0)`);
+                        cellsX.attr('transform', `translate(${t * cellWidth}, 0)`);
+                        cellsY.attr('transform', `translate(${(1-t) * cellWidth}, 0)`);
+                    })
+                    .on('end', () => {
+                        setTimeout(playAnimation, 2500);
+                    });
+            }
+            playAnimation();
+        }
+
+        // 反函数图像可视化
+        function visualizeInverseGraph(containerId) {
+            const setup = setupD3(containerId);
+            if (!setup) {
+                console.error("D3 setup failed for:", containerId);
+                return;
+            }
+            const { g, width, height } = setup;
+
+            const domainRange = [-5, 5];
+            const xScale = d3.scaleLinear().domain(domainRange).range([0, width]);
+            const yScale = d3.scaleLinear().domain(domainRange).range([height, 0]);
+            drawAxes(g, xScale, yScale, width, height);
+
+            // 1. Draw static elements
+            g.append("line").attr("x1", xScale(domainRange[0])).attr("y1", yScale(domainRange[0]))
+                .attr("x2", xScale(domainRange[1])).attr("y2", yScale(domainRange[1]))
+                .attr("stroke", "grey").attr("stroke-width", 2).attr("stroke-dasharray", "5,5");
+            
+            g.append("text")
+                .attr("x", xScale(3.5))
+                .attr("y", yScale(4.2))
+                .text("y = x (镜子)")
+                .style("color", "grey")
+                .style("font-size", "16px");
+
+            const originalFunc = x => 0.5 * x + 1;
+            const dataPoints = d3.range(-5, 5.1, 0.2);
+            const originalData = dataPoints.map(x => ({x: x, y: originalFunc(x)})).filter(d => d.y >= domainRange[0] && d.y <= domainRange[1]);
+            const reflectedData = originalData.map(d => ({x: d.y, y: d.x}));
+            const line = d3.line().x(d => xScale(d.x)).y(d => yScale(d.y));
+
+            const samplePoints = [
+                {x: -4, y: originalFunc(-4)},
+                {x: -1, y: originalFunc(-1)},
+                {x: 2, y: originalFunc(2)},
+                {x: 4, y: originalFunc(4)},
+            ];
+
+            // 2. Draw the original function and its labels
+            g.append("path").datum(originalData).attr("fill", "none").attr("stroke-width", 4)
+                .attr("stroke", "var(--primary-color)")
+                .attr("d", line);
+
+            g.append("text")
+                .attr("x", xScale(-4.5))
+                .attr("y", yScale(-1))
+                .text("原函数: y = 0.5x + 1")
+                .style("color", "var(--primary-color)")
+                .style("font-size", "16px")
+                .style("font-weight", "bold");
+
+            // Prepare the inverse path but keep it hidden/dashed initially
+            const inversePath = g.append("path").datum(reflectedData).attr("fill", "none").attr("stroke-width", 4)
+                .attr("stroke", "var(--accent-color)")
+                .attr("d", line);
+
+            const pointsGroup = g.append('g');
+
+            function playAnimation() {
+                pointsGroup.selectAll('*').remove();
+
+                // Set inverse path to be dashed and transparent for the start of the animation
+                inversePath
+                    .style('opacity', 0.3)
+                    .attr('stroke-dasharray', '8, 8');
+
+                let totalDelay = 500;
+
+                samplePoints.forEach((d, i) => {
+                    const originalPos = { x: xScale(d.x), y: yScale(d.y) };
+                    const reflectedPos = { x: xScale(d.y), y: yScale(d.x) };
+
+                    // Point on original function
+                    const p1 = pointsGroup.append('circle')
+                        .attr('r', 8).attr('fill', 'var(--primary-color)')
+                        .attr('cx', originalPos.x).attr('cy', originalPos.y)
+                        .style('opacity', 0);
+
+                    // Point that will move to inverse function
+                    const p2 = pointsGroup.append('circle')
+                        .attr('r', 8).attr('fill', 'var(--accent-color)')
+                        .attr('cx', originalPos.x).attr('cy', originalPos.y)
+                        .style('opacity', 0);
+
+                    // Animate appearance of point on original function
+                    p1.transition(`appear-${i}`).delay(totalDelay).duration(500).style('opacity', 1);
+                    totalDelay += 1500;
+
+                    // Animate flip: fade out original point, move the second point
+                    p1.transition(`fadeout-${i}`).delay(totalDelay).duration(500).style('opacity', 0);
+                    p2.transition(`flip-${i}`).delay(totalDelay).duration(1000)
+                        .style('opacity', 1)
+                        .attr('cx', reflectedPos.x)
+                        .attr('cy', reflectedPos.y);
+
+                    totalDelay += 1000;
+                });
+
+                // After all points have flipped, animate the inverse path to become solid
+                const pathNode = inversePath.node();
+                const totalLength = pathNode.getTotalLength();
+
+                inversePath
+                    .attr("stroke-dasharray", totalLength + " " + totalLength)
+                    .attr("stroke-dashoffset", totalLength)
+                    .style('opacity', 1)
+                    .transition('draw-line')
+                    .delay(totalDelay)
+                    .duration(1500)
+                    .ease(d3.easeLinear)
+                    .attr("stroke-dashoffset", 0);
+
+                totalDelay += 3000;
+                setTimeout(playAnimation, totalDelay);
+            }
+            playAnimation();
+        }
+
+        // 渲染数学公式辅助函数
+        function renderMathJaxInContainer(containerId) {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    window.MathJax.typesetPromise([container]).catch((err) => console.log(err.message));
+                }
+            }
+        }
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showSlide(0);
+            updateSlideInfo();
+            console.log('✨ 函数基础教学系统初始化完成');
+        });
+    </script>
+</body>
+</html>

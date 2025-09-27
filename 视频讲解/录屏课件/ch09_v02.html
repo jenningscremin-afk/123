@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第9章 视频 9.2 二重积分计算（直角坐标）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/noto-serif-sc.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('✅ MathJax已加载并配置完成');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="./assets/lesson-template.css">
+</head>
+<body class="blackboard">
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+    <div id="slide-container" class="slide-container flex-grow">
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>迭代积分思路</h2>
+      <ul><li>公式：∬_D f(x, y) dA = ∫_{x=a}^{b} [∫_{y=g1(x)}^{g2(x)} f(x, y) dy] dx</li><li>思想：先沿 y 积分，再沿 x 累加</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>区域被竖直扫描，形成一条条积分条。</li><li>积分条完成后沿 x 方向累加。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>区域类型</h2>
+      <ul><li>类型 I：竖直条覆盖区域 → a ≤ x ≤ b, g1(x) ≤ y ≤ g2(x)</li><li>类型 II：水平条覆盖区域 → c ≤ y ≤ d, h1(y) ≤ x ≤ h2(y)</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>两种扫描方式对比演示。</li><li>上下限写法以标签形式提示。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>例题：三角形区域</h2>
+      <ul><li>区域顶点： (0,0), (1,0), (1,1)</li><li>积分：∬_D (x + y) dA</li><li>类型 I：0 ≤ x ≤ 1, 0 ≤ y ≤ x，结果 1/2</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>三角形区域被竖向扫描，积分条逐渐填满。</li><li>计算步骤逐条显示，最终结果高亮。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>积分次序交换</h2>
+      <ul><li>原则：同一区域，两种迭代次序都成立</li><li>目的：选择更易计算的上下限</li><li>步骤：画图 → 改写上下限</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>原扫描方向与改写后的扫描方向在区域图上交替显示。</li><li>表格对比两组上下限。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>例题：换次序简化</h2>
+      <ul><li>原式：∫₀¹ ∫_y¹ e^{x²} dx dy</li><li>换次序：∫₀¹ ∫₀^x e^{x²} dy dx</li><li>结果：∫₀¹ e^{x²}·x dx</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>显示原积分的上下限，并标出难点在于对 x 积分。</li><li>换次序后，内层积分转为对 y，计算轻松完成。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>本节总结</h2>
+      <ul><li>流程：画区域 → 选类型 → 写上下限 → 视情况换次序</li><li>作业：尝试三个不同形状的积分区域</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>流程图逐步亮起每一步。</li><li>作业提示弹窗提醒下载练习。</li></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="subtitle-area" id="subtitleArea">欢迎学习二重积分计算（直角坐标）！点击开始讲课启动虚拟人讲师。</div>
+    <div class="control-bar">
+        <div class="control-title">第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">6</span> 页</div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn autoplay" onclick="startAutoPlay()" id="autoPlayBtn">🎬 自动播放</button>
+        <div class="control-hint">💡 录制提示：点击自动播放后立即开始录屏，系统会自动完成全部演示。</div>
+        <div class="control-shortcuts">💡 快捷键：空格/→ 下一页，← 上一页，Enter 播放当前页</div>
+    </div>
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+    <script>
+        const lessonTitle = "二重积分计算（直角坐标）";
+        const subtitleScript = {
+    "1": "迭代积分就是把二维累加拆成两次一维积分，先沿 y 方向算面积条，再沿 x 方向整合。",
+    "2": "先判断你的区域更适合竖直条还是水平条，写上下限才不会出错。",
+    "3": "把区域视作类型 I，先对 y 积分，再对 x 积分，很快得到 1/2。如果换水平条也可以算，但上下限要重新写。",
+    "4": "遇到难算的积分，尝试换个积分次序。换之前一定要画出区域，搞清楚边界方程。",
+    "5": "原式直接算会碰到 e^{x²} 这个难点，换次序之后，内层只是对 y 积分，答案轻松到手。",
+    "6": "计算二重积分的关键在于图像感。多画几张区域图，多练换次序，技巧就牢固了。\" ---"
+};
+        const actionMap = {
+    "1": "A_LH_introduced_O",
+    "2": "A_RH_point_O",
+    "3": "A_RH_please_O",
+    "4": "A_LH_emphasize_O",
+    "5": "A_RH_smile_O",
+    "6": "A_RLH_welcome_O"
+};
+        const slideTitles = {
+    "1": "迭代积分思路",
+    "2": "区域类型",
+    "3": "例题：三角形区域",
+    "4": "积分次序交换",
+    "5": "例题：换次序简化",
+    "6": "本节总结"
+};
+        const slideDurations = {
+    "1": 40000,
+    "2": 55000,
+    "3": 70000,
+    "4": 55000,
+    "5": 70000,
+    "6": 60000
+};
+        const totalSlides = 6;
+
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+            currentSlide = index;
+            document.getElementById('currentSlide').textContent = index + 1;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([slides[index]]).catch(err => console.error(err));
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function restart() {
+            showSlide(0);
+            if (!isAutoPlaying) speakContent(1);
+        }
+
+        function updateSubtitle(text) {
+            const area = document.getElementById('subtitleArea');
+            if (area) {
+                area.textContent = text;
+            }
+        }
+
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (!indicator) return;
+            indicator.textContent = message;
+            indicator.className = 'status-indicator';
+            if (type === 'connected') indicator.classList.add('connected');
+            if (type === 'error') indicator.classList.add('error');
+            if (type === 'connecting') indicator.classList.add('connecting');
+            if (type === 'recording') indicator.classList.add('recording');
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+            try {
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                if (avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+                avatarPlatform = new AvatarPlatform({ useInlinePlayer: true });
+                avatarPlatform
+                    .on('connected', () => {
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => speakContent(currentSlide + 1), 500);
+                    })
+                    .on('disconnected', () => {
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '重新连接';
+                        startBtn.disabled = false;
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '连接失败';
+                        startBtn.disabled = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1, move_h: 0, move_v: 0, audio_format: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            const text = subtitleScript[slideNum] || '';
+            updateSubtitle(text ? `【第${slideNum}页/${totalSlides}页】` + text : `第${slideNum}页`);
+            if (!isTeaching || !isConnected || !avatarPlatform || !text) return;
+            try {
+                const action = actionMap[slideNum];
+                if (action) {
+                    await avatarPlatform.writeCmd('action', action);
+                }
+                await avatarPlatform.writeText(text, { nlp: false });
+            } catch (error) {
+                console.error('❌ 语音播报失败:', error);
+            }
+        }
+
+        async function startAutoPlay() {
+            const autoBtn = document.getElementById('autoPlayBtn');
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                autoBtn.textContent = '🎬 自动播放';
+                autoBtn.classList.remove('stop');
+                updateStatus('自动播放已停止');
+                return;
+            }
+            isAutoPlaying = true;
+            autoBtn.textContent = '⏹️ 停止播放';
+            autoBtn.classList.add('stop');
+            updateStatus('🎬 自动播放开始！', 'recording');
+
+            for (let slide = 1; slide <= totalSlides; slide++) {
+                if (!isAutoPlaying) break;
+                showSlide(slide - 1);
+                speakContent(slide);
+                const duration = slideDurations[slide] || 15000;
+                await new Promise(resolve => setTimeout(resolve, duration));
+            }
+
+            isAutoPlaying = false;
+            autoBtn.textContent = '🎬 自动播放';
+            autoBtn.classList.remove('stop');
+            updateStatus('课程播放结束');
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                event.preventDefault();
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousSlide();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                speakContent(currentSlide + 1);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('totalSlides').textContent = totalSlides;
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

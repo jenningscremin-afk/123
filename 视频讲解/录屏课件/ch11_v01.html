@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第11章 视频 11.1 级数概念与敛散性判别</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/noto-serif-sc.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('✅ MathJax已加载并配置完成');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="./assets/lesson-template.css">
+</head>
+<body class="blackboard">
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+    <div id="slide-container" class="slide-container flex-grow">
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>级数定义</h2>
+      <ul><li>级数 = 数列部分和的极限</li><li>表示：Σ a_n</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>数列项依次跳入求和框，部分和曲线逐步绘制。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>部分和直观</h2>
+      <ul><li>等比级数示例：1/2 + 1/4 + 1/8 + … → 1</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>数轴上显示部分和值逐步逼近 1。</li><li>等比级数求和公式同步显示。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>敛散性的基本判定</h2>
+      <ul><li>收敛：部分和趋向有限值</li><li>发散：部分和无界或震荡</li><li>必要条件：a_n → 0</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>对比两个部分和曲线：一个稳定，另一个震荡。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>常用判别法</h2>
+      <ul><li>比较判别法、比值判别法、根值判别法、交错级数判别法</li><li>每个判别法的适用场景</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>判别法流程图展开，点击节点显示说明。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>例题：比值判别法</h2>
+      <ul><li>级数：Σ n!/3^n</li><li>比值极限 L = lim |a_{n+1}/a_n| = ∞ → 发散</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>比值判别法步骤逐条高亮。</li><li>结果位置出现红色“发散”标签。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>小结与练习</h2>
+      <ul><li>核心记忆：部分和概念、必要条件、常用判别法</li><li>练习：判断两个给定级数的敛散性</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>关键点回顾，练习按钮弹出题目。</li></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="subtitle-area" id="subtitleArea">欢迎学习级数概念与敛散性判别！点击开始讲课启动虚拟人讲师。</div>
+    <div class="control-bar">
+        <div class="control-title">第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">6</span> 页</div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn autoplay" onclick="startAutoPlay()" id="autoPlayBtn">🎬 自动播放</button>
+        <div class="control-hint">💡 录制提示：点击自动播放后立即开始录屏，系统会自动完成全部演示。</div>
+        <div class="control-shortcuts">💡 快捷键：空格/→ 下一页，← 上一页，Enter 播放当前页</div>
+    </div>
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+    <script>
+        const lessonTitle = "级数概念与敛散性判别";
+        const subtitleScript = {
+    "1": "级数就是把无限多项按顺序加起来，观察部分和是否趋向某个固定值。",
+    "2": "经典的等比级数告诉我们：如果公比在 −1 到 1 之间，部分和会越来越接近一个极限。",
+    "3": "项趋向零是必要条件，但不是充分条件。调和级数就是反例。",
+    "4": "面对不同的级数，要选择合适的判别法。指数、阶乘类常用比值或根值判别；符号交替的级数用交错判别。",
+    "5": "阶乘增长速度远超指数，导致比值极限大于 1，因此级数发散。",
+    "6": "把常见判别法做成工具箱，遇到级数先判类型，再选工具。\" ---"
+};
+        const actionMap = {
+    "1": "A_RLH_welcome_O",
+    "2": "A_LH_introduced_O",
+    "3": "A_RH_warning_O",
+    "4": "A_RH_point_O",
+    "5": "A_RH_emphasize_O",
+    "6": "A_RLH_welcome_O"
+};
+        const slideTitles = {
+    "1": "级数定义",
+    "2": "部分和直观",
+    "3": "敛散性的基本判定",
+    "4": "常用判别法",
+    "5": "例题：比值判别法",
+    "6": "小结与练习"
+};
+        const slideDurations = {
+    "1": 40000,
+    "2": 55000,
+    "3": 55000,
+    "4": 60000,
+    "5": 70000,
+    "6": 65000
+};
+        const totalSlides = 6;
+
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+            currentSlide = index;
+            document.getElementById('currentSlide').textContent = index + 1;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([slides[index]]).catch(err => console.error(err));
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function restart() {
+            showSlide(0);
+            if (!isAutoPlaying) speakContent(1);
+        }
+
+        function updateSubtitle(text) {
+            const area = document.getElementById('subtitleArea');
+            if (area) {
+                area.textContent = text;
+            }
+        }
+
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (!indicator) return;
+            indicator.textContent = message;
+            indicator.className = 'status-indicator';
+            if (type === 'connected') indicator.classList.add('connected');
+            if (type === 'error') indicator.classList.add('error');
+            if (type === 'connecting') indicator.classList.add('connecting');
+            if (type === 'recording') indicator.classList.add('recording');
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+            try {
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                if (avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+                avatarPlatform = new AvatarPlatform({ useInlinePlayer: true });
+                avatarPlatform
+                    .on('connected', () => {
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => speakContent(currentSlide + 1), 500);
+                    })
+                    .on('disconnected', () => {
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '重新连接';
+                        startBtn.disabled = false;
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '连接失败';
+                        startBtn.disabled = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1, move_h: 0, move_v: 0, audio_format: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            const text = subtitleScript[slideNum] || '';
+            updateSubtitle(text ? `【第${slideNum}页/${totalSlides}页】` + text : `第${slideNum}页`);
+            if (!isTeaching || !isConnected || !avatarPlatform || !text) return;
+            try {
+                const action = actionMap[slideNum];
+                if (action) {
+                    await avatarPlatform.writeCmd('action', action);
+                }
+                await avatarPlatform.writeText(text, { nlp: false });
+            } catch (error) {
+                console.error('❌ 语音播报失败:', error);
+            }
+        }
+
+        async function startAutoPlay() {
+            const autoBtn = document.getElementById('autoPlayBtn');
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                autoBtn.textContent = '🎬 自动播放';
+                autoBtn.classList.remove('stop');
+                updateStatus('自动播放已停止');
+                return;
+            }
+            isAutoPlaying = true;
+            autoBtn.textContent = '⏹️ 停止播放';
+            autoBtn.classList.add('stop');
+            updateStatus('🎬 自动播放开始！', 'recording');
+
+            for (let slide = 1; slide <= totalSlides; slide++) {
+                if (!isAutoPlaying) break;
+                showSlide(slide - 1);
+                speakContent(slide);
+                const duration = slideDurations[slide] || 15000;
+                await new Promise(resolve => setTimeout(resolve, duration));
+            }
+
+            isAutoPlaying = false;
+            autoBtn.textContent = '🎬 自动播放';
+            autoBtn.classList.remove('stop');
+            updateStatus('课程播放结束');
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                event.preventDefault();
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousSlide();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                speakContent(currentSlide + 1);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('totalSlides').textContent = totalSlides;
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

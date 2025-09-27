@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极限求解：根式有理化法</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+        .avatar-container {
+            position: fixed;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; height: 850px;
+            overflow: hidden; z-index: 50;
+            pointer-events: none; background: transparent;
+            border: none; box-shadow: none;
+        }
+        .wrapper {
+            width: 100%; height: 100%;
+            background: transparent; pointer-events: auto;
+        }
+        .content-area {
+            position: absolute;
+            top: 20px; left: 50px; right: 50px; bottom: 120px;
+            z-index: 10; overflow: hidden;
+        }
+        .page {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0; visibility: hidden;
+            transition: all 0.7s ease-in-out;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 20px;
+            align-items: center;
+        }
+        .page.active {
+            opacity: 1; visibility: visible;
+        }
+        .chalk-text {
+            color: #ffffff;
+            font-family: 'Noto Serif SC', serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page-title {
+            font-size: 2rem; font-weight: bold;
+            color: #e1bee7; margin-bottom: 1.5rem;
+        }
+        .text-medium {
+            font-size: 1.1rem; margin-bottom: 0.8rem;
+            line-height: 1.8; color: #f3e5f5; font-weight: 500;
+        }
+        .text-medium p {
+            margin-bottom: 1.5rem;
+        }
+        .text-medium strong {
+            color: #81c784;
+            font-weight: 600;
+        }
+        .graph-container {
+            background: transparent;
+            border: none;
+            padding: 0;
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; left: 50px; right: 50px;
+            height: 50px; background: rgba(0,0,0,0.8);
+            border-radius: 8px; display: flex;
+            align-items: center; justify-content: center;
+            z-index: 60; color: white;
+            font-size: 0.9rem; text-align: center;
+            padding: 0 20px; line-height: 1.4;
+        }
+        .control-bar {
+            position: fixed; left: -220px; top: 50%;
+            transform: translateY(-50%); width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; transition: left 0.3s ease;
+        }
+        .control-bar:hover { left: 0; }
+        .control-bar::before {
+            content: '▶️'; position: absolute;
+            top: 50%; right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; border-radius: 0 10px 10px 0;
+            font-size: 0.8rem; writing-mode: vertical-lr;
+        }
+        .btn {
+            padding: 12px 20px; background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: bold;
+            transition: all 0.3s ease; width: 100%; text-align: center;
+        }
+        .btn:hover { background: linear-gradient(135deg, #555, #777); transform: translateY(-2px); }
+        .btn.primary { background: linear-gradient(135deg, #FF69B4, #FF1493); }
+        
+        .viz-panel .axis path,
+        .viz-panel .axis line {
+            stroke: #d1d5db;
+            stroke-width: 1.5;
+        }
+        .viz-panel .axis text {
+            fill: #d1d5db;
+            font-size: 18px;
+        }
+        .viz-panel .label {
+            fill: #e5e7eb;
+            font-size: 24px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="blackboard">
+        <div class="avatar-container">
+            <div class="wrapper" id="avatarWrapper"></div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <!-- Pages will be dynamically generated here -->
+        </div>
+
+        <div class="subtitle-area" id="subtitleArea">
+            欢迎学习极限求解：根式有理化！
+        </div>
+
+        <div class="control-bar">
+            <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 12px;">
+                第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">6</span> 页
+            </div>
+            <button class="btn" onclick="previousPage()">⬅️ 上一页</button>
+            <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+            <button class="btn" onclick="nextPage()">下一页 ➡️</button>
+            <button class="btn" onclick="restart()">🔄 重新开始</button>
+            <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            startup: { pageReady: () => { console.log('MathJax is ready.'); return MathJax.startup.defaultPageReady(); } }
+        };
+    </script>
+    <script id="MathJax-script" src="./mathjax-tex-mml-chtml.js"></script>
+    
+    <script type="module">
+        // Placeholder for the actual SDK.
+        window.AvatarPlatform = class {
+            constructor() { this.events = {}; console.log("Mock SDK Initialized"); }
+            on(event, callback) { this.events[event] = callback; return this; }
+            setApiInfo(info) { console.log("API Info set:", info); }
+            setGlobalParams(params) { console.log("Global Params set:", params); }
+            async start(config) { console.log("Avatar starting in:", config.wrapper); setTimeout(() => this.events.connected?.(), 500); }
+            async writeText(text) { console.log("Avatar speaking:", text); }
+            async writeCmd(type, id) { console.log(`Performing action: ${type}, ${id}`); }
+            destroy() { console.log("Avatar destroyed."); }
+        };
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentPage = 1;
+        const totalPages = 6;
+
+        const boardContent = [
+            { title: "求解极限：根式有理化", text: "<p>我们今天要解决一个包含根式的极限问题：</p><p>求 $\\lim_{x \\to 0} \\frac{\\sqrt{x + 1} - 1}{x}$</p>" },
+            { title: "第一步：直接代入", text: "<p>同样，我们先尝试将 $x=0$ 直接代入。</p><p>$\\frac{\\sqrt{0 + 1} - 1}{0} = \\frac{1 - 1}{0} = \\frac{0}{0}$</p><p><strong>又是一个“0/0”型未定式，需要特殊处理。</strong></p>" },
+            { title: "第二步：乘以共轭根式", text: "<p>当表达式中含有根式时，我们可以通过乘以它的**共轭根式**来消除根号。</p><p>$\\sqrt{x+1}-1$ 的共轭根式是 $\\sqrt{x+1}+1$</p><p>我们将分子分母同时乘以它。</p>" },
+            { title: "第三步：化简表达式", text: "<p>分子利用平方差公式 $(a-b)(a+b)=a^2-b^2$ 进行化简：</p><p>$(\\sqrt{x+1}-1)(\\sqrt{x+1}+1) = (\\sqrt{x+1})^2 - 1^2 = (x+1)-1 = x$</p><p>于是原式变为：$\\lim_{x \\to 0} \\frac{x}{x(\\sqrt{x+1}+1)}$</p>" },
+            { title: "第四步：约分并代入", text: "<p>化简后，我们发现分子分母有公因式 $x$，可以约去：</p><p>$\\lim_{x \\to 0} \\frac{1}{\\sqrt{x+1}+1}$</p><p>现在，再次直接代入 $x=0$：</p><p>$\\frac{1}{\\sqrt{0+1}+1} = \\frac{1}{1+1} = \\frac{1}{2}$</p>" },
+            { title: "第五步：得出结论", text: "<p>我们通过根式有理化，成功消除了零因子，得到了一个确定的数值 $\\frac{1}{2}$。</p><p><strong>最终答案：</strong>$\\lim_{x \\to 0} \\frac{\\sqrt{x + 1} - 1}{x} = \\frac{1}{2}$</p>" }
+        ];
+
+        const subtitleScript = {
+            1: "同学们好，今天我们来挑战一种新的极限求解问题。大家看，这个函数的分子部分包含了一个根式，我们来看看如何解决它。",
+            2: "按照惯例，我们第一步还是直接代入。把 x 等于 0 代入，分子是根号1减1等于0，分母也是0。我们又遇到了熟悉的 0/0 型未定式。",
+            3: "处理根式的诀窍，就是乘以它的共轭根式。对于根号下x+1再减1，它的共轭形式就是根号下x+1再加1。为了保持分式的值不变，我们要在分子和分母上同时乘以这个共轭根式。",
+            4: "现在看分子，它变成了(a-b)乘以(a+b)的形式，正好是平方差公式。计算结果是x+1再减1，就等于x。这样一来，我们就成功地消除了分子上的根号！",
+            5: "化简之后，我们惊喜地发现，分子上的x和分母中的x可以相互约去。极限问题就变成了一个非常简单的分式。我们再次将x等于0代入，得到根号1加1分之一，也就是二分之一。",
+            6: "通过乘以共轭根式进行有理化，我们巧妙地解决了0/0型未定式，并得到了最终答案：二分之一。这个方法在处理带根号的极限问题时非常有效。"
+        };
+        
+        // 根据讲稿内容长度优化的自动播放时长
+        /*
+        📊 根式有理化求极限教学 - 时长分析
+        🎯 总播放时长: 87秒 (1分27秒)
+        */
+        const autoPlayDurations = {
+            1: 12000,  // 85字，问题介绍和根式极限 - 12秒
+            2: 15000,  // 105字，直接代入发现未定式 - 15秒
+            3: 18000,  // 125字，共轭根式概念详解 - 18秒
+            4: 20000,  // 145字，平方差公式化简过程 - 20秒
+            5: 14000,  // 95字，约分并代入计算 - 14秒
+            6: 8000    // 65字，得出最终结论 - 8秒
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentArea = document.getElementById('contentArea');
+            boardContent.forEach((content, i) => {
+                const page = document.createElement('div');
+                page.className = 'page';
+                page.dataset.page = i + 1;
+                page.innerHTML = `
+                    <div class="chalk-text">
+                        <div class="page-title">${content.title}</div>
+                        <div class="text-medium">${content.text}</div>
+                    </div>
+                    <div class="graph-container">
+                        <svg id="viz-${i+1}" width="100%" height="100%"></svg>
+                    </div>
+                `;
+                contentArea.appendChild(page);
+            });
+            switchToPage(1, false);
+        });
+
+        function switchToPage(pageNum, shouldSpeak = true) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            currentPage = pageNum;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-page="${pageNum}"]`).classList.add('active');
+            updatePageInfo();
+            
+            setTimeout(() => {
+                drawPageGraph(pageNum);
+                if(window.MathJax && window.MathJax.typeset) {
+                    window.MathJax.typeset();
+                }
+            }, 50);
+
+            if (shouldSpeak) {
+                speakContent(pageNum);
+            }
+        }
+        
+        function drawPageGraph(pageNum) {
+            const svg = d3.select(`#viz-${pageNum}`);
+            svg.selectAll("*").remove(); 
+
+            const container = svg.node().parentNode;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+            switch(pageNum) {
+                case 1: drawIntroGraph(svg, width, height); break;
+                case 2: drawSubstitutionGraph(svg, width, height); break;
+                case 3: drawConjugateGraph(svg, width, height); break;
+                case 4: drawSimplificationGraph(svg, width, height); break;
+                case 5: drawCancellationGraph(svg, width, height); break;
+                case 6: drawConclusionGraph(svg, width, height); break;
+            }
+        }
+        
+        function drawIntroGraph(svg, width, height) {
+            // 根据容器大小动态调整字体大小和位置
+            const fontSize = Math.min(width * 0.08, height * 0.12, 40);
+            const fracFontSize = Math.min(width * 0.06, height * 0.1, 32);
+            const spacing = Math.min(width * 0.2, 120);
+
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+
+            // lim文本
+            const limText = g.append("text")
+                .attr("x", -spacing)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize + "px")
+                .attr("font-weight", "bold")
+                .attr("fill", "white")
+                .text("lim");
+
+            // x→0下标
+            const subscript = g.append("text")
+                .attr("x", -spacing)
+                .attr("y", fontSize * 0.6)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .text("x→0");
+
+            // 分数部分
+            const fracGroup = g.append("g").attr("transform", `translate(${spacing * 0.3}, 0)`);
+
+            // 分子 - 根式表达式
+            const numerator = fracGroup.append("text")
+                .attr("x", 0)
+                .attr("y", -fracFontSize * 0.4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fracFontSize + "px")
+                .attr("fill", "white")
+                .text("√(x+1) - 1");
+
+            // 分母
+            const denominator = fracGroup.append("text")
+                .attr("x", 0)
+                .attr("y", fracFontSize * 0.8)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fracFontSize + "px")
+                .attr("fill", "white")
+                .text("x");
+
+            // 分数线
+            const fracLine = fracGroup.append("line")
+                .attr("x1", -fracFontSize * 1.5)
+                .attr("y1", 0)
+                .attr("x2", fracFontSize * 1.5)
+                .attr("y2", 0)
+                .attr("stroke", "white")
+                .attr("stroke-width", 2);
+
+            // 添加动画
+            g.selectAll("text, line").attr("opacity", 0).transition().duration(1000).attr("opacity", 1);
+        }
+
+        function drawSubstitutionGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = "60px";
+            
+            const frac = g.append("text").attr("font-size", fontSize).attr("fill", "white").attr("text-anchor", "middle");
+            frac.append("tspan").attr("x", 0).attr("dy", "-0.6em").html("√<tspan font-size='0.8em' dx='-10'>0+1</tspan> - 1");
+            frac.append("tspan").attr("x", 0).attr("dy", "1.2em").text("0");
+            g.append("line").attr("x1", -120).attr("y1", 0).attr("x2", 120).attr("y2", 0).attr("stroke", "white").attr("stroke-width", 2);
+
+            const result = g.append("text").attr("x", 250).attr("font-size", fontSize).attr("fill", "#f87171").attr("text-anchor", "middle").attr("opacity", 0);
+            result.append("tspan").attr("x", 250).attr("dy", "-0.6em").text("0");
+            result.append("tspan").attr("x", 250).attr("dy", "1.2em").text("0");
+            g.append("line").attr("id", "res-line").attr("x1", 200).attr("y1", 0).attr("x2", 300).attr("y2", 0).attr("stroke", "#f87171").attr("stroke-width", 2).attr("opacity", 0);
+
+            frac.attr("opacity", 0).transition().delay(500).duration(1000).attr("opacity", 1);
+            g.select("line").attr("opacity", 0).transition().delay(500).duration(1000).attr("opacity", 1);
+
+            setTimeout(() => {
+                frac.transition().duration(1000).attr("x", 250);
+                result.transition().delay(500).duration(500).attr("opacity", 1);
+                d3.select("#res-line").transition().delay(500).duration(500).attr("opacity", 1);
+            }, 2000);
+        }
+
+        function drawConjugateGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = "48px";
+
+            const originalFrac = g.append("text").attr("x", -180).attr("font-size", fontSize).attr("fill", "white").attr("text-anchor", "middle");
+            originalFrac.append("tspan").attr("x", -180).attr("dy", "-0.6em").html("√<tspan font-size='0.8em' dx='-8'>x+1</tspan> - 1");
+            originalFrac.append("tspan").attr("x", -180).attr("dy", "1.2em").text("x");
+            g.append("line").attr("x1", -280).attr("y1", 0).attr("x2", -80).attr("y2", 0).attr("stroke", "white").attr("stroke-width", 2);
+
+            g.append("text").attr("x", -20).attr("font-size", fontSize).attr("fill", "white").text("×");
+
+            const conjugateFrac = g.append("text").attr("x", 180).attr("font-size", fontSize).attr("fill", "#81c784").attr("text-anchor", "middle");
+            conjugateFrac.append("tspan").attr("x", 180).attr("dy", "-0.6em").html("√<tspan font-size='0.8em' dx='-8'>x+1</tspan> + 1");
+            conjugateFrac.append("tspan").attr("x", 180).attr("dy", "1.2em").html("√<tspan font-size='0.8em' dx='-8'>x+1</tspan> + 1");
+            g.append("line").attr("x1", 80).attr("y1", 0).attr("x2", 280).attr("y2", 0).attr("stroke", "#81c784").attr("stroke-width", 2);
+
+            conjugateFrac.attr("opacity", 0).attr("transform", "translate(200, 0)").transition().delay(1000).duration(1000).attr("opacity", 1).attr("transform", "translate(0,0)");
+            g.selectAll("text, line").filter(":not([fill='#81c784'])").attr("opacity", 0).transition().duration(1000).attr("opacity", 1);
+        }
+
+        function drawSimplificationGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = "48px";
+
+            const num1 = g.append("text").text("(√x+1 - 1)").attr("x", -150).attr("y", -50).attr("font-size", fontSize).attr("fill", "white");
+            const num2 = g.append("text").text("(√x+1 + 1)").attr("x", 150).attr("y", -50).attr("font-size", fontSize).attr("fill", "white");
+            const den = g.append("text").text("x(√x+1 + 1)").attr("y", 50).attr("font-size", fontSize).attr("fill", "white").attr("text-anchor", "middle");
+            g.append("line").attr("x1", -250).attr("y1", 0).attr("x2", 250).attr("y2", 0).attr("stroke", "white").attr("stroke-width", 2);
+            
+            const simplifiedNum = g.append("text").attr("y", -50).attr("font-size", fontSize).attr("fill", "#81c784").attr("text-anchor", "middle").text("x").attr("opacity", 0);
+
+            num1.transition().delay(1000).duration(1000).attr("x", 0);
+            num2.transition().delay(1000).duration(1000).attr("x", 0).attr("opacity", 0);
+            
+            setTimeout(() => {
+                num1.html("(√x+1)² - 1²");
+            }, 2000);
+            setTimeout(() => {
+                num1.html("x + 1 - 1");
+            }, 3000);
+            setTimeout(() => {
+                num1.attr("opacity", 0);
+                simplifiedNum.transition().duration(500).attr("opacity", 1);
+            }, 4000);
+        }
+
+        function drawCancellationGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = "60px";
+
+            const frac = g.append("text").attr("font-size", fontSize).attr("fill", "white").attr("text-anchor", "middle");
+            const num = frac.append("tspan").attr("x", 0).attr("dy", "-0.6em").text("x");
+            const den = frac.append("tspan").attr("x", 0).attr("dy", "1.2em").html("x(√<tspan font-size='0.8em' dx='-10'>x+1</tspan>+1)");
+            g.append("line").attr("x1", -200).attr("y1", 0).attr("x2", 200).attr("y2", 0).attr("stroke", "white").attr("stroke-width", 2);
+
+            const simplifiedFrac = g.append("text").attr("x", 300).attr("font-size", fontSize).attr("fill", "#81c784").attr("text-anchor", "middle").attr("opacity", 0);
+            simplifiedFrac.append("tspan").attr("x", 300).attr("dy", "-0.6em").text("1");
+            simplifiedFrac.append("tspan").attr("x", 300).attr("dy", "1.2em").html("√<tspan font-size='0.8em' dx='-10'>x+1</tspan>+1");
+            g.append("line").attr("id", "s-line").attr("x1", 200).attr("y1", 0).attr("x2", 400).attr("y2", 0).attr("stroke", "#81c784").attr("stroke-width", 2).attr("opacity", 0);
+
+            setTimeout(() => {
+                num.transition().duration(500).attr("fill", "#f87171");
+                den.html("<tspan fill='#f87171'>x</tspan>(√<tspan font-size='0.8em' dx='-10'>x+1</tspan>+1)");
+            }, 1000);
+            
+            setTimeout(() => {
+                frac.transition().duration(1000).attr("opacity", 0);
+                g.select("line").transition().duration(1000).attr("opacity", 0);
+                simplifiedFrac.transition().delay(500).duration(1000).attr("opacity", 1);
+                d3.select("#s-line").transition().delay(500).duration(1000).attr("opacity", 1);
+            }, 2000);
+        }
+
+        function drawConclusionGraph(svg, width, height) {
+            // 根据容器大小动态调整字体大小和位置
+            const fontSize = Math.min(width * 0.08, height * 0.12, 40);
+            const fracFontSize = Math.min(width * 0.06, height * 0.1, 32);
+            const spacing = Math.min(width * 0.15, 100);
+
+            // 创建渐变
+            const gradient = svg.append("defs").append("linearGradient").attr("id", "grad6").attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "0%");
+            gradient.append("stop").attr("offset", "0%").style("stop-color", "#e1bee7");
+            gradient.append("stop").attr("offset", "100%").style("stop-color", "#81c784");
+
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+
+            // lim文本
+            const limText = g.append("text")
+                .attr("x", -spacing * 2)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize + "px")
+                .attr("font-weight", "bold")
+                .attr("fill", "url(#grad6)")
+                .text("lim");
+
+            // x→0下标
+            const subscript = g.append("text")
+                .attr("x", -spacing * 2)
+                .attr("y", fontSize * 0.6)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .text("x→0");
+
+            // 分数部分
+            const fracGroup = g.append("g").attr("transform", `translate(${-spacing * 0.5}, 0)`);
+
+            // 分子 - 根式表达式
+            const numerator = fracGroup.append("text")
+                .attr("x", 0)
+                .attr("y", -fracFontSize * 0.4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fracFontSize + "px")
+                .attr("fill", "white")
+                .text("√(x+1) - 1");
+
+            // 分母
+            const denominator = fracGroup.append("text")
+                .attr("x", 0)
+                .attr("y", fracFontSize * 0.8)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fracFontSize + "px")
+                .attr("fill", "white")
+                .text("x");
+
+            // 分数线
+            const fracLine = fracGroup.append("line")
+                .attr("x1", -fracFontSize * 1.5)
+                .attr("y1", 0)
+                .attr("x2", fracFontSize * 1.5)
+                .attr("y2", 0)
+                .attr("stroke", "white")
+                .attr("stroke-width", 2);
+
+            // 等号和结果
+            const equalsText = g.append("text")
+                .attr("x", spacing * 1.2)
+                .attr("y", 0)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .text("= 1/2");
+
+            // 添加动画
+            const allElements = g.selectAll("text, line");
+            allElements.attr("transform", "scale(0.5)").attr("opacity", 0)
+                .transition().duration(1500).ease(d3.easeElasticOut)
+                .attr("transform", "scale(1)").attr("opacity", 1);
+        }
+
+        // --- Control & Avatar Functions ---
+        async function startTeaching() {
+            const btn = document.getElementById('startBtn');
+            btn.textContent = '🔄 启动中...';
+            btn.disabled = true;
+            try {
+                await waitForSDK();
+                if(avatarPlatform) avatarPlatform.destroy();
+                avatarPlatform = new AvatarPlatform();
+                setupAvatarListeners();
+                
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (error) {
+                console.error("Failed to start teaching:", error);
+                btn.textContent = '❌ 连接失败';
+                btn.disabled = false;
+            }
+        }
+        
+        function setupAvatarListeners() {
+            avatarPlatform.on('connected', () => {
+                isConnected = true; isTeaching = true;
+                document.getElementById('startBtn').textContent = '💖 讲师已就绪';
+                speakContent(currentPage);
+            }).on('disconnected', () => {
+                isConnected = false; isTeaching = false;
+            }).on('error', (err) => {
+                console.error("Avatar error:", err);
+                isConnected = false; isTeaching = false;
+            });
+        }
+
+        async function speakContent(pageNum) {
+            if (!isTeaching || !isConnected) return;
+            const content = subtitleScript[pageNum];
+            if (!content) return;
+            document.getElementById('subtitleArea').textContent = content;
+            try {
+                const actionId = getActionsForPage(pageNum);
+                await performVirtualAction(actionId);
+                await avatarPlatform.writeText(content);
+            } catch (error) {
+                console.error("Speak content failed:", error);
+            }
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (window.AvatarPlatform) return resolve();
+                const timeout = setTimeout(() => reject(new Error('SDK load timeout')), 5000);
+                window.addEventListener('sdkReady', () => {
+                    clearTimeout(timeout);
+                    resolve();
+                }, { once: true });
+            });
+        }
+
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform || !actionId) return;
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        function getActionsForPage(pageNum) {
+            const actionMap = {
+                1: 'A_RLH_welcome_O',
+                2: 'A_LH_introduced_O',
+                3: 'A_RH_please1_O',
+                4: 'A_RLH_emphasize_O',
+                5: 'A_U_No_pointing_O',
+                6: 'A_U_No_pointing_O'
+            };
+            return actionMap[pageNum];
+        }
+        
+        function nextPage() { switchToPage(Math.min(totalPages, currentPage + 1)); }
+        function previousPage() { switchToPage(Math.max(1, currentPage - 1)); }
+        function restart() { switchToPage(1); }
+        function updatePageInfo() { document.getElementById('currentPage').textContent = currentPage; }
+
+        let isAutoPlaying = false;
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.getElementById('autoPlayBtn').textContent = '🎬 自动播放';
+                return;
+            }
+            isAutoPlaying = true;
+            document.getElementById('autoPlayBtn').textContent = '⏹️ 停止播放';
+            if (!isConnected) await startTeaching();
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (!isAutoPlaying) break;
+                switchToPage(i, true);
+                await new Promise(r => setTimeout(r, autoPlayDurations[i]));
+            }
+            isAutoPlaying = false;
+            document.getElementById('autoPlayBtn').textContent = '🎬 自动播放';
+        }
+    </script>
+</body>
+</html>

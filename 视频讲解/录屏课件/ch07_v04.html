@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第7章 视频 7.4 第七章：知识点回顾与习题精讲</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/noto-serif-sc.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('✅ MathJax已加载并配置完成');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="./assets/lesson-template.css">
+</head>
+<body class="blackboard">
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+    <div id="slide-container" class="slide-container flex-grow">
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>知识图谱</h2>
+      <ul><li>微分方程概念 → 分离变量 → 线性方程 → 应用</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>流程图逐步点亮。</li><li>“动态世界”主题出现。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>例题 1</h2>
+      <ul><li>题：y' = y(1−y)</li><li>分离：dy/(y(1−y)) = dx</li><li>积分：ln|y| − ln|1−y| = x + C</li><li>解：y=\frac{1}{1+Ce^{−x}}</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>积分分部分展开。</li><li>解的 Sigmoid 曲线展示。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>例题 2</h2>
+      <ul><li>题：y' + 2y = 4</li><li>积分因子：μ=e^{2x}</li><li>结果：y=2 + Ce^{−2x}</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>步骤展示。</li><li>曲线示意 y→2 的收敛。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>总结</h2>
+      <ul><li>作业：分离变量 2 题，线性方程 2 题</li><li>预告：下一章多元函数微分学</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>作业清单。</li><li>章节链接箭头。</li></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="subtitle-area" id="subtitleArea">欢迎学习第七章：知识点回顾与习题精讲！点击开始讲课启动虚拟人讲师。</div>
+    <div class="control-bar">
+        <div class="control-title">第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">4</span> 页</div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn autoplay" onclick="startAutoPlay()" id="autoPlayBtn">🎬 自动播放</button>
+        <div class="control-hint">💡 录制提示：点击自动播放后立即开始录屏，系统会自动完成全部演示。</div>
+        <div class="control-shortcuts">💡 快捷键：空格/→ 下一页，← 上一页，Enter 播放当前页</div>
+    </div>
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+    <script>
+        const lessonTitle = "第七章：知识点回顾与习题精讲";
+        const subtitleScript = {
+    "1": "微分方程让我们从变化出发理解世界，解法就是打开问题的钥匙。",
+    "2": "这是著名的 Logistic 方程，常用于人口模型。",
+    "3": "线性方程的解通常由稳态值加上指数衰减组成。",
+    "4": "准备好进阶到多元函数，体验三维空间的变化。\" ## 第八章：多元函数微分学 (进入三维) * `视频 8.1`: **多元函数与偏导数入门** * `视频 8.2`: **全微分与多元复合函数求导** * `视频 8.3`: **第八章：知识点回顾与习题精讲** #### 本章PPT执行总控表 | 视频 | 页面数量 | PPT主视觉关键词 | 动画亮点 | 互动/练习提示 | | --- | --- | --- | --- | --- | | 8.1 多元函数与偏导数入门 | 4 | 三维曲面透视、偏导方向箭头 | 曲面切片、沿 x/y 方向切线、偏导极限演示 | 设置“选择偏导方向”互动题，点击对应箭头显示解释 | | 8.2 全微分与多元复合函数求导 | 4 | 全微分矩阵布局、链式网络图 | 全微分展开公式、变量替换路径动画、雅可比矩阵可视化 | 练习页提供“填写微分公式中的系数”表格并给出即时校验 | | 8.3 第八章：知识点回顾与习题精讲 | 4 | 三维应用场景、偏导工具清单 | 曲面近似对比、链式网络回顾、综合例题拆解 | 章末加入工程/经济案例问答及拓展阅读链接 |"
+};
+        const actionMap = {
+    "1": "A_RLH_welcome_O",
+    "2": "A_LH_introduced_O",
+    "3": "A_RH_point_O",
+    "4": "A_RLH_welcome_O"
+};
+        const slideTitles = {
+    "1": "知识图谱",
+    "2": "例题 1",
+    "3": "例题 2",
+    "4": "总结"
+};
+        const slideDurations = {
+    "1": 40000,
+    "2": 70000,
+    "3": 70000,
+    "4": 40000
+};
+        const totalSlides = 4;
+
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+            currentSlide = index;
+            document.getElementById('currentSlide').textContent = index + 1;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([slides[index]]).catch(err => console.error(err));
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function restart() {
+            showSlide(0);
+            if (!isAutoPlaying) speakContent(1);
+        }
+
+        function updateSubtitle(text) {
+            const area = document.getElementById('subtitleArea');
+            if (area) {
+                area.textContent = text;
+            }
+        }
+
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (!indicator) return;
+            indicator.textContent = message;
+            indicator.className = 'status-indicator';
+            if (type === 'connected') indicator.classList.add('connected');
+            if (type === 'error') indicator.classList.add('error');
+            if (type === 'connecting') indicator.classList.add('connecting');
+            if (type === 'recording') indicator.classList.add('recording');
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+            try {
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                if (avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+                avatarPlatform = new AvatarPlatform({ useInlinePlayer: true });
+                avatarPlatform
+                    .on('connected', () => {
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => speakContent(currentSlide + 1), 500);
+                    })
+                    .on('disconnected', () => {
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '重新连接';
+                        startBtn.disabled = false;
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '连接失败';
+                        startBtn.disabled = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1, move_h: 0, move_v: 0, audio_format: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            const text = subtitleScript[slideNum] || '';
+            updateSubtitle(text ? `【第${slideNum}页/${totalSlides}页】` + text : `第${slideNum}页`);
+            if (!isTeaching || !isConnected || !avatarPlatform || !text) return;
+            try {
+                const action = actionMap[slideNum];
+                if (action) {
+                    await avatarPlatform.writeCmd('action', action);
+                }
+                await avatarPlatform.writeText(text, { nlp: false });
+            } catch (error) {
+                console.error('❌ 语音播报失败:', error);
+            }
+        }
+
+        async function startAutoPlay() {
+            const autoBtn = document.getElementById('autoPlayBtn');
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                autoBtn.textContent = '🎬 自动播放';
+                autoBtn.classList.remove('stop');
+                updateStatus('自动播放已停止');
+                return;
+            }
+            isAutoPlaying = true;
+            autoBtn.textContent = '⏹️ 停止播放';
+            autoBtn.classList.add('stop');
+            updateStatus('🎬 自动播放开始！', 'recording');
+
+            for (let slide = 1; slide <= totalSlides; slide++) {
+                if (!isAutoPlaying) break;
+                showSlide(slide - 1);
+                speakContent(slide);
+                const duration = slideDurations[slide] || 15000;
+                await new Promise(resolve => setTimeout(resolve, duration));
+            }
+
+            isAutoPlaying = false;
+            autoBtn.textContent = '🎬 自动播放';
+            autoBtn.classList.remove('stop');
+            updateStatus('课程播放结束');
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                event.preventDefault();
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousSlide();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                speakContent(currentSlide + 1);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('totalSlides').textContent = totalSlides;
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

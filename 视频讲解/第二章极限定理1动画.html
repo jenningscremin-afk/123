@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 无穷极限：团队合作的智慧</title>
+
+    <!-- 本地思源宋体字体文件 -->
+    <link rel="stylesheet" href="./noto-serif-sc.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css">
+
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif CN',
+                         'Songti SC', 'SimSun', '宋体', serif;
+            background-color: white;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 简洁背景 */
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            position: relative;
+            border: none;
+            margin: 0;
+        }
+
+        /* 虚拟人显示区域 - 保持原位置 */
+        .avatar-container {
+            position: fixed;
+            top: 60%;
+            left: calc(50% - 90px);
+            transform: translate(-50%, -50%);
+            width: 750px;
+            height: 850px;
+            overflow: hidden;
+            z-index: 50;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .wrapper {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            pointer-events: auto;
+        }
+
+        /* 教学内容区域 - 左右分栏布局 */
+        .content-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 50px;
+            z-index: 10;
+            overflow: visible;
+        }
+
+        /* 页面内容 */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 5px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* 左侧文字区域 */
+        .text-section {
+            flex: 0 0 45%;
+            background: transparent;
+            padding: 15px;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 100%;
+        }
+
+        /* 右侧图表区域 */
+        .chart-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 文字样式 */
+        .chalk-text {
+            color: #2c3e50;
+            font-family: 'Noto Serif SC', serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #1e3c72;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 简化的内容框 - 减小间距 */
+        .content-box {
+            background: transparent;
+            border-radius: 0;
+            padding: 6px 0;
+            margin: 2px 0;
+            border-left: none;
+            transition: all 0.3s ease;
+            transform: translateX(-20px);
+            opacity: 0;
+            animation: slideInLeft 0.6s ease-out forwards;
+        }
+
+        .content-box:nth-child(2) { animation-delay: 0.1s; }
+        .content-box:nth-child(3) { animation-delay: 0.2s; }
+        .content-box:nth-child(4) { animation-delay: 0.3s; }
+        .content-box:nth-child(5) { animation-delay: 0.4s; }
+
+        .content-box:hover {
+            background: transparent;
+            transform: translateX(5px);
+        }
+
+        @keyframes slideInLeft {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .content-text {
+            font-size: 16px;
+            color: #2c3e50;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* 数学公式样式 - 调整高度和颜色 */
+        .math-formula {
+            background: rgba(30, 60, 114, 0.05);
+            border: 2px solid rgba(30, 60, 114, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #1e3c72;
+            font-weight: 700;
+            transform: scale(0.9);
+            opacity: 0;
+            animation: popIn 0.6s ease-out 0.5s forwards;
+            transition: all 0.3s ease;
+        }
+
+        .math-formula:hover {
+            transform: scale(1.05);
+            background: rgba(30, 60, 114, 0.08);
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+        }
+
+        @keyframes popIn {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 图表容器 - 占满右侧 */
+        .graph-container {
+            flex: 1;
+            background: transparent;
+            padding: 10px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .graph-title {
+            font-size: 0.95rem;
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .graph-content {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+        }
+
+        /* 字幕区域 - 无边框，黑色描边文字 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 5px;
+            left: 20px;
+            right: 20px;
+            height: 40px;
+            background: transparent;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            color: white;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 0 15px;
+            line-height: 1.4;
+            text-shadow:
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000,
+                0 0 3px rgba(0,0,0,0.8);
+            pointer-events: none;
+            font-weight: 600;
+        }
+
+        /* 左侧控制栏 - 现代玻璃效果 */
+        .control-bar {
+            position: fixed;
+            left: -240px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 270px;
+            height: auto;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 200;
+            border-radius: 0 20px 20px 0;
+            padding: 25px 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-bar:hover {
+            left: 0;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-bar::before {
+            content: '▶️';
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 8px;
+            border-radius: 0 15px 15px 0;
+            font-size: 0.9rem;
+            writing-mode: vertical-lr;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #333;
+        }
+
+        .btn {
+            padding: 14px 22px;
+            background: rgba(255, 255, 255, 0.25);
+            color: #333;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #222;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .btn.primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 状态指示器 - 现代设计 */
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 100;
+            transition: all 0.3s ease;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-indicator.connected {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            display: block;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .status-indicator.recording {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            animation: pulse 1.5s infinite;
+            display: block;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+
+        /* 团队图标 - 增强效果 */
+        .team-icon {
+            display: inline-block;
+            font-size: 1.4rem;
+            margin-right: 0.6rem;
+            vertical-align: middle;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+
+        /* 成功失败标记 - 现代样式 */
+        .success-mark {
+            color: #00c851;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0,200,81,0.3);
+        }
+
+        .fail-mark {
+            color: #ff3547;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(255,53,71,0.3);
+        }
+
+        /* 录制模式 */
+        .recording-mode .status-indicator {
+            opacity: 0;
+        }
+
+        .recording-mode .control-bar {
+            left: -320px;
+        }
+
+        /* 添加页面切换动画 */
+        .page:not(.active) {
+            transform: translateY(20px);
+        }
+
+        /* 动画小人样式 */
+        .animated-runner {
+            display: inline-block;
+            font-size: 18px;
+            animation: bounce 2s infinite;
+        }
+
+        .runner-right {
+            color: #2196F3;
+        }
+
+        .runner-left {
+            color: #4CAF50;
+            transform: scaleX(-1);
+        }
+
+        .arrow-right {
+            color: #FF9800;
+            margin-left: 3px;
+            animation: slideInRight 1s ease-out;
+        }
+
+        .arrow-left {
+            color: #FF9800;
+            margin-right: 3px;
+            animation: slideInLeft 1s ease-out;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .content-area {
+                left: 40px;
+                right: 40px;
+            }
+
+            .page {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                left: 20px;
+                right: 20px;
+                top: 20px;
+                bottom: 80px;
+            }
+
+            .page {
+                padding: 15px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .control-bar {
+                width: 220px;
+                left: -200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blackboard">
+        <div id="statusIndicator" class="status-indicator">等待连接</div>
+
+        <!-- 虚拟人显示区域 -->
+        <div class="avatar-container">
+            <div class="wrapper" id="avatarWrapper"></div>
+        </div>
+
+        <div class="content-area">
+            <!-- 第1页：团队合作的开始 -->
+            <div class="page active" data-page="1">
+                <div class="text-section">
+                    <div class="page-title">
+                        <svg width="20" height="20" fill="currentColor" class="bi bi-building" viewBox="0 0 16 16" style="margin-right: 8px;">
+                            <path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z"/>
+                            <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V1Zm11 0H3v14h3v-2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V15h3V1Z"/>
+                        </svg>
+                        优秀团队的秘密
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <span class="team-icon">👥</span><strong>公司的发展目标</strong><br>
+                            一家公司有东部和西部两个团队。
+                            老板说："不管发展多久，两个团队最终都要达到同一个目标！"
+                        </div>
+                    </div>
+
+                    <div class="math-formula">
+                        $$\lim_{x \rightarrow \infty} f(x) = A$$
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <strong>📈 团队业绩规律</strong><br>
+                            随着时间推移，团队的努力会越来越接近某个目标值。
+                            这个"最终目标"就是我们要找的极限！
+                        </div>
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <strong>🎯 成功的关键</strong><br>
+                            不管从哪个方向努力，最终都要汇聚到同一个目标点。
+                            这就是团队合作的精髓！
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <div class="graph-title">📈 看！两个团队的业绩都逐渐接近目标</div>
+                    <div class="graph-container">
+                        <div id="graph1" class="graph-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第2页：东西部不同发展方向 -->
+            <div class="page" data-page="2">
+                <div class="text-section">
+                    <div class="page-title">
+                        <svg width="20" height="20" fill="currentColor" class="bi bi-building-exclamation" viewBox="0 0 16 16" style="margin-right: 8px;">
+                            <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6.5a.5.5 0 0 1-1 0V1H3v14h3v-2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V15h3v-2.5a.5.5 0 0 1 1 0V15a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V1Z"/>
+                            <path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z"/>
+                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1.5a.5.5 0 0 1-1 0V11a.5.5 0 0 1 1 0Zm0 3a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z"/>
+                        </svg>
+                        两个团队的分歧
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <svg width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                            </svg><strong>公司的困境</strong><br>
+                            <svg width="14" height="14" fill="#2196F3" class="bi bi-arrow-up-circle-fill" viewBox="0 0 16 16" style="margin-right: 3px;">
+                                <path d="M16 8A8 8 0 1 0 0 8a8 8 0 0 0 16 0zm-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707V11.5z"/>
+                            </svg> 东部团队努力向上，目标是天花板<br>
+                            <svg width="14" height="14" fill="#4CAF50" class="bi bi-arrow-down-circle-fill" viewBox="0 0 16 16" style="margin-right: 3px;">
+                                <path d="M16 8A8 8 0 1 0 0 8a8 8 0 0 0 16 0zM8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V4.5z"/>
+                            </svg> 西部团队努力向下，目标是地下室<br>
+                            老板头疼了：两个团队目标完全相反！
+                        </div>
+                    </div>
+
+                    <div class="math-formula" style="padding: 8px; margin: 8px 0;">
+                        $$\lim_{x \rightarrow +\infty} \arctan(x) = \frac{\pi}{2}$$
+                        $$\lim_{x \rightarrow -\infty} \arctan(x) = -\frac{\pi}{2}$$
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <svg width="16" height="16" fill="#FF5722" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                            </svg><strong>无法统一</strong><br>
+                            两个团队永远不会在同一个地方相遇！
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <div class="graph-title">🏢 看！两个团队朝着完全不同的目标努力</div>
+                    <div class="graph-container">
+                        <div id="graph2" class="graph-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第3页：成功的团队合作与总结 -->
+            <div class="page" data-page="3">
+                <div class="text-section">
+                    <div class="page-title">
+                        <svg width="20" height="20" fill="#FFD700" class="bi bi-trophy-fill" viewBox="0 0 16 16" style="margin-right: 8px;">
+                            <path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33.076 33.076 0 0 1 2.5.5zm.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935zm10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935z"/>
+                        </svg>
+                        团队成功的法则
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <svg width="16" height="16" fill="currentColor" class="bi bi-handshake-fill" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                <path d="M6.45 1.45A.5.5 0 0 1 7 1h2a.5.5 0 0 1 .55.45l.5 2.237a2.5 2.5 0 0 1-.61 2.01l-.94.94a.5.5 0 0 1-.707 0L6.5 5.354a.5.5 0 0 1 0-.708l.94-.94a2.5 2.5 0 0 1-.61-2.01L6.45 1.45z"/>
+                                <path d="M2.343 4.343a8 8 0 0 1 11.314 0l-1.06 1.061a6.5 6.5 0 0 0-9.193 0l-1.06-1.06z"/>
+                                <path d="M10.828 9.828a4 4 0 0 1-5.656 0l-.707.707a5 5 0 0 0 7.07 0l-.707-.707zM8 6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                            </svg><strong>理想的公司</strong><br>
+                            <svg width="14" height="14" fill="#2196F3" class="bi bi-building-fill" viewBox="0 0 16 16" style="margin-right: 3px;">
+                                <path d="M3 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h3v-3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V16h3a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1H3Zm1 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z"/>
+                            </svg> 东部团队："我们的目标是总部大厅！"<br>
+                            <svg width="14" height="14" fill="#4CAF50" class="bi bi-building-fill" viewBox="0 0 16 16" style="margin-right: 3px;">
+                                <path d="M3 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h3v-3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V16h3a1 1 0 0 0 1-1V1a1 1 0 0 0-1-1H3Zm1 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z"/>
+                            </svg> 西部团队："我们的目标也是总部大厅！"<br>
+                            老板笑了：两个团队目标一致！
+                        </div>
+                    </div>
+
+                    <div class="math-formula" style="background: rgba(255, 215, 0, 0.1); color: #D84315; padding: 8px; margin: 8px 0;">
+                        $$\lim_{x \rightarrow \infty} f(x) = A \Leftrightarrow \lim_{x \rightarrow +\infty} f(x) = \lim_{x \rightarrow -\infty} f(x) = A$$
+                        <div style="font-size: 0.9rem; margin-top: 8px; font-weight: 800;">🌟 团队合作黄金法则 🌟</div>
+                    </div>
+
+                    <div class="content-box">
+                        <div class="content-text">
+                            <svg width="16" height="16" fill="currentColor" class="bi bi-bullseye" viewBox="0 0 16 16" style="margin-right: 5px;">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10zm0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/>
+                                <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+                                <path d="M8.5 8a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
+                            </svg><strong>判断方法</strong><br>
+                            看东部和西部团队的最终目标，相同就有统一目标，不同就目标分裂！
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <div class="graph-title">🤝 看！两个团队最终在总部大厅相遇</div>
+                    <div class="graph-container">
+                        <div id="graph3" class="graph-content"></div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- 字幕显示区域 -->
+        <div class="subtitle-area" id="subtitleArea">
+            🎯 欢迎学习无穷极限！今天我们用团队合作来理解数学原理
+        </div>
+
+        <div class="control-bar">
+            <div style="color: #333; margin-bottom: 1rem; text-align: center; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(255,255,255,0.3);">
+                第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">3</span> 页
+            </div>
+            <button class="btn" onclick="previousPage()">⬅️ 上一页</button>
+            <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+            <button class="btn" onclick="nextPage()">下一页 ➡️</button>
+            <button class="btn" onclick="restart()">🔄 重新开始</button>
+            <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn">🎬 自动播放</button>
+            <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 10px; line-height: 1.2;">
+                💡 录制提示：<br>
+                点击自动播放后立即开始录屏<br>
+                系统会自动完成全部演示
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript代码 -->
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script src="./polyfill.min.js"></script>
+    <script src="./mathjax-tex-mml-chtml.js"></script>
+    <script src="./plotly-2.35.2.min.js"></script>
+    <script src="./d3.v7.min.js"></script>
+
+    <script>
+        // 全局变量
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentPage = 1;
+        const totalPages = 3;
+        let isAutoPlaying = false;
+
+        // 教学内容 - 团队合作故事（按6-7字/秒语速优化）
+        const pageContent = {
+            1: "同学们好！今天我们用团队合作的故事，来理解无穷极限的概念。请看屏幕上的动画。想象一家公司，有东部和西部两个团队。老板对他们说：不管发展多久，两个团队最终都要达到同一个目标！这就是无穷极限的核心思想。观察图中的蓝色小人和绿色小人，他们沿着不同的路径前进，但最终都趋向同一个目标点。随着时间推移，团队的努力会越来越接近某个目标值。这个最终目标，就是我们要找的极限值！",
+
+            2: "现在我们看第二个例子，一个有问题的公司。请注意观察两个小人的移动方向。东部团队的蓝色小人向右移动，他们的目标是天花板，也就是正的二分之派。西部团队的绿色小人向左移动，他们的目标是地下室，也就是负的二分之派。老板很头疼：两个团队的目标完全相反！这就像反正切函数的性质。当x趋向正无穷时，函数值趋向正的二分之派。当x趋向负无穷时，函数值趋向负的二分之派。因为两个方向的极限值不相等，所以无穷极限不存在！",
+
+            3: "最后我们看一个成功的公司案例。观察动画中的两个小人，他们从中心点出发，分别向左右两个方向移动。东部团队说：我们的目标是总部大厅！西部团队也说：我们的目标也是总部大厅！老板笑了：两个团队目标完全一致！这就是团队合作的黄金法则。在数学上，这个函数是一除以一加x的平方。无论x趋向正无穷还是负无穷，函数值都趋向于零。这就是无穷极限存在的条件：当且仅当左极限等于右极限！记住这个判断方法：看两个方向的最终目标，相同就有统一的极限，不同就极限不存在！"
+        };
+
+        // 状态更新
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                }
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePageInfo();
+            console.log('✨ 团队合作教学系统初始化完成');
+            setTimeout(() => {
+                drawPageGraph(1);
+                renderMathJax();
+            }, 1000);
+        });
+
+        // 等待SDK
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时'));
+                }, 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        // 开始教学
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                await waitForSDK();
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！');
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => {
+                            speakContent(1);
+                        }, 1000);
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                    });
+
+                // 虚拟人配置保持不变
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+            }
+        }
+
+        // 动作控制函数 - 根据动作ID执行虚拟人动作
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                // 使用官方writeCmd方法驱动动作
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        // 根据页面内容选择合适的动作 - 精确匹配语音播放时间
+        function getActionsForPage(pageNum) {
+            const actionMap = {
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 25 }],    // 双手打开欢迎 - 团队介绍，126字，25秒
+                2: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 32 }],      // 左手向左有请 - 指向右侧图形，140字，32秒
+                3: [{ type: 'action', value: 'A_RH_please_O', wb: 2, we: 35 }]       // 右手向右有请 - 指向右侧动态演示，154字，35秒
+            };
+            return actionMap[pageNum] || [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 25 }];
+        }
+
+        // 语音播报 - 增加手势动作和图表动画同步
+        async function speakContent(pageNum) {
+            if (!isTeaching || !isConnected || !avatarPlatform) return;
+            const content = pageContent[pageNum];
+            if (!content) return;
+
+            try {
+                // 先执行动作
+                const actions = getActionsForPage(pageNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                // 同时启动图表动画
+                setTimeout(() => {
+                    triggerGraphAnimation(pageNum);
+                }, 2000); // 延迟2秒后开始图表动画
+
+                // 然后播放语音内容
+                await avatarPlatform.writeText(content, { nlp: false });
+                updateSubtitle(content);
+                console.log(`✅ 沐沐讲解第${pageNum}页，动作: ${actions[0]?.value}`);
+            } catch (error) {
+                console.error('❌ 讲解失败:', error);
+            }
+        }
+
+        // 触发图表动画
+        function triggerGraphAnimation(pageNum) {
+            switch(pageNum) {
+                case 1:
+                    // 重新绘制第一页图表以触发动画
+                    drawTeamGoalD3();
+                    break;
+                case 2:
+                    // 重新绘制第二页图表以触发动画
+                    drawDifferentGoalsD3();
+                    break;
+                case 3:
+                    // 重新绘制第三页图表以触发动画
+                    drawUnifiedGoalD3();
+                    break;
+            }
+        }
+
+        // 更新字幕
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        // 页面控制
+        function switchToPage(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            const targetPage = document.querySelector(`[data-page="${pageNum}"]`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageNum;
+                updatePageInfo();
+                setTimeout(() => {
+                    drawPageGraph(pageNum);
+                    renderMathJax();
+                }, 500);
+                if (!isAutoPlaying) {
+                    setTimeout(() => {
+                        speakContent(pageNum);
+                    }, 800);
+                }
+            }
+        }
+
+        function switchToPageSilent(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            const targetPage = document.querySelector(`[data-page="${pageNum}"]`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageNum;
+                updatePageInfo();
+                setTimeout(() => {
+                    drawPageGraph(pageNum);
+                    renderMathJax();
+                }, 500);
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) switchToPage(currentPage + 1);
+        }
+
+        function previousPage() {
+            if (currentPage > 1) switchToPage(currentPage - 1);
+        }
+
+        function restart() {
+            switchToPage(1);
+        }
+
+        function updatePageInfo() {
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+        }
+
+        // 绘图函数 - 使用D3.js和动画
+        function drawPageGraph(pageNum) {
+            switch(pageNum) {
+                case 1: drawTeamGoalD3(); break;
+                case 2: drawDifferentGoalsD3(); break;
+                case 3: drawUnifiedGoalD3(); break;
+            }
+        }
+
+        // 创建SVG图标的辅助函数 - 使用内嵌SVG
+        function createPersonIcon(g, x, y, color, direction = 'right') {
+            const iconGroup = g.append('g')
+                .attr('transform', `translate(${x}, ${y})`)
+                .style('opacity', 0);
+
+            // 人物SVG - 可以水平翻转
+            const personSvg = iconGroup.append('svg')
+                .attr('width', 20)
+                .attr('height', 20)
+                .attr('x', -10)
+                .attr('y', -10)
+                .attr('viewBox', '0 0 16 16')
+                .attr('fill', color)
+                .style('transform', direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)');
+
+            // 行走的人的路径
+            personSvg.append('path')
+                .attr('d', 'M9.5 1.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM6.44 3.752A.75.75 0 0 1 7 3.5h1.445c.742 0 1.32.643 1.243 1.38l-.43 4.083a1.8 1.8 0 0 1-.088.395l-.318.906.213.242a.8.8 0 0 1 .114.175l2 4.25a.75.75 0 1 1-1.357.638l-1.956-4.154-1.68-1.921A.75.75 0 0 1 6 8.96l.138-2.613-.435.489-.464 2.786a.75.75 0 1 1-1.48-.246l.5-3a.75.75 0 0 1 .18-.375l2-2.25Z');
+
+            // 方向箭头
+            const arrowSvg = iconGroup.append('svg')
+                .attr('width', 16)
+                .attr('height', 16)
+                .attr('x', direction === 'right' ? 15 : -25)
+                .attr('y', -8)
+                .attr('viewBox', '0 0 16 16')
+                .attr('fill', '#FF9800');
+
+            if (direction === 'right') {
+                arrowSvg.append('path')
+                    .attr('d', 'M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z');
+            } else {
+                arrowSvg.append('path')
+                    .attr('d', 'M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z');
+            }
+
+            return iconGroup;
+        }
+
+        // 创建奖杯图标
+        function createTrophyIcon(g, x, y, color) {
+            const iconGroup = g.append('g')
+                .attr('transform', `translate(${x}, ${y})`)
+                .style('opacity', 0);
+
+            const trophySvg = iconGroup.append('svg')
+                .attr('width', 24)
+                .attr('height', 24)
+                .attr('x', -12)
+                .attr('y', -12)
+                .attr('viewBox', '0 0 16 16')
+                .attr('fill', color);
+
+            trophySvg.append('path')
+                .attr('d', 'M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33.076 33.076 0 0 1 2.5.5zm.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935zm10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935z');
+
+            return iconGroup;
+        }
+
+        // 第1页：团队目标 - D3.js版本
+        function drawTeamGoalD3() {
+            const container = d3.select('#graph1');
+            container.selectAll('*').remove();
+
+            const margin = {top: 20, right: 20, bottom: 40, left: 50};
+            const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = container.node().getBoundingClientRect().height - margin.top - margin.bottom;
+
+            const svg = container.append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .style('background', 'transparent');
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            // 创建比例尺
+            const xScale = d3.scaleLinear().domain([0.1, 10]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([0, 2]).range([height, 0]);
+
+            // 创建线条生成器
+            const line = d3.line()
+                .x(d => xScale(d.x))
+                .y(d => yScale(d.y))
+                .curve(d3.curveMonotoneX);
+
+            // 生成数据
+            const data1 = [], data2 = [];
+            for (let x = 0.1; x <= 10; x += 0.1) {
+                data1.push({x: x, y: 1/x});
+                data2.push({x: x, y: 2/(x+1)});
+            }
+
+            // 添加坐标轴 - 美化样式
+            const xAxis = g.append('g')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(8))
+                .style('color', '#333');
+
+            xAxis.append('text')
+                .attr('x', width/2)
+                .attr('y', 35)
+                .attr('fill', '#1e3c72')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .text('时间越来越长 →');
+
+            const yAxis = g.append('g')
+                .call(d3.axisLeft(yScale).ticks(6))
+                .style('color', '#333');
+
+            yAxis.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', -35)
+                .attr('x', -height/2)
+                .attr('fill', '#1e3c72')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .text('距离目标还有多远');
+
+            // 添加网格线
+            g.selectAll('.grid-x')
+                .data(xScale.ticks(8))
+                .enter().append('line')
+                .attr('class', 'grid-x')
+                .attr('x1', d => xScale(d))
+                .attr('x2', d => xScale(d))
+                .attr('y1', 0)
+                .attr('y2', height)
+                .attr('stroke', '#e0e0e0')
+                .attr('stroke-width', 0.5);
+
+            g.selectAll('.grid-y')
+                .data(yScale.ticks(6))
+                .enter().append('line')
+                .attr('class', 'grid-y')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', d => yScale(d))
+                .attr('y2', d => yScale(d))
+                .attr('stroke', '#e0e0e0')
+                .attr('stroke-width', 0.5);
+
+            // 添加目标线（y=0）
+            g.append('line')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', yScale(0))
+                .attr('y2', yScale(0))
+                .attr('stroke', '#FF9800')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '5,5')
+                .style('opacity', 0)
+                .transition()
+                .duration(1000)
+                .style('opacity', 1);
+
+            // 添加函数曲线 - 带动画
+            const path1 = g.append('path')
+                .datum(data1)
+                .attr('fill', 'none')
+                .attr('stroke', '#2196F3')
+                .attr('stroke-width', 4)
+                .attr('d', line);
+
+            const path2 = g.append('path')
+                .datum(data2)
+                .attr('fill', 'none')
+                .attr('stroke', '#4CAF50')
+                .attr('stroke-width', 4)
+                .attr('d', line);
+
+            // 路径动画
+            const totalLength1 = path1.node().getTotalLength();
+            const totalLength2 = path2.node().getTotalLength();
+
+            path1
+                .attr('stroke-dasharray', totalLength1 + ' ' + totalLength1)
+                .attr('stroke-dashoffset', totalLength1)
+                .transition()
+                .duration(2000)
+                .attr('stroke-dashoffset', 0);
+
+            path2
+                .attr('stroke-dasharray', totalLength2 + ' ' + totalLength2)
+                .attr('stroke-dashoffset', totalLength2)
+                .transition()
+                .duration(2000)
+                .delay(500)
+                .attr('stroke-dashoffset', 0);
+
+            // 添加图例 - 右下角位置
+            const legend = g.append('g')
+                .attr('transform', `translate(${width - 120}, ${height - 60})`)
+                .style('opacity', 0);
+
+            // 透明背景
+            legend.append('rect')
+                .attr('x', -5)
+                .attr('y', -5)
+                .attr('width', 115)
+                .attr('height', 55)
+                .attr('fill', 'rgba(255,255,255,0.9)')
+                .attr('stroke', 'none')
+                .attr('rx', 3);
+
+            legend.append('line')
+                .attr('x1', 0).attr('x2', 15)
+                .attr('y1', 10).attr('y2', 10)
+                .attr('stroke', '#2196F3')
+                .attr('stroke-width', 3);
+
+            legend.append('text')
+                .attr('x', 20).attr('y', 14)
+                .text('东部团队业绩')
+                .style('font-size', '10px')
+                .style('font-weight', '500')
+                .attr('fill', '#333');
+
+            legend.append('line')
+                .attr('x1', 0).attr('x2', 15)
+                .attr('y1', 30).attr('y2', 30)
+                .attr('stroke', '#4CAF50')
+                .attr('stroke-width', 3);
+
+            legend.append('text')
+                .attr('x', 20).attr('y', 34)
+                .text('西部团队业绩')
+                .style('font-size', '10px')
+                .style('font-weight', '500')
+                .attr('fill', '#333');
+
+            // 图例淡入动画
+            legend.transition()
+                .duration(500)
+                .delay(2500)
+                .style('opacity', 1);
+
+            // 添加奖杯图标表示目标
+            const trophy = createTrophyIcon(g, width - 30, yScale(0) - 10, '#FFD700');
+            trophy.transition()
+                .duration(1000)
+                .delay(1000)
+                .style('opacity', 1);
+
+            // 添加团队标识 - 都向右移动
+            const teamIcon1 = g.append('text')
+                .attr('x', xScale(0.5))
+                .attr('y', yScale(1/0.5) + 5)
+                .text('�→')
+                .style('font-size', '16px')
+                .style('opacity', 0);
+
+            const teamIcon2 = g.append('text')
+                .attr('x', xScale(0.5))
+                .attr('y', yScale(2/1.5) + 5)
+                .text('�→')
+                .style('font-size', '16px')
+                .style('opacity', 0);
+
+            // 添加动态点表示趋向目标 - 修正轨迹，确保在线上
+            const movingDot1 = g.append('circle')
+                .attr('r', 5)
+                .attr('fill', '#2196F3')
+                .attr('cx', xScale(1))
+                .attr('cy', yScale(1/1))  // 确保在1/x线上
+                .style('opacity', 0);
+
+            const movingDot2 = g.append('circle')
+                .attr('r', 5)
+                .attr('fill', '#4CAF50')
+                .attr('cx', xScale(1))
+                .attr('cy', yScale(2/(1+1)))  // 确保在2/(x+1)线上
+                .style('opacity', 0);
+
+            // 添加人物图标 - 都向右移动
+            const newTeamIcon1 = createPersonIcon(g, xScale(0.5), yScale(1/0.5), '#2196F3', 'right');
+            const newTeamIcon2 = createPersonIcon(g, xScale(0.5), yScale(2/1.5), '#4CAF50', 'right');
+
+            // 动画显示趋向过程 - 修正轨迹
+            setTimeout(() => {
+                // 第一个点沿着1/x曲线移动
+                movingDot1.style('opacity', 1);
+                newTeamIcon1.style('opacity', 1);
+
+                // 创建沿曲线移动的动画
+                let t = 0;
+                const animate1 = () => {
+                    t += 0.02;
+                    const x = 1 + t * 7;  // 从1到8
+                    if (x <= 8) {
+                        movingDot1
+                            .attr('cx', xScale(x))
+                            .attr('cy', yScale(1/x));
+                        newTeamIcon1
+                            .attr('transform', `translate(${xScale(x)}, ${yScale(1/x) - 25})`);
+                        requestAnimationFrame(animate1);
+                    }
+                };
+                animate1();
+
+                // 第二个点沿着2/(x+1)曲线移动
+                movingDot2.style('opacity', 1);
+                newTeamIcon2.style('opacity', 1);
+
+                let t2 = 0;
+                const animate2 = () => {
+                    t2 += 0.02;
+                    const x = 1 + t2 * 7;  // 从1到8
+                    if (x <= 8) {
+                        movingDot2
+                            .attr('cx', xScale(x))
+                            .attr('cy', yScale(2/(x+1)));
+                        newTeamIcon2
+                            .attr('transform', `translate(${xScale(x)}, ${yScale(2/(x+1)) - 25})`);
+                        requestAnimationFrame(animate2);
+                    }
+                };
+                setTimeout(animate2, 500);
+            }, 3000);
+        }
+
+        // 第2页：不同目标 - D3.js版本
+        function drawDifferentGoalsD3() {
+            const container = d3.select('#graph2');
+            container.selectAll('*').remove();
+
+            const margin = {top: 20, right: 20, bottom: 40, left: 60};
+            const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = container.node().getBoundingClientRect().height - margin.top - margin.bottom;
+
+            const svg = container.append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .style('background', 'transparent');
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            // 创建比例尺 - 修正范围，确保y轴正确显示
+            const xScale = d3.scaleLinear().domain([-5, 5]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-2, 2]).range([height, 0]);
+
+            // 创建线条生成器
+            const line = d3.line()
+                .x(d => xScale(d.x))
+                .y(d => yScale(d.y))
+                .curve(d3.curveMonotoneX);
+
+            // 生成arctan数据
+            const data = [];
+            for (let x = -5; x <= 5; x += 0.1) {
+                data.push({x: x, y: Math.atan(x)});
+            }
+
+            // 添加网格线
+            g.selectAll('.grid-x')
+                .data(xScale.ticks(8))
+                .enter().append('line')
+                .attr('class', 'grid-x')
+                .attr('x1', d => xScale(d))
+                .attr('x2', d => xScale(d))
+                .attr('y1', 0)
+                .attr('y2', height)
+                .attr('stroke', '#e0e0e0')
+                .attr('stroke-width', 0.5);
+
+            g.selectAll('.grid-y')
+                .data(yScale.ticks(6))
+                .enter().append('line')
+                .attr('class', 'grid-y')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', d => yScale(d))
+                .attr('y2', d => yScale(d))
+                .attr('stroke', '#e0e0e0')
+                .attr('stroke-width', 0.5);
+
+            // 添加坐标轴 - 修正x轴位置，应该在y=0处
+            const xAxis = g.append('g')
+                .attr('transform', `translate(0,${yScale(0)})`)
+                .call(d3.axisBottom(xScale).ticks(8))
+                .style('color', '#333');
+
+            // x轴标签 - 调整位置，避免与坐标轴重叠
+            xAxis.append('text')
+                .attr('x', width - 50)  // 移到右侧
+                .attr('y', -10)         // 在x轴上方
+                .attr('fill', '#1e3c72')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .text('团队努力方向 →');
+
+            const yAxis = g.append('g')
+                .attr('transform', `translate(${xScale(0)},0)`)  // y轴应该在x=0处
+                .call(d3.axisLeft(yScale).ticks(6))
+                .style('color', '#333');
+
+            // y轴标签 - 调整位置，放在y轴右侧
+            yAxis.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', 20)          // 在y轴右侧
+                .attr('x', -30)         // 靠近顶部
+                .attr('fill', '#1e3c72')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .text('↑ 团队目标高度');
+
+            // 添加目标线
+            const piHalf = Math.PI/2;
+
+            // 正π/2线
+            g.append('line')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', yScale(piHalf))
+                .attr('y2', yScale(piHalf))
+                .attr('stroke', '#F44336')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '5,5')
+                .style('opacity', 0)
+                .transition()
+                .duration(1000)
+                .delay(1500)
+                .style('opacity', 1);
+
+            // 负π/2线
+            g.append('line')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', yScale(-piHalf))
+                .attr('y2', yScale(-piHalf))
+                .attr('stroke', '#2196F3')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '5,5')
+                .style('opacity', 0)
+                .transition()
+                .duration(1000)
+                .delay(2000)
+                .style('opacity', 1);
+
+            // 添加arctan曲线
+            const path = g.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#9C27B0')
+                .attr('stroke-width', 4)
+                .attr('d', line);
+
+            // 路径动画
+            const totalLength = path.node().getTotalLength();
+            path
+                .attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                .attr('stroke-dashoffset', totalLength)
+                .transition()
+                .duration(2500)
+                .attr('stroke-dashoffset', 0);
+
+            // 图例在右下角
+            const legend = g.append('g')
+                .attr('transform', `translate(${width - 140}, ${height - 80})`)
+                .style('opacity', 0);
+
+            legend.append('rect')
+                .attr('x', -5)
+                .attr('y', -5)
+                .attr('width', 135)
+                .attr('height', 75)
+                .attr('fill', 'rgba(255,255,255,0.9)')
+                .attr('stroke', 'none')
+                .attr('rx', 3);
+
+            legend.append('line')
+                .attr('x1', 0).attr('x2', 15)
+                .attr('y1', 10).attr('y2', 10)
+                .attr('stroke', '#F44336')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '3,3');
+
+            legend.append('text')
+                .attr('x', 20).attr('y', 14)
+                .text('东部团队目标')
+                .style('font-size', '10px')
+                .style('font-weight', '500')
+                .attr('fill', '#F44336');
+
+            legend.append('line')
+                .attr('x1', 0).attr('x2', 15)
+                .attr('y1', 30).attr('y2', 30)
+                .attr('stroke', '#2196F3')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '3,3');
+
+            legend.append('text')
+                .attr('x', 20).attr('y', 34)
+                .text('西部团队目标')
+                .style('font-size', '10px')
+                .style('font-weight', '500')
+                .attr('fill', '#2196F3');
+
+            legend.append('line')
+                .attr('x1', 0).attr('x2', 15)
+                .attr('y1', 50).attr('y2', 50)
+                .attr('stroke', '#9C27B0')
+                .attr('stroke-width', 3);
+
+            legend.append('text')
+                .attr('x', 20).attr('y', 54)
+                .text('团队发展轨迹')
+                .style('font-size', '10px')
+                .style('font-weight', '500')
+                .attr('fill', '#9C27B0');
+
+            // 图例淡入动画
+            legend.transition()
+                .duration(500)
+                .delay(3000)
+                .style('opacity', 1);
+
+            // 添加分歧标志
+            const conflictIcon = g.append('text')
+                .attr('x', width/2)
+                .attr('y', 30)
+                .text('⚡')
+                .style('font-size', '24px')
+                .style('text-anchor', 'middle')
+                .style('opacity', 0)
+                .transition()
+                .duration(1000)
+                .delay(2500)
+                .style('opacity', 1);
+
+            // 添加东部团队小人（向右移动）
+            const eastTeam = g.append('text')
+                .attr('x', xScale(3))
+                .attr('y', yScale(Math.atan(3)) - 15)
+                .text('�→')
+                .style('font-size', '16px')
+                .style('opacity', 0);
+
+            // 添加西部团队小人（向左移动）
+            const westTeam = g.append('text')
+                .attr('x', xScale(-3))
+                .attr('y', yScale(Math.atan(-3)) + 25)
+                .text('←�')
+                .style('font-size', '16px')
+                .style('opacity', 0);
+
+            // 添加人物图标 - 注意方向
+            const newEastTeam = createPersonIcon(g, xScale(3), yScale(Math.atan(3)), '#2196F3', 'right');
+            const newWestTeam = createPersonIcon(g, xScale(-3), yScale(Math.atan(-3)), '#4CAF50', 'left');
+
+            // 添加动态点表示趋向 - 确保在arctan曲线上
+            const movingDot1 = g.append('circle')
+                .attr('r', 4)
+                .attr('fill', '#FF6B6B')
+                .attr('cx', xScale(0.5))
+                .attr('cy', yScale(Math.atan(0.5)))  // 确保在arctan曲线上
+                .style('opacity', 0);
+
+            const movingDot2 = g.append('circle')
+                .attr('r', 4)
+                .attr('fill', '#4ECDC4')
+                .attr('cx', xScale(-0.5))
+                .attr('cy', yScale(Math.atan(-0.5)))  // 确保在arctan曲线上
+                .style('opacity', 0);
+
+            // 动画显示动态点 - 沿着arctan曲线移动
+            setTimeout(() => {
+                // 东部团队动画
+                movingDot1.style('opacity', 1);
+                newEastTeam.style('opacity', 1);
+
+                let t1 = 0;
+                const animateEast = () => {
+                    t1 += 0.03;
+                    const x = 0.5 + t1 * 3.5;  // 从0.5到4
+                    if (x <= 4) {
+                        const y = Math.atan(x);
+                        movingDot1
+                            .attr('cx', xScale(x))
+                            .attr('cy', yScale(y));
+                        newEastTeam
+                            .attr('transform', `translate(${xScale(x)}, ${yScale(y) - 25})`);
+                        requestAnimationFrame(animateEast);
+                    }
+                };
+                animateEast();
+
+                // 西部团队动画
+                movingDot2.style('opacity', 1);
+                newWestTeam.style('opacity', 1);
+
+                let t2 = 0;
+                const animateWest = () => {
+                    t2 += 0.03;
+                    const x = -0.5 - t2 * 3.5;  // 从-0.5到-4
+                    if (x >= -4) {
+                        const y = Math.atan(x);
+                        movingDot2
+                            .attr('cx', xScale(x))
+                            .attr('cy', yScale(y));
+                        newWestTeam
+                            .attr('transform', `translate(${xScale(x)}, ${yScale(y) + 5})`);
+                        requestAnimationFrame(animateWest);
+                    }
+                };
+                setTimeout(animateWest, 300);
+            }, 3500);
+        }
+
+        // 第3页：统一目标 - D3.js版本，增加动画元素
+        function drawUnifiedGoalD3() {
+            const container = d3.select('#graph3');
+            container.selectAll('*').remove();
+
+            const margin = {top: 20, right: 20, bottom: 40, left: 50};
+            const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = container.node().getBoundingClientRect().height - margin.top - margin.bottom;
+
+            const svg = container.append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .style('background', 'transparent');
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            // 创建比例尺
+            const xScale = d3.scaleLinear().domain([-6, 6]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([-0.1, 1.1]).range([height, 0]);
+
+            // 创建线条生成器
+            const line = d3.line()
+                .x(d => xScale(d.x))
+                .y(d => yScale(d.y))
+                .curve(d3.curveMonotoneX);
+
+            // 生成数据
+            const data = [];
+            for (let x = -6; x <= 6; x += 0.1) {
+                data.push({x: x, y: 1/(1 + x*x)});
+            }
+
+            // 添加网格线
+            g.selectAll('.grid-x')
+                .data(xScale.ticks(8))
+                .enter().append('line')
+                .attr('class', 'grid-x')
+                .attr('x1', d => xScale(d))
+                .attr('x2', d => xScale(d))
+                .attr('y1', 0)
+                .attr('y2', height)
+                .attr('stroke', '#e0e0e0')
+                .attr('stroke-width', 0.5);
+
+            g.selectAll('.grid-y')
+                .data(yScale.ticks(6))
+                .enter().append('line')
+                .attr('class', 'grid-y')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', d => yScale(d))
+                .attr('y2', d => yScale(d))
+                .attr('stroke', '#e0e0e0')
+                .attr('stroke-width', 0.5);
+
+            // 添加坐标轴 - 修正位置
+            const xAxis = g.append('g')
+                .attr('transform', `translate(0,${yScale(0)})`)  // x轴应该在y=0处
+                .call(d3.axisBottom(xScale).ticks(8))
+                .style('color', '#333');
+
+            // x轴标签
+            xAxis.append('text')
+                .attr('x', width - 50)
+                .attr('y', -10)
+                .attr('fill', '#1e3c72')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .text('团队努力方向 →');
+
+            const yAxis = g.append('g')
+                .attr('transform', `translate(${xScale(0)},0)`)  // y轴应该在x=0处
+                .call(d3.axisLeft(yScale).ticks(6))
+                .style('color', '#333');
+
+            // y轴标签
+            yAxis.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', 20)
+                .attr('x', -30)
+                .attr('fill', '#1e3c72')
+                .style('text-anchor', 'middle')
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .text('↑ 团队业绩水平');
+
+            // 添加目标线（y=0）
+            g.append('line')
+                .attr('x1', 0)
+                .attr('x2', width)
+                .attr('y1', yScale(0))
+                .attr('y2', yScale(0))
+                .attr('stroke', '#FF9800')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '5,5')
+                .style('opacity', 0)
+                .transition()
+                .duration(1000)
+                .style('opacity', 1);
+
+            // 添加总部大厅图标
+            const headquarters = g.append('text')
+                .attr('x', width/2)
+                .attr('y', yScale(0) - 15)
+                .text('🏢')
+                .style('font-size', '24px')
+                .style('text-anchor', 'middle')
+                .style('opacity', 0)
+                .transition()
+                .duration(1000)
+                .delay(1500)
+                .style('opacity', 1);
+
+
+
+            // 添加函数曲线
+            const path = g.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#4CAF50')
+                .attr('stroke-width', 4)
+                .attr('d', line);
+
+            // 路径动画
+            const totalLength = path.node().getTotalLength();
+            path
+                .attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                .attr('stroke-dashoffset', totalLength)
+                .transition()
+                .duration(2000)
+                .attr('stroke-dashoffset', 0);
+
+            // 添加人物图标 - 从中心开始，跑向无穷远处
+            const newEastTeam = createPersonIcon(g, xScale(0), yScale(1), '#2196F3', 'right');
+            const newWestTeam = createPersonIcon(g, xScale(0), yScale(1), '#4CAF50', 'left');
+
+            const movingDot1 = g.append('circle')
+                .attr('r', 5)
+                .attr('fill', '#FF6B6B')
+                .attr('cx', xScale(0))  // 从x=0开始（中心）
+                .attr('cy', yScale(1))  // 从最高点开始
+                .style('opacity', 0);
+
+            const movingDot2 = g.append('circle')
+                .attr('r', 5)
+                .attr('fill', '#4ECDC4')
+                .attr('cx', xScale(0))   // 从x=0开始（中心）
+                .attr('cy', yScale(1))   // 从最高点开始
+                .style('opacity', 0);
+
+            // 发散动画 - 从中心向无穷远处跑
+            setTimeout(() => {
+                newEastTeam.style('opacity', 1);
+                newWestTeam.style('opacity', 1);
+                movingDot1.style('opacity', 1);
+                movingDot2.style('opacity', 1);
+
+                // 沿曲线从中心向无穷远处发散
+                let t = 0;
+                const divergeAnimation = () => {
+                    t += 0.015;  // 稍微慢一点，更好观察
+
+                    // 西部团队从中心向-∞移动（x从0到-6）
+                    const x1 = 0 - t * 6;
+                    if (x1 >= -6) {
+                        const y1 = 1/(1 + x1*x1);
+                        movingDot1
+                            .attr('cx', xScale(x1))
+                            .attr('cy', yScale(y1));
+                        newWestTeam
+                            .attr('transform', `translate(${xScale(x1)}, ${yScale(y1) - 25})`);
+                    }
+
+                    // 东部团队从中心向+∞移动（x从0到6）
+                    const x2 = 0 + t * 6;
+                    if (x2 <= 6) {
+                        const y2 = 1/(1 + x2*x2);
+                        movingDot2
+                            .attr('cx', xScale(x2))
+                            .attr('cy', yScale(y2));
+                        newEastTeam
+                            .attr('transform', `translate(${xScale(x2)}, ${yScale(y2) - 25})`);
+                    }
+
+                    if (t < 1) {
+                        requestAnimationFrame(divergeAnimation);
+                    } else {
+
+
+                        // 添加发散说明的文字提示
+                        g.append('text')
+                            .attr('x', width/2)
+                            .attr('y', yScale(0) - 50)  // 下移20个单位，从-20变为-40
+                            .text('两个团队都趋向同一个极限值：0')
+                            .style('font-size', '12px')
+                            .style('text-anchor', 'middle')
+                            .style('fill', '#4CAF50')
+                            .style('font-weight', 'bold')
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(500)
+                            .delay(500)
+                            .style('opacity', 1);
+                    }
+                };
+                divergeAnimation();
+            }, 2500);
+        }
+
+
+
+        // 页面切换时重新渲染MathJax
+        function renderMathJax() {
+            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                MathJax.typesetPromise().catch(function (err) {
+                    console.log('MathJax渲染错误:', err.message);
+                });
+            }
+        }
+
+        // 自动播放
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            isAutoPlaying = true;
+            const autoPlayBtn = document.getElementById('autoPlayBtn');
+            autoPlayBtn.textContent = '⏹️ 停止播放';
+            updateStatus('🎬 自动播放开始', 'recording');
+            document.body.classList.add('recording-mode');
+
+            if (!isConnected) {
+                startTeaching().catch(error => {
+                    console.log('⚠️ 虚拟人连接失败');
+                });
+            }
+
+            for (let page = 1; page <= totalPages; page++) {
+                if (!isAutoPlaying) break;
+                switchToPageSilent(page);
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                if (isConnected && avatarPlatform) {
+                    try {
+                        await speakContent(page);
+                        await new Promise(resolve => setTimeout(resolve, getPageDuration(page)));
+                    } catch (error) {
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    }
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            stopAutoPlay();
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                updateStatus('播放已停止', 'normal');
+            }
+        }
+
+        function getPageDuration(pageNum) {
+            const durations = {
+                1: 34000,  // 团队介绍 (126字，按3.7字/秒约34秒，语速放慢便于理解)
+                2: 37000,  // 不同目标 (140字，按3.8字/秒约37秒，语速放慢便于理解)
+                3: 40000   // 统一目标和总结 (154字，按3.9字/秒约40秒，语速放慢便于理解)
+            };
+            return durations[pageNum] || 34000;
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextPage();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousPage();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (!isTeaching) {
+                        startTeaching();
+                    } else if (isConnected) {
+                        speakContent(currentPage);
+                    }
+                    break;
+            }
+        });
+
+        // 页面关闭清理
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) stopAutoPlay();
+            if (avatarPlatform && isConnected) avatarPlatform.stop();
+        });
+
+        // 初始化图形
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                drawPageGraph(1);
+                renderMathJax();
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一章：指数函数 - 虚拟人教学系统</title>
+    
+    <!-- 本地资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- MathJax配置 -->
+    <script>
+        // 避免重复声明window.MathJax
+        if (!window.MathJax) {
+            window.MathJax = {
+                tex: {
+                    inlineMath: [['$', '$'], ['\\(', '\\)']],
+                    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                    processEscapes: true,
+                    processEnvironments: true
+                },
+                svg: {
+                    fontCache: 'global'
+                },
+                startup: {
+                    pageReady: () => {
+                        return MathJax.startup.defaultPageReady().then(() => {
+                            console.log('MathJax is ready');
+                        });
+                    }
+                }
+            };
+        }
+    </script>
+    <script id="MathJax-script" async src="./mathjax-tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --chalkboard-bg: transparent;
+            --chalk-text: #ecf0f1;
+            --visualization-bg: #fdfdfd00;
+            --primary-color: #3498db;
+            --accent-color: #e67e22;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #9b59b6;
+            --text-color: #34495e;
+            --heading-font: 'Noto Serif SC', serif;
+            --handwriting-font: 'Noto Serif SC', serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--heading-font);
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+
+        /* 虚拟人显示区域 */
+        .avatar-container {
+            position: fixed;
+            top: 60%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; 
+            height: 850px;
+            overflow: hidden; 
+            z-index: 50;
+            pointer-events: none; 
+            background: transparent;
+        }
+        
+        .wrapper {
+            width: 100%; 
+            height: 100%;
+            background: transparent; 
+            pointer-events: auto;
+        }
+
+        .slide-container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+        }
+        
+        .slide { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: opacity 0.6s ease-in-out; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 2rem; 
+            background-color: transparent; 
+        }
+        
+        .slide.active { 
+            opacity: 1; 
+            visibility: visible; 
+        }
+        
+        .slide-content { 
+            display: flex; 
+            flex-direction: row; 
+            gap: 2rem; 
+            width: 100%; 
+            max-width: 1400px; 
+            height: 95%; 
+        }
+        
+        .blackboard-text {
+            font-family: 'Noto Serif SC', serif;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        
+        .blackboard-text h1 { 
+            color: #f1c40f; 
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.5); 
+        }
+        
+        .blackboard-text h2 { 
+            color: #f1c40f; 
+            border-bottom: 2px solid #f39c12;
+            font-size: 2.8rem;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .blackboard-text h3 { 
+            color: #1abc9c;
+            font-size: 1.8rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .blackboard-text strong, .highlight { 
+            color: #e74c3c; 
+            font-weight: bold;
+        }
+        
+        .blackboard-text .math-formula { 
+            background-color: rgba(0,0,0,0.2); 
+            padding: 15px; 
+            border-radius: 5px; 
+            border-left: 4px solid #f39c12; 
+            font-size: 1.3rem; 
+            color: #1abc9c;
+            text-align: center;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        .formula-rule {
+            font-size: 1.2rem;
+            color: #16a085;
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .animation-pane {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        /* 左侧控制栏 */
+        .control-bar {
+            position: fixed; 
+            left: -220px; 
+            top: 50%;
+            transform: translateY(-50%); 
+            width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            gap: 10px; 
+            z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; 
+            transition: left 0.3s ease;
+        }
+        
+        .control-bar:hover { 
+            left: 0; 
+        }
+        
+        .control-bar::before {
+            content: '▶️'; 
+            position: absolute;
+            top: 50%; 
+            right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; 
+            border-radius: 0 10px 10px 0;
+            font-size: 16px;
+            writing-mode: vertical-lr;
+        }
+        
+        .btn {
+            padding: 12px 20px; 
+            background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease; 
+            width: 100%; 
+            text-align: center;
+        }
+        
+        .btn:hover { 
+            background: linear-gradient(135deg, #555, #777); 
+            transform: translateY(-2px); 
+        }
+        
+        .btn.primary { 
+            background: linear-gradient(135deg, #FF69B4, #FF1493); 
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 字幕区域 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; 
+            left: 50px; 
+            right: 50px;
+            height: auto;
+            min-height: 50px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 8px; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            z-index: 60; 
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            padding: 15px 20px; 
+            line-height: 1.4;
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; 
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; 
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+        
+        .status-indicator.connected { 
+            background: rgba(76, 175, 80, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-indicator.error { 
+            background: rgba(244, 67, 54, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.connecting { 
+            background: rgba(255, 152, 0, 0.8); 
+            display: block;
+        }
+
+        /* 录制模式下隐藏UI元素 */
+        .recording-mode .status-indicator {
+            opacity: 0; 
+            pointer-events: none;
+        }
+        
+        .recording-mode .control-bar {
+            left: -300px; 
+            transition: left 0.5s ease;
+        }
+
+        /* 导航按钮 */
+        .nav-btn { 
+            background-color: rgba(255,255,255,0.1); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            transition: all 0.3s ease; 
+        }
+        
+        .nav-btn:hover { 
+            background-color: rgba(255,255,255,0.2); 
+            transform: translateY(-2px); 
+        }
+        
+        .nav-btn:disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+        }
+
+        .visualization {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 10%, #c3cfe2 100%);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .chalkboard {
+            flex: 0 0 35%;
+            background-color: transparent !important;
+            background: transparent !important;
+            color: var(--chalk-text);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 5px solid #bdc3c7;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .chalkboard p, .chalkboard li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .chalkboard ol {
+            padding-left: 25px;
+        }
+
+        .chalkboard ul {
+            list-style-type: '→ ';
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body class="blackboard">
+
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    
+    <!-- 虚拟人显示区域 -->
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+
+    <div id="slide-container" class="slide-container flex-grow">
+        
+        <!-- === 课件内容配置区域 ===
+             第1页：标题页 - 第一页课件内容 -->
+        <div class="slide active">
+            <div class="slide-content">
+                <!-- 第一页课件内容：标题和副标题 -->
+                <div class="blackboard-text w-full text-center">
+                    <h1 class="text-6xl font-bold">第一章：指数函数</h1>
+                    <p class="text-2xl mt-4 text-gray-300">探索指数的奥秘</p>
+                </div>
+                <!-- 第一页课件右侧可视化：无 -->
+            </div>
+        </div>
+
+        <!-- 第2页：指数基础概念 - 第二页课件内容 -->
+        <div class="slide">
+            <div class="slide-content">
+                <!-- 第二页课件内容：指数基础概念讲解 -->
+                <div class="chalkboard">
+                    <h2>指数</h2>
+                    <h3>定义</h3>
+                    <p>指数表示一个数（底数）连续乘以自身多少次。</p>
+                    <div class="math-formula">
+                        $a^n = \underbrace{a \times a \times \dots \times a}_{n \text{ 个}}$
+                    </div>
+                    <p>其中，$a$ 是 <span class="highlight">底数</span>，$n$ 是 <span class="highlight">指数</span>。</p>
+                    <h3>例子</h3>
+                    <p>$2^3 = 2 \times 2 \times 2 = 8$</p>
+                    <p>$10^4 = 10 \times 10 \times 10 \times 10 = 10000$</p>
+                </div>
+                <!-- 第二页课件右侧可视化：指数增长柱状图 -->
+                <div class="visualization" id="vis-exponents"></div>
+            </div>
+        </div>
+
+        <!-- 第3页：指数运算法则1 - 第三页课件内容 -->
+        <div class="slide">
+            <div class="slide-content">
+                <!-- 第三页课件内容：乘法法则和除法法则 -->
+                <div class="chalkboard">
+                    <h3>乘法法则</h3>
+                    <div class="formula-rule">
+                        $a^m \cdot a^n = a^{m+n}$
+                    </div>
+                    <p>同底数幂相乘，<span class="highlight">底数不变，指数相加</span>。</p>
+                    <p>例：$2^3 \cdot 2^4 = 2^{3+4} = 2^7 = 128$</p>
+                    <h3>除法法则</h3>
+                    <div class="formula-rule">
+                        $\frac{a^m}{a^n} = a^{m-n}$
+                    </div>
+                    <p>同底数幂相除，<span class="highlight">底数不变，指数相减</span>。</p>
+                    <p>例：$\frac{5^7}{5^3} = 5^{7-3} = 5^4 = 625$</p>
+                </div>
+                <!-- 第三页课件右侧可视化：圆圈合并演示乘法法则，除法法则演示 -->
+                <div class="visualization" id="vis-exponent-rules-1"></div>
+            </div>
+        </div>
+
+        <!-- 第4页：指数运算法则2 - 第四页课件内容 -->
+        <div class="slide">
+            <div class="slide-content">
+                <!-- 第四页课件内容：幂的幂法则和乘积的幂法则 -->
+                <div class="chalkboard">
+                    <h3>幂的幂法则</h3>
+                    <div class="formula-rule">
+                        $(a^m)^n = a^{m \cdot n}$
+                    </div>
+                    <p>幂的幂，<span class="highlight">底数不变，指数相乘</span>。</p>
+                    <p>例：$(3^2)^4 = 3^{2 \times 4} = 3^8$</p>
+                    <h3>乘积的幂法则</h3>
+                    <div class="formula-rule">
+                        $(ab)^n = a^n \cdot b^n$
+                    </div>
+                    <p>积的幂等于<span class="highlight">幂的积</span>。</p>
+                    <p>例：$(2 \times 3)^4 = 2^4 \times 3^4 = 16 \times 81$</p>
+                </div>
+                <!-- 第四页课件右侧可视化：大圆圈分散成小圆圈演示幂的幂运算 -->
+                <div class="visualization" id="vis-exponent-rules-2"></div>
+            </div>
+        </div>
+
+        <!-- 第5页：特殊指数 - 第五页课件内容 -->
+        <div class="slide">
+            <div class="slide-content">
+                <!-- 第五页课件内容：零指数和负指数 -->
+                <div class="chalkboard">
+                    <h3>零指数</h3>
+                    <div class="formula-rule">
+                        $a^0 = 1$ （$a \neq 0$）
+                    </div>
+                    <p>任何非零数的零次方都等于 <span class="highlight">1</span>。</p>
+                    <p>可以通过 $\frac{a^m}{a^m} = a^{m-m} = a^0$ 来理解。一个数除以自身等于 1。</p>
+                    <h3>负指数</h3>
+                    <div class="formula-rule">
+                        $a^{-n} = \frac{1}{a^n}$
+                    </div>
+                    <p>负指数表示<span class="highlight">倒数</span>。</p>
+                    <p>可以从 $\frac{a^0}{a^n} = a^{0-n} = a^{-n}$ 推导出来。</p>
+                </div>
+                <!-- 第五页课件右侧可视化：天平演示零指数，分数相消演示负指数 -->
+                <div class="visualization" id="vis-special-exponents"></div>
+            </div>
+        </div>
+
+        <!-- 第6页：分数指数 - 第六页课件内容 -->
+        <div class="slide">
+            <div class="slide-content">
+                <!-- 第六页课件内容：分数指数概念 -->
+                <div class="chalkboard">
+                      <h3>分数指数</h3>
+                    <p>分数指数是<span class="highlight">开方运算</span>的另一种写法。</p>
+
+
+                    <div class="formula-rule">
+                        $a^{\frac{1}{n}} = \sqrt[n]{a}$
+                    </div>
+                    <p>读作：$a$ 的 $n$ 分之一次方等于 $a$ 的 $n$ 次方根。</p>
+
+                    <p>• $27^{\frac{1}{3}} = \sqrt[3]{27} = 3$</p>
+                    <p>• $16^{\frac{1}{4}} = \sqrt[4]{16} = 2$</p>
+                    <p>• $8^{\frac{1}{3}} = \sqrt[3]{8} = 2$</p>
+
+
+                    <p>指数 $\frac{1}{n}$ 表示：<span class="highlight">"什么数的 $n$ 次方等于底数？"</span></p>
+                </div>
+                <!-- 第六页课件右侧可视化：立方体演示27的立方根 -->
+                <div class="visualization" id="vis-fractional-exponents"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 字幕区域 -->
+    <div class="subtitle-area" id="subtitleArea">
+        欢迎学习指数函数！点击开始讲课可启动虚拟人讲师。
+    </div>
+
+    <!-- 左侧控制栏 -->
+    <div class="control-bar">
+        <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">6</span> 页
+        </div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎤 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+        <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 16px; font-weight: bold; line-height: 1.2;">
+            💡 录制提示：<br>
+            点击自动播放后立即开始录屏<br>
+            系统会自动完成全部演示
+        </div>
+        <div style="color: #ccc; margin-top: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            💡 快捷键：空格/→下一页 ←上一页 Enter播放
+        </div>
+    </div>
+
+    <!-- 讯飞官方SDK -->
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        // === 虚拟人相关配置 ===
+        // 这里配置虚拟人的各种参数，照抄下面的代码，不要改动
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+        const totalSlides = 6;
+
+        // === 自动播放时间设置（可根据内容调整播放时长）===
+        // 每页的播放持续时间，单位毫秒，可以根据内容多少调整
+        // 注意：getSlideDuration函数在下面定义，这里只是注释说明
+
+        // === 字幕脚本设置（可根据课件内容调整）===
+        // 每页虚拟人讲解的台词，可以根据课件内容修改
+        const subtitleScript = {
+            // 第一页：欢迎页
+            1: `大家好，欢迎来到第一章指数函数的学习。指数函数是数学中非常重要的基础函数之一，它在自然科学、经济学、工程学等领域都有广泛的应用。今天我们将从最基础的指数概念开始，逐步深入了解指数的运算法则和特殊性质。让我们一起探索指数的奥秘吧！`,
+
+            // 第二页：指数基础概念讲解
+            2: `首先，让我们来理解什么是指数。指数表示一个数连续乘以自身多少次。比如2的3次方，就是2乘以2再乘以2，等于8。在这个表达式中，2是底数，3是指数。右边的动画直观地展示了指数的增长规律，你可以看到，随着指数的增加，结果呈现出快速增长的趋势。这就是指数函数的特点之一。`,
+
+            // 第三页：指数运算法则1讲解（乘法法则、除法法则）
+            3: `接下来学习指数的运算法则。第一个是乘法法则：同底数幂相乘时，底数不变，指数相加。比如2的3次方乘以2的4次方，等于2的7次方。第二个是除法法则：同底数幂相除时，底数不变，指数相减。这两个法则是指数运算的基础，大家要牢记并熟练运用。右边的动画形象地展示了这两个运算过程。`,
+
+            // 第四页：指数运算法则2讲解（幂的幂法则、乘积的幂法则）
+            4: `现在我们来看另外两个重要的运算法则。幂的幂法则告诉我们，当对一个幂再次求幂时，底数不变，指数相乘。比如3的2次方的4次方，等于3的8次方。乘积的幂法则说明，两个数乘积的幂等于各自幂的乘积。这些法则在简化复杂的指数运算时非常有用。请观察右边的动画，它展示了大圆圈分散成小圆泡的过程，形象地说明了幂的幂运算。`,
+
+            // 第五页：特殊指数讲解（零指数、负指数）
+            5: `特殊指数是指数运算中的重要概念。首先，任何非零数的零次方都等于1，这可以通过同数相除来理解。其次，负指数表示倒数，比如2的负3次方等于2的3次方分之一。右边的天平动画帮助我们理解零指数的平衡性，而分数演示则展示了负指数的约分过程。掌握这些特殊指数，对后续学习非常重要。`,
+
+            // 第六页：分数指数讲解
+            6: `最后，我们来学习分数指数。分数指数实际上是开方运算的另一种表示方法。比如27的三分之一次方等于27的立方根，结果是3。右边的立方体动画直观地展示了这个概念。分数指数将指数运算和根式运算统一起来，这是数学中一个优美的统一。通过今天的学习，相信大家对指数函数有了全面的认识。`
+        };
+
+        // 更新幻灯片信息
+        function updateSlideInfo() {
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('totalSlides').textContent = totalSlides;
+        }
+
+        // 显示指定的幻灯片
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            // 运行对应的可视化
+            runVisualization(index);
+            
+            // 渲染数学公式
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                setTimeout(() => {
+                    window.MathJax.typesetPromise([slides[index]]).catch((err) => console.log(err.message));
+                }, 50);
+            }
+        }
+
+        // 下一页
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 上一页
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 重新开始
+        function restart() {
+            currentSlide = 0;
+            showSlide(0);
+            updateSlideInfo();
+            if (!isAutoPlaying) {
+                speakContent(1);
+            }
+        }
+
+        // 虚拟人相关函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                }
+            }
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        
+                        setTimeout(() => {
+                            speakContent(currentSlide + 1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        updateStatus('连接断开', 'error');
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',                                    
+                    apiKey: '133adcc14bda6e315040f78700b38267',             
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',       
+                    sceneId: '216155854796361728',                       
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',    
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',         
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+            }
+        }
+
+        // === 虚拟人动作配置 (这是全部动作配置，可以根据需要调整) ===
+        // 一般都是往右边做动作，因为可视化内容在右边
+        // actionId动作列表：
+        // - A_RLH_welcome_O: 双臂右手往右上扬，欢迎姿势
+        // - A_RLH_emphasize_O: 双臂往右边强调，适合数学概念讲解
+        // - A_LH_please_O: 左手往右请的手势，引导观众注意力到右侧
+        // - A_LH_introduced_O: 左手往右介绍的手势，适合介绍新概念
+        // - A_U_No_pointing_O: 无手势动作，保持自然姿态
+        // wb: 开始时间延迟（秒），we: 结束时间延迟（秒）
+        function getActionsForPage(slideNum) {
+            const actionMap = {
+                // 第一页动作：欢迎姿势，开头欢迎
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 8 }],
+
+                // 第二页动作：往右强调，介绍指数概念，观察右侧柱状图
+                2: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+
+                // 第三页动作：左手往右引导，讲解运算法则，查看右侧圆圈动画
+                3: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 6 }],
+
+                // 第四页动作：左手介绍新动作，介绍幂的幂法则，右侧圆圈分散动画
+                4: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+
+                // 第五页动作：左手往右引导，讲解特殊指数，右侧天平动画
+                5: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],
+
+                // 第六页动作：往右强调，总结分数指数，右侧立方体动画
+                6: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }]
+            };
+            // 默认动作：无手势
+            return actionMap[slideNum] || [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }];
+        }
+
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[slideNum];
+            if (!content) return;
+
+            try {
+                const actions = getActionsForPage(slideNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                await avatarPlatform.writeText(content, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 沟沟讲解第${slideNum}页`);
+
+                if (isAutoPlaying) {
+                    updateAutoPlaySubtitle(slideNum, content);
+                } else {
+                    updateSubtitle(content);
+                }
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function updateAutoPlaySubtitle(slideNum, text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea && isAutoPlaying) {
+                const prefix = `【第${slideNum}页/${totalSlides}页】`;
+                subtitleArea.textContent = prefix + text;
+            } else if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function getSlideTitle(slideNum) {
+            const titles = {
+                1: "第一章：指数函数",
+                2: "指数基础概念",
+                3: "指数运算法则（一）",
+                4: "指数运算法则（二）",
+                5: "特殊指数",
+                6: "分数指数"
+            };
+            return titles[slideNum] || `第${slideNum}页`;
+        }
+
+        function getSlideDuration(slideNum) {
+            const durations = {
+                1: 20000,  
+                2: 24000,  
+                3: 26000,  
+                4: 26000,  
+                5: 24000,  
+                6: 22000   
+            };
+            return durations[slideNum] || 20000;
+        }
+
+        function switchToSlideSilent(slideNum) {
+            if (slideNum < 1 || slideNum > totalSlides) {
+                console.log(`❌ 页面切换失败：页码${slideNum}超出范围(1-${totalSlides})`);
+                return;
+            }
+            showSlide(slideNum - 1);
+            console.log(`✅ 成功切换到第${slideNum}页`);
+        }
+
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'recording');
+                document.body.classList.add('recording-mode');
+
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                for (let slide = 1; slide <= totalSlides; slide++) {
+                    try {
+                        if (!isAutoPlaying) {
+                            console.log('🛑 自动播放被停止');
+                            break;
+                        }
+
+                        console.log(`\n🎬 === 开始播放第${slide}页/${totalSlides}页 ===`);
+                        switchToSlideSilent(slide);
+                        updateStatus(`📖 第${slide}页/${totalSlides}页 - ${getSlideTitle(slide)}`, 'recording');
+
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            try {
+                                await speakContent(slide);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            } catch (error) {
+                                console.error(`❌ 第${slide}页语音播放失败:`, error);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            }
+                        } else {
+                            const slideTime = getSlideDuration(slide);
+                            await new Promise(resolve => setTimeout(resolve, slideTime));
+                        }
+
+                        const waitTime = slide === totalSlides ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${slide}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    handleEnterKey();
+                    break;
+            }
+        });
+
+        function handleEnterKey() {
+            if (!isTeaching) {
+                startTeaching();
+            } else if (isConnected) {
+                speakContent(currentSlide + 1);
+                console.log('🎵 Enter键触发：重新播放当前页内容');
+            } else {
+                console.log('⚠️ 虚拟人未连接，无法播放');
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        // 运行可视化函数
+        function runVisualization(slideIndex) {
+            switch (slideIndex) {
+                case 1: visualizeExponents('vis-exponents'); break;
+                case 2: visualizeExponentRules1('vis-exponent-rules-1'); break;
+                case 3: visualizeExponentRules2('vis-exponent-rules-2'); break;
+                case 4: visualizeSpecialExponents('vis-special-exponents'); break;
+                case 5: visualizeFractionalExponents('vis-fractional-exponents'); break;
+            }
+        }
+
+        // --- 可视化函数实现 ---
+        
+        // 指数基础概念可视化
+        function visualizeExponents(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 数据
+            const data = [
+                {x: 0, y: 1, label: "2^0"},
+                {x: 1, y: 2, label: "2^1"},
+                {x: 2, y: 4, label: "2^2"},
+                {x: 3, y: 8, label: "2^3"},
+                {x: 4, y: 16, label: "2^4"}
+            ];
+            
+            const xScale = d3.scaleLinear()
+                .domain([-0.5, 4.5])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, 20])
+                .range([innerHeight, 0]);
+            
+            // 绘制坐标轴
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale));
+            
+            g.append('g')
+                .call(d3.axisLeft(yScale));
+            
+            // 绘制柱状图
+            g.selectAll('.bar')
+                .data(data)
+                .enter().append('rect')
+                .attr('class', 'bar')
+                .attr('x', d => xScale(d.x) - 20)
+                .attr('width', 40)
+                .attr('y', innerHeight)
+                .attr('height', 0)
+                .attr('fill', '#3498db')
+                .transition()
+                .duration(1000)
+                .delay((d, i) => i * 300)
+                .attr('y', d => yScale(d.y))
+                .attr('height', d => innerHeight - yScale(d.y));
+            
+            // 添加数值标签
+            g.selectAll('.label')
+                .data(data)
+                .enter().append('text')
+                .attr('class', 'label')
+                .attr('x', d => xScale(d.x))
+                .attr('y', d => yScale(d.y) - 10)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .style('font-weight', 'bold')
+                .style('opacity', 0)
+                .text(d => d.y)
+                .transition()
+                .duration(500)
+                .delay((d, i) => 1000 + i * 300)
+                .style('opacity', 1);
+        }
+
+        // 指数运算法则1可视化
+        function visualizeExponentRules1(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // 乘法演示
+            const mulY = height * 0.25;
+            const mulGroup = svg.append('g');
+            
+            // 第一组圆圈 (2^3)
+            const circles1 = mulGroup.selectAll('.c1')
+                .data(d3.range(3))
+                .enter().append('circle')
+                .attr('class', 'c1')
+                .attr('cy', mulY)
+                .attr('cx', (d, i) => width * 0.2 + i * 40)
+                .attr('r', 15)
+                .attr('fill', '#3498db');
+            
+            // 第二组圆圈 (2^2)
+            const circles2 = mulGroup.selectAll('.c2')
+                .data(d3.range(2))
+                .enter().append('circle')
+                .attr('class', 'c2')
+                .attr('cy', mulY)
+                .attr('cx', (d, i) => width * 0.8 - i * 40)
+                .attr('r', 15)
+                .attr('fill', '#e67e22');
+            
+            // 动画：圆圈向中央移动
+            setTimeout(() => {
+                circles1.transition()
+                    .duration(1500)
+                    .attr('cx', (d, i) => width/2 - 100 + i * 40);
+                
+                circles2.transition()
+                    .duration(1500)
+                    .attr('cx', (d, i) => width/2 + 20 + i * 40);
+            }, 1000);
+            
+            // 添加运算结果
+            mulGroup.append('text')
+                .attr('x', width/2)
+                .attr('y', mulY + 70)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '18px')
+                .style('font-weight', 'bold')
+                .style('fill', '#2ecc71')
+                .style('opacity', 0)
+                .text('2³ × 2² = 2⁵ = 32')
+                .transition()
+                .delay(2600)
+                .duration(1000)
+                .style('opacity', 1);
+
+            // 除法演示
+            const divY = height * 0.75;
+            svg.append('line')
+                .attr('x1', 0).attr('y1', height/2)
+                .attr('x2', width).attr('y2', height/2)
+                .attr('stroke', '#ddd').attr('stroke-width', 2);
+
+            const divGroup = svg.append('g');
+            
+            // 创建5^4的四个圆圈
+            const divCircles = divGroup.selectAll('.c3')
+                .data(d3.range(4))
+                .enter().append('g')
+                .attr('class', 'c3')
+                .attr('transform', (d, i) => `translate(${width/2 - 75 + i * 50}, ${divY})`);
+
+            divCircles.append('circle')
+                .attr('r', 18)
+                .attr('fill', '#9b59b6');
+
+            // 划掉后两个（表示除以5^2）
+            divCircles.filter((d, i) => i >= 2)
+                .transition()
+                .delay(4000)
+                .duration(1000)
+                .style('opacity', 0.3)
+                .select('circle')
+                .attr('fill', '#ccc');
+
+            divCircles.filter((d, i) => i >= 2)
+                .append('line')
+                .attr('x1', -15).attr('y1', -15)
+                .attr('x2', 15).attr('y2', 15)
+                .attr('stroke', '#e74c3c')
+                .attr('stroke-width', 3)
+                .style('opacity', 0)
+                .transition()
+                .delay(4000)
+                .duration(1000)
+                .style('opacity', 1);
+
+            const divResult = divGroup.append('text')
+                .attr('x', width / 2)
+                .attr('y', divY + 70)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '18px')
+                .style('font-weight', 'bold')
+                .style('fill', '#2ecc71')
+                .style('opacity', 0)
+                .text('5⁴ ÷ 5² = 5² = 25')
+                .transition()
+                .delay(5100)
+                .duration(1000)
+                .style('opacity', 1);
+        }
+
+        // 指数运算法则2可视化
+        function visualizeExponentRules2(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // 创建大圆圈
+            const bigCircle = svg.append('circle')
+                .attr('cx', centerX)
+                .attr('cy', centerY)
+                .attr('r', 0)
+                .attr('fill', '#3498db')
+                .attr('opacity', 0.7);
+            
+            // 大圆圈展开动画
+            bigCircle.transition()
+                .duration(1000)
+                .attr('r', 60);
+            
+            // 添加标签 (2³)
+            svg.append('text')
+                .attr('x', centerX)
+                .attr('y', centerY + 5)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '18px')
+                .style('font-weight', 'bold')
+                .style('fill', 'white')
+                .text('(2³)')
+                .style('opacity', 0)
+                .transition()
+                .delay(800)
+                .duration(600)
+                .style('opacity', 1);
+            
+            // 2秒后开始分散成小圆圈
+            setTimeout(() => {
+                const positions = [
+                    {x: centerX - 80, y: centerY - 80},
+                    {x: centerX + 80, y: centerY - 80},
+                    {x: centerX - 80, y: centerY + 80},
+                    {x: centerX + 80, y: centerY + 80}
+                ];
+                
+                positions.forEach((pos, i) => {
+                    setTimeout(() => {
+                        const smallCircle = svg.append('circle')
+                            .attr('cx', centerX)
+                            .attr('cy', centerY)
+                            .attr('r', 25)
+                            .attr('fill', '#e67e22')
+                            .attr('opacity', 0);
+                        
+                        smallCircle.transition()
+                            .duration(100)
+                            .attr('opacity', 0.8)
+                            .transition()
+                            .duration(800)
+                            .attr('cx', pos.x)
+                            .attr('cy', pos.y);
+                        
+                        // 添加小圆圈标签
+                        svg.append('text')
+                            .attr('x', centerX)
+                            .attr('y', centerY + 5)
+                            .attr('text-anchor', 'middle')
+                            .style('font-size', '12px')
+                            .style('font-weight', 'bold')
+                            .style('fill', 'white')
+                            .text('2³')
+                            .style('opacity', 0)
+                            .transition()
+                            .delay(200)
+                            .duration(800)
+                            .attr('x', pos.x)
+                            .attr('y', pos.y + 5)
+                            .style('opacity', 1);
+                    }, i * 150);
+                });
+                
+                // 隐藏大圆圈
+                bigCircle.transition()
+                    .delay(600)
+                    .duration(500)
+                    .attr('opacity', 0);
+            }, 2000);
+            
+            // 添加结果文本
+            svg.append('text')
+                .attr('x', centerX)
+                .attr('y', height - 50)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '20px')
+                .style('font-weight', 'bold')
+                .style('opacity', 0)
+                .text('(2³)⁴ = 2¹² = 4096')
+                .transition()
+                .delay(4000)
+                .duration(1000)
+                .style('opacity', 1);
+        }
+
+        // 特殊指数可视化
+        function visualizeSpecialExponents(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const sectionHeight = height / 2;
+            
+            // --- 零指数演示 (上半部分) ---
+            const zeroGroup = svg.append('g');
+            const scaleGroup = zeroGroup.append('g')
+                .attr('transform', `translate(${width / 2}, ${sectionHeight * 0.6})`);
+
+            // 天平支点
+            scaleGroup.append('polygon')
+                .attr('points', '-10,0 10,0 0,15')
+                .attr('fill', '#555');
+            
+            // 天平横梁
+            const beam = scaleGroup.append('line')
+                .attr('x1', -100).attr('x2', 100)
+                .attr('y1', 0).attr('y2', 0)
+                .attr('stroke', '#555')
+                .attr('stroke-width', 4);
+            
+            // 左盘文本
+            const leftPan = scaleGroup.append('text')
+                .attr('x', -70)
+                .attr('y', -15)
+                .attr('font-size', '16px')
+                .attr('text-anchor', 'middle');
+            
+            // 右盘文本
+            const rightPan = scaleGroup.append('text')
+                .attr('x', 70)
+                .attr('y', -15)
+                .attr('font-size', '16px')
+                .attr('text-anchor', 'middle');
+
+            // 零指数动画
+            leftPan.append('tspan')
+                .text('a³')
+                .style('opacity', 0)
+                .transition().delay(0).duration(500).style('opacity', 1);
+            
+            rightPan.append('tspan')
+                .text('a³')
+                .style('opacity', 0)
+                .transition().delay(0).duration(500).style('opacity', 1);
+
+            setTimeout(() => {
+                leftPan.html('a³ ÷ a³');
+                rightPan.html('a³ ÷ a³');
+            }, 800);
+
+            setTimeout(() => {
+                beam.transition().duration(500)
+                    .attr('transform', 'rotate(5)')
+                    .transition().duration(500)
+                    .attr('transform', 'rotate(-5)')
+                    .transition().duration(500)
+                    .attr('transform', 'rotate(0)');
+                
+                leftPan.html('a⁰').attr('font-size', '16px').attr('fill', '#e74c3c');
+                rightPan.html('1').attr('font-size', '16px').attr('fill', '#2ecc71');
+            }, 1500);
+
+            // --- 负指数演示 (下半部分) ---
+            svg.append('line')
+                .attr('x1', 0).attr('y1', sectionHeight)
+                .attr('x2', width).attr('y2', sectionHeight)
+                .attr('stroke', '#ddd');
+            
+            const negGroup = svg.append('g')
+                .attr('transform', `translate(0, ${sectionHeight})`);
+
+            // 负指数动画 - 1秒后开始
+            const negTitle = negGroup.append('text')
+                .attr('x', width/2)
+                .attr('y', sectionHeight * 0.2)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '18px')
+                .text('a² ÷ a⁵ = ?')
+                .style('opacity', 0)
+                .transition().delay(1000).duration(500).style('opacity', 1);
+
+            const fraction = negGroup.append('g')
+                .attr('transform', `translate(${width/2}, ${sectionHeight * 0.6})`)
+                .style('opacity', 0);
+            
+            // 分子：aa
+            const numerator = fraction.selectAll('.num')
+                .data('aa'.split(''))
+                .enter().append('text')
+                .attr('class', 'num')
+                .text('a')
+                .attr('x', (d,i) => -25 + i * 25)
+                .attr('y', -15)
+                .attr('font-size', '16px');
+
+            // 分母：aaaaa
+            const denominator = fraction.selectAll('.den')
+                .data('aaaaa'.split(''))
+                .enter().append('text')
+                .attr('class', 'den')
+                .text('a')
+                .attr('x', (d,i) => -60 + i * 25)
+                .attr('y', 25)
+                .attr('font-size', '16px');
+            
+            // 分数线
+            fraction.append('line')
+                .attr('x1', -70).attr('x2', 70)
+                .attr('y1', 0).attr('y2', 0)
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2);
+
+            // 分数显示 - 1秒后
+            fraction.transition().delay(1000).duration(500).style('opacity', 1);
+
+            // 标红相消项 - 2.5秒后
+            setTimeout(() => {
+                for(let i=0; i<2; i++){
+                    numerator.filter((d, j) => i === j).attr('fill', '#e74c3c');
+                    denominator.filter((d, j) => i === j).attr('fill', '#e74c3c');
+                }
+            }, 2500);
+
+            // 最终结果 - 5秒后
+            setTimeout(() => {
+                const resultGroup = negGroup.append('g')
+                    .attr('transform', `translate(${width * 0.65}, ${sectionHeight * 0.6})`)
+                    .style('opacity', 0);
+
+                const finalEq = resultGroup.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '18px');
+                    
+                finalEq.append('tspan')
+                    .text('a')
+                    .attr('fill', '#e74c3c');
+                finalEq.append('tspan')
+                    .text('-3')
+                    .attr('baseline-shift', 'super')
+                    .attr('font-size', '14px')
+                    .attr('fill', '#e74c3c');
+                finalEq.append('tspan')
+                    .text(' = ');
+
+                // 创建分数形式的1/a³
+                const fracGroup = resultGroup.append('g')
+                    .attr('transform', 'translate(40, 0)');
+                fracGroup.append('text')
+                    .attr('x', 0).attr('y', -10)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '14px')
+                    .text('1');
+                fracGroup.append('line')
+                    .attr('x1', -15).attr('x2', 25)
+                    .attr('y1', 0).attr('y2', 0)
+                    .attr('stroke', '#333')
+                    .attr('stroke-width', 2);
+                fracGroup.append('text')
+                    .attr('x', 0).attr('y', 20)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '14px')
+                    .text('a³');
+
+                // 淡入最终结果
+                resultGroup.transition()
+                    .delay(400)
+                    .duration(800)
+                    .style('opacity', 1);
+            }, 5000);
+        }
+
+        // 分数指数可视化
+        function visualizeFractionalExponents(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+
+            // 创建HTML内容展示三个例子
+            const mainDiv = container.append('div')
+                .style('width', '100%')
+                .style('height', '100%')
+                .style('display', 'flex')
+                .style('flex-direction', 'column')
+                .style('gap', '20px')
+                .style('padding', '20px')
+                .style('box-sizing', 'border-box');
+
+            // 第一个例子：27^(1/3) = 3
+            const section1 = mainDiv.append('div')
+                .style('flex', '1')
+                .style('display', 'flex')
+                .style('align-items', 'center')
+                .style('gap', '40px');
+
+            const canvas1 = section1.append('div')
+                .style('flex', '1')
+                .attr('id', 'canvas-27')
+                .style('height', '100%');
+
+            const text1 = section1.append('div')
+                .style('flex', '1')
+                .style('text-align', 'center');
+
+            text1.append('h3')
+                .style('font-size', '1.8em')
+                .style('color', 'var(--text-color)')
+                .style('margin', '0')
+                .html('27<sup>1/3</sup> = ∛27 = 3');
+
+            text1.append('p')
+                .style('font-size', '1.2em')
+                .style('color', '#7f8c8d')
+                .style('margin-top', '10px')
+                .text('27个单位立方体 = 3×3×3');
+
+            // 第二个例子：16^(1/4) = 2
+            const section2 = mainDiv.append('div')
+                .style('flex', '1')
+                .style('display', 'flex')
+                .style('align-items', 'center')
+                .style('gap', '40px');
+
+            const text2 = section2.append('div')
+                .style('flex', '1')
+                .style('text-align', 'center');
+
+            text2.append('h3')
+                .style('font-size', '1.8em')
+                .style('color', 'var(--text-color)')
+                .style('margin', '0')
+                .html('16<sup>1/4</sup> = ⁴√16 = 2');
+
+            text2.append('p')
+                .style('font-size', '1.2em')
+                .style('color', '#7f8c8d')
+                .style('margin-top', '10px')
+                .text('因为 2⁴ = 16');
+
+            // 第三个例子：8^(2/3) = 4
+            const section3 = mainDiv.append('div')
+                .style('flex', '1')
+                .style('text-align', 'center');
+
+            section3.append('h3')
+                .style('font-size', '1.6em')
+                .style('color', 'var(--text-color)')
+                .style('margin', '0')
+                .html('8<sup>2/3</sup> = (∛8)² = 2² = 4');
+
+            // 使用Canvas API绘制3D效果的立方体
+            setTimeout(() => {
+                draw3DCubes('canvas-27', 3, 3, 3); // 3×3×3
+            }, 100);
+
+            // 绘制3D立方体阵列
+            function draw3DCubes(canvasId, nx, ny, nz) {
+                const canvasDiv = document.getElementById(canvasId);
+                if (!canvasDiv) return;
+
+                const canvas = document.createElement('canvas');
+                const rect = canvasDiv.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height || 150;
+                canvasDiv.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const cubeSize = Math.min(canvas.width, canvas.height) / Math.max(nx, ny, nz) / 2;
+
+                // 等距投影绘制立方体
+                for(let x = 0; x < nx; x++) {
+                    for(let y = 0; y < ny; y++) {
+                        for(let z = 0; z < nz; z++) {
+                            const offsetX = (x - nx/2 + 0.5) * cubeSize * 1.2;
+                            const offsetY = (y - ny/2 + 0.5) * cubeSize * 0.7;
+                            const offsetZ = (z - nz/2 + 0.5) * cubeSize * 1.2;
+
+                            const isoX = centerX + (offsetX - offsetY) * 0.866;
+                            const isoY = centerY + (offsetX + offsetY) * 0.5 - offsetZ;
+
+                            drawIsometricCube(ctx, isoX, isoY, cubeSize * 0.8);
+                        }
+                    }
+                }
+            }
+
+            // 绘制单个等距立方体
+            function drawIsometricCube(ctx, x, y, size) {
+                const s = size;
+                const h = s * 0.866; // sqrt(3)/2
+
+                // 顶面（最亮）
+                ctx.fillStyle = '#5dade2';
+                ctx.beginPath();
+                ctx.moveTo(x, y - s);
+                ctx.lineTo(x + h, y - s/2);
+                ctx.lineTo(x, y);
+                ctx.lineTo(x - h, y - s/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#3498db';
+                ctx.stroke();
+
+                // 右面（中等亮度）
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + h, y - s/2);
+                ctx.lineTo(x + h, y + s/2);
+                ctx.lineTo(x, y + s);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#2874a6';
+                ctx.stroke();
+
+                // 左面（最暗）
+                ctx.fillStyle = '#2874a6';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y + s);
+                ctx.lineTo(x - h, y + s/2);
+                ctx.lineTo(x - h, y - s/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#1e5f8e';
+                ctx.stroke();
+            }
+        }
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showSlide(0);
+            updateSlideInfo();
+            console.log('✨ 指数函数教学系统初始化完成');
+        });
+    </script>
+</body>
+</html>

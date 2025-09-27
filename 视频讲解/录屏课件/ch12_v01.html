@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第12章 视频 12.1 向量概念与点积叉积</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/noto-serif-sc.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\(', '\)']],
+                displayMath: [['$$', '$$'], ['\[', '\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('✅ MathJax已加载并配置完成');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="./assets/lesson-template.css">
+</head>
+<body class="blackboard">
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+    <div id="slide-container" class="slide-container flex-grow">
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>课程导入</h2>
+      <ul><li>标题：向量概念与点积叉积</li><li>核心问题：长度 + 方向如何计算？</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>三维坐标系出现，两支向量箭头分别指向不同方向。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>向量的表示</h2>
+      <ul><li>向量 = 大小 + 方向</li><li>表示方式：有向线段、坐标三元组</li><li>模长：|a| = √(a_x² + a_y² + a_z²)</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>向量箭头从起点移动到终点，坐标三元组同步显示。</li><li>模长计算步骤逐条亮出。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>点积的含义</h2>
+      <ul><li>点积公式：a·b = |a||b|cosθ = a_x b_x + a_y b_y + a_z b_z</li><li>几何意义：投影与夹角</li><li>判断垂直：a·b = 0 → 正交</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>向量 b 在 a 上投影，投影长度随夹角改变。</li><li>显示夹角 θ 与 cosθ 数值。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>叉积的含义</h2>
+      <ul><li>叉积：a × b = |a||b|sinθ · n（n 为垂直于平面的单位向量）</li><li>模长：等于由 a、b 构成的平行四边形面积</li><li>方向：右手法则</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>两向量构成的平行四边形逐渐填色。</li><li>右手法则动画展示叉积方向。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>例题：角度与面积</h2>
+      <ul><li>已知 a = ⟨2,−1,1⟩，b = ⟨1,2,0⟩</li><li>求夹角：cosθ = (a·b)/(|a||b|)</li><li>求面积：|a × b|</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>计算步骤分栏显示，数值同步填入。</li><li>平行四边形面积高亮显示。</li></ol>
+                </div>
+            </div>
+        </div>
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text">
+                    <h2>小结</h2>
+      <ul><li>向量三件套：模长、点积、叉积</li><li>应用：判断垂直、求面积、找法向量</li></ul>
+                </div>
+                <div class="animation-pane">
+                    <h3>动画执行提示</h3>
+      <ol><li>三个关键词翻牌锁定。</li></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="subtitle-area" id="subtitleArea">欢迎学习向量概念与点积叉积！点击开始讲课启动虚拟人讲师。</div>
+    <div class="control-bar">
+        <div class="control-title">第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">6</span> 页</div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn autoplay" onclick="startAutoPlay()" id="autoPlayBtn">🎬 自动播放</button>
+        <div class="control-hint">💡 录制提示：点击自动播放后立即开始录屏，系统会自动完成全部演示。</div>
+        <div class="control-shortcuts">💡 快捷键：空格/→ 下一页，← 上一页，Enter 播放当前页</div>
+    </div>
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+    <script>
+        const lessonTitle = "向量概念与点积叉积";
+        const subtitleScript = {
+    "1": "向量是描述空间方向和大小的语言。本节我们关注向量的基本概念以及最常用的两个运算：点积和叉积。",
+    "2": "向量既可以用箭头表示，也可以用坐标分量表示。三维向量的长度就是三个分量平方和的平方根。",
+    "3": "点积告诉我们两个向量在同一方向上的‘重合度’。投影越长，点积越大；若点积为零，就说明它们互相垂直。",
+    "4": "叉积的模长就是平行四边形面积，方向由右手法则确定。它在计算面积、法向量时非常有用。",
+    "5": "通过点积得到夹角，通过叉积得到面积。两个操作都只需代入分量进行运算。",
+    "6": "掌握向量的基本运算后，空间几何问题就有了可靠的工具。\" ---"
+};
+        const actionMap = {
+    "1": "A_RLH_welcome_O",
+    "2": "A_LH_introduced_O",
+    "3": "A_RH_point_O",
+    "4": "A_LH_emphasize_O",
+    "5": "A_RH_please_O",
+    "6": "A_RLH_welcome_O"
+};
+        const slideTitles = {
+    "1": "课程导入",
+    "2": "向量的表示",
+    "3": "点积的含义",
+    "4": "叉积的含义",
+    "5": "例题：角度与面积",
+    "6": "小结"
+};
+        const slideDurations = {
+    "1": 35000,
+    "2": 50000,
+    "3": 60000,
+    "4": 65000,
+    "5": 70000,
+    "6": 45000
+};
+        const totalSlides = 6;
+
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+
+        const slides = document.querySelectorAll('.slide');
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+            currentSlide = index;
+            document.getElementById('currentSlide').textContent = index + 1;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([slides[index]]).catch(err => console.error(err));
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+                if (!isAutoPlaying) speakContent(currentSlide + 1);
+            }
+        }
+
+        function restart() {
+            showSlide(0);
+            if (!isAutoPlaying) speakContent(1);
+        }
+
+        function updateSubtitle(text) {
+            const area = document.getElementById('subtitleArea');
+            if (area) {
+                area.textContent = text;
+            }
+        }
+
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (!indicator) return;
+            indicator.textContent = message;
+            indicator.className = 'status-indicator';
+            if (type === 'connected') indicator.classList.add('connected');
+            if (type === 'error') indicator.classList.add('error');
+            if (type === 'connecting') indicator.classList.add('connecting');
+            if (type === 'recording') indicator.classList.add('recording');
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+            try {
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                if (avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+                avatarPlatform = new AvatarPlatform({ useInlinePlayer: true });
+                avatarPlatform
+                    .on('connected', () => {
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => speakContent(currentSlide + 1), 500);
+                    })
+                    .on('disconnected', () => {
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '重新连接';
+                        startBtn.disabled = false;
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '连接失败';
+                        startBtn.disabled = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1, move_h: 0, move_v: 0, audio_format: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert('启动失败: ' + error.message);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            const text = subtitleScript[slideNum] || '';
+            updateSubtitle(text ? `【第${slideNum}页/${totalSlides}页】` + text : `第${slideNum}页`);
+            if (!isTeaching || !isConnected || !avatarPlatform || !text) return;
+            try {
+                const action = actionMap[slideNum];
+                if (action) {
+                    await avatarPlatform.writeCmd('action', action);
+                }
+                await avatarPlatform.writeText(text, { nlp: false });
+            } catch (error) {
+                console.error('❌ 语音播报失败:', error);
+            }
+        }
+
+        async function startAutoPlay() {
+            const autoBtn = document.getElementById('autoPlayBtn');
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                autoBtn.textContent = '🎬 自动播放';
+                autoBtn.classList.remove('stop');
+                updateStatus('自动播放已停止');
+                return;
+            }
+            isAutoPlaying = true;
+            autoBtn.textContent = '⏹️ 停止播放';
+            autoBtn.classList.add('stop');
+            updateStatus('🎬 自动播放开始！', 'recording');
+
+            for (let slide = 1; slide <= totalSlides; slide++) {
+                if (!isAutoPlaying) break;
+                showSlide(slide - 1);
+                speakContent(slide);
+                const duration = slideDurations[slide] || 15000;
+                await new Promise(resolve => setTimeout(resolve, duration));
+            }
+
+            isAutoPlaying = false;
+            autoBtn.textContent = '🎬 自动播放';
+            autoBtn.classList.remove('stop');
+            updateStatus('课程播放结束');
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                event.preventDefault();
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                previousSlide();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                speakContent(currentSlide + 1);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('totalSlides').textContent = totalSlides;
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

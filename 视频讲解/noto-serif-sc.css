@@ -1,0 +1,27 @@
+/*
+ * 思源宋体 (Noto Serif SC) 本地字体文件
+ * 用于提供优雅的中文宋体显示效果
+ * 支持数学公式的中文字符显示
+ */
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/NotoSerifSC-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/NotoSerifSC-Medium.ttf') format('truetype');
+}
+
+/* 字体回退方案 - 确保在字体加载失败时有合适的替代 */
+.serif-fallback {
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif CN',
+               'Songti SC', 'SimSun', '宋体', serif;
+}

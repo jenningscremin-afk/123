@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一章：对数函数 - 虚拟人教学系统</title>
+    
+    <!-- 本地资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- MathJax配置 -->
+    <script>
+        if (!window.MathJax) {
+            window.MathJax = {
+                tex: {
+                    inlineMath: [['$', '$'], ['\\(', '\\)']],
+                    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                    processEscapes: true,
+                    processEnvironments: true
+                },
+                svg: {
+                    fontCache: 'global'
+                },
+                startup: {
+                    pageReady: () => {
+                        return MathJax.startup.defaultPageReady().then(() => {
+                            console.log('MathJax is ready');
+                        });
+                    }
+                }
+            };
+        }
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --chalkboard-bg: transparent;
+            --chalk-text: #ecf0f1;
+            --visualization-bg: #fdfdfd00;
+            --primary-color: #3498db;
+            --accent-color: #e67e22;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #9b59b6;
+            --text-color: #34495e;
+            --heading-font: 'Noto Serif SC', serif;
+            --handwriting-font: 'Noto Serif SC', serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--heading-font);
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+
+        /* 虚拟人显示区域 */
+        .avatar-container {
+            position: fixed;
+            top: 60%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; 
+            height: 850px;
+            overflow: hidden; 
+            z-index: 50;
+            pointer-events: none; 
+            background: transparent;
+        }
+        
+        .wrapper {
+            width: 100%; 
+            height: 100%;
+            background: transparent; 
+            pointer-events: auto;
+        }
+
+        .slide-container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+        }
+        
+        .slide { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: opacity 0.6s ease-in-out; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 2rem; 
+            background-color: transparent; 
+        }
+        
+        .slide.active { 
+            opacity: 1; 
+            visibility: visible; 
+        }
+        
+        .slide-content { 
+            display: flex; 
+            flex-direction: row; 
+            gap: 2rem; 
+            width: 100%; 
+            max-width: 1400px; 
+            height: 95%; 
+        }
+        
+        .blackboard-text {
+            font-family: 'Noto Serif SC', serif;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        
+        .blackboard-text h1 { 
+            color: #f1c40f; 
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.5); 
+        }
+        
+        .blackboard-text h2 { 
+            color: #f1c40f; 
+            border-bottom: 2px solid #f39c12;
+            font-size: 2.8rem;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .blackboard-text h3 { 
+            color: #1abc9c;
+            font-size: 1.8rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .blackboard-text strong, .highlight { 
+            color: #e74c3c; 
+            font-weight: bold;
+        }
+        
+        .blackboard-text .math-formula { 
+            background-color: rgba(0,0,0,0.2); 
+            padding: 15px; 
+            border-radius: 5px; 
+            border-left: 4px solid #f39c12; 
+            font-size: 1.3rem; 
+            color: #1abc9c;
+            text-align: center;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        .formula-rule {
+            font-size: 1.2rem;
+            color: #16a085;
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .animation-pane {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        /* 左侧控制栏 */
+        .control-bar {
+            position: fixed; 
+            left: -220px; 
+            top: 50%;
+            transform: translateY(-50%); 
+            width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            gap: 10px; 
+            z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; 
+            transition: left 0.3s ease;
+        }
+        
+        .control-bar:hover { 
+            left: 0; 
+        }
+        
+        .control-bar::before {
+            content: '▶️'; 
+            position: absolute;
+            top: 50%; 
+            right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; 
+            border-radius: 0 10px 10px 0;
+            font-size: 16px;
+            writing-mode: vertical-lr;
+        }
+        
+        .btn {
+            padding: 12px 20px; 
+            background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease; 
+            width: 100%; 
+            text-align: center;
+        }
+        
+        .btn:hover { 
+            background: linear-gradient(135deg, #555, #777); 
+            transform: translateY(-2px); 
+        }
+        
+        .btn.primary { 
+            background: linear-gradient(135deg, #FF69B4, #FF1493); 
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 字幕区域 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; 
+            left: 50px; 
+            right: 50px;
+            height: auto;
+            min-height: 50px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 8px; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            z-index: 60; 
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            padding: 15px 20px; 
+            line-height: 1.4;
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; 
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; 
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+        
+        .status-indicator.connected { 
+            background: rgba(76, 175, 80, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-indicator.error { 
+            background: rgba(244, 67, 54, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.connecting { 
+            background: rgba(255, 152, 0, 0.8); 
+            display: block;
+        }
+
+        /* 录制模式下隐藏UI元素 */
+        .recording-mode .status-indicator {
+            opacity: 0; 
+            pointer-events: none;
+        }
+        
+        .recording-mode .control-bar {
+            left: -300px; 
+            transition: left 0.5s ease;
+        }
+
+        /* 导航按钮 */
+        .nav-btn { 
+            background-color: rgba(255,255,255,0.1); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            transition: all 0.3s ease; 
+        }
+        
+        .nav-btn:hover { 
+            background-color: rgba(255,255,255,0.2); 
+            transform: translateY(-2px); 
+        }
+        
+        .nav-btn:disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+        }
+
+        .visualization {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 10%, #c3cfe2 100%);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .visualization.full-width {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+
+        .visualization.white-bg {
+            background: white;
+        }
+
+        .chalkboard {
+            flex: 0 0 35%;
+            background-color: transparent !important;
+            background: transparent !important;
+            color: var(--chalk-text);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 5px solid #bdc3c7;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .chalkboard p, .chalkboard li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .chalkboard ol {
+            padding-left: 25px;
+        }
+
+        .chalkboard ul {
+            list-style-type: '→ ';
+            padding-left: 20px;
+        }
+
+        /* 历史页面特殊样式 */
+        .main-title {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+            z-index: 20;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.6); }
+        }
+
+        .clock-container {
+            width: 600px;
+            height: 600px;
+            position: relative;
+            margin: auto;
+        }
+
+        .event-marker {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s ease-out;
+        }
+
+        .event-marker.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .event-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #ffd700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 12px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .event-year {
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .event-name {
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            max-width: 140px;
+        }
+
+        .center-clock {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 540px;
+            height: 540px;
+            border: 1px solid #ffd700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6px;
+            color: #ffd700;
+            background: rgba(0, 0, 0, 0);
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+        }
+
+        .floating-quote {
+            position: absolute;
+            color: #ffd700;
+            font-size: 18px;
+            max-width: 350px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="blackboard">
+
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    
+    <!-- 虚拟人显示区域 -->
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+
+    <div id="slide-container" class="slide-container flex-grow">
+        
+        <!-- 第1页：对数历史发展 -->
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="visualization full-width" id="vis-log-history">
+                    <div class="clock-container">
+                        <!-- 轨道圈 -->
+                        <div class="orbit" style="position: absolute; width: 550px; height: 550px; border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+                        <div class="orbit" style="position: absolute; width: 450px; height: 450px; border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+                        <div class="orbit" style="position: absolute; width: 350px; height: 350px; border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+
+                        <!-- 中央时钟 -->
+                        <div class="center-clock pulse">
+                            <span style="font-family: 'Times New Roman', serif;">∞</span>
+                        </div>
+
+                        <!-- 事件标记 -->
+                        <div class="event-marker" id="event1" style="top: 10px; left: 240px;">
+                            <div class="event-icon">📜</div>
+                            <div class="event-year">1614</div>
+                            <div class="event-name">对数诞生</div>
+                        </div>
+
+                        <div class="event-marker" id="event2" style="top: 80px; right: 10px;">
+                            <div class="event-icon">🔭</div>
+                            <div class="event-year">1619</div>
+                            <div class="event-name">开普勒定律</div>
+                        </div>
+
+                        <div class="event-marker" id="event3" style="bottom: 100px; right: 20px;">
+                            <div class="event-icon">⚓</div>
+                            <div class="event-year">1620</div>
+                            <div class="event-name">航海革命</div>
+                        </div>
+
+                        <div class="event-marker" id="event4" style="bottom: 120px; left: 20px;">
+                            <div class="event-icon">📏</div>
+                            <div class="event-year">1622</div>
+                            <div class="event-name">计算尺发明</div>
+                        </div>
+
+                        <div class="event-marker" id="event5" style="top: 120px; left: 10px;">
+                            <div class="event-icon">🚀</div>
+                            <div class="event-year">1969</div>
+                            <div class="event-name">人类登月</div>
+                        </div>
+
+                        <!-- 漂浮引言 -->
+                        <div class="floating-quote" id="quote1" style="top: 280px; right: -220px;">
+                            "对数的发明，让天文学家的寿命延长了一倍"
+                            <div style="text-align: right; font-size: 14px; margin-top: 12px;">- 拉普拉斯</div>
+                        </div>
+
+                        <div class="floating-quote" id="quote2" style="bottom: 480px; left: -120px;">
+                            "没有对数表，我不可能完成行星定律的计算"
+                            <div style="text-align: right; font-size: 14px; margin-top: 12px;">- 开普勒</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第2页：对数定义 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>对数</h2>
+                    <p>对数是<strong>指数</strong>的逆运算。</p>
+                    <p>如果 $b^y = x$，那么 $\log_b(x) = y$</p>
+                    <ul>
+                        <li>$b$ 是底数</li>
+                        <li>$x$ 是真数</li>
+                        <li>$y$ 就是以$b$为底$x$的对数</li>
+                    </ul>
+                    <p>对数 $y$ 回答了一个问题："底数 $b$ 需要自身相乘多少次才能得到 $x$？"</p>
+                    <p>将复杂的大数<strong>乘除</strong>运算，转化为简单的<strong>加减</strong>运算。</p>
+                </div>
+                <div class="visualization" id="vis-log-definition">
+                    <svg id="animation2" width="100%" height="100%"></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第3页：对数运算法则 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="visualization full-width white-bg" id="vis-log-operations">
+                    <svg id="animation3" width="100%" height="100%"></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第4页：对数性质 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>乘积的对数</h3>
+                    <p>$\log_b(xy) = \log_b(x) + \log_b(y)$</p>
+                    <p style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                        <strong>例：</strong>$\log_2(8 \times 4) = \log_2(8) + \log_2(4) = 3 + 2 = 5$<br>
+                        验证：$2^5 = 32 = 8 \times 4$ ✓
+                    </p>
+
+                    <h3>商的对数</h3>
+                    <p>$\log_b(\frac{x}{y}) = \log_b(x) - \log_b(y)$</p>
+                    <p style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                        <strong>例：</strong>$\log_2(\frac{16}{4}) = \log_2(16) - \log_2(4) = 4 - 2 = 2$<br>
+                        验证：$2^2 = 4 = \frac{16}{4}$ ✓
+                    </p>
+
+                    <h3>幂的对数</h3>
+                    <p>$\log_b(x^n) = n \cdot \log_b(x)$</p>
+                    <p style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px;">
+                        <strong>例：</strong>$\log_2(8^3) = 3 \cdot \log_2(8) = 3 \times 3 = 9$<br>
+                        验证：$2^9 = 512 = 8^3$ ✓
+                    </p>
+
+                    <h3>换底公式</h3>
+                    <p>$\log_b(x) = \frac{\log_a(x)}{\log_a(b)}$</p>
+                </div>
+                <div class="visualization" id="vis-log-properties"></div>
+            </div>
+        </div>
+
+        <!-- 第5页：常用对数系统 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h3>常用对数系统</h3>
+                    <div style="margin: 20px 0;">
+                        <h3 style="color: #e74c3c;">常用对数（lg）</h3>
+                        <p>以10为底的对数：$\lg(x) = \log_{10}(x)$</p>
+                        <ul>
+                            <li>$\lg(10) = 1$</li>
+                            <li>$\lg(100) = 2$</li>
+                            <li>$\lg(1000) = 3$</li>
+                        </ul>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <h3 style="color: #27ae60;">自然对数（ln）</h3>
+                        <p>以$e$为底的对数：$\ln(x) = \log_e(x)$</p>
+                        <p>其中 $e \approx 2.718...$（欧拉数）</p>
+                        <ul>
+                            <li>$\ln(e) = 1$</li>
+                            <li>$\ln(e^2) = 2$</li>
+                            <li>$\ln(1) = 0$</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="visualization" id="vis-common-logs">
+                      <svg id="animation5" width="100%" height="100%"></svg>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 字幕区域 -->
+    <div class="subtitle-area" id="subtitleArea">
+        欢迎学习对数函数！点击开始讲课可启动虚拟人讲师。
+    </div>
+
+    <!-- 左侧控制栏 -->
+    <div class="control-bar">
+        <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">5</span> 页
+        </div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎤 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+        <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 16px; font-weight: bold; line-height: 1.2;">
+            💡 录制提示：<br>
+            点击自动播放后立即开始录屏<br>
+            系统会自动完成全部演示
+        </div>
+        <div style="color: #ccc; margin-top: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            💡 快捷键：空格/→下一页 ←上一页 Enter播放
+        </div>
+    </div>
+
+    <!-- 讯飞官方SDK -->
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        // === 虚拟人相关配置 ===
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+        const totalSlides = 5;
+
+        // === 自动播放时间设置 ===
+        const getSlideDuration = (slideNum) => {
+            const durations = {
+                1: 28000,  // 第一页：对数历史（展示时间较长）
+                2: 32000,  // 第二页：对数定义
+                3: 35000,  // 第三页：对数运算法则（动画较多）
+                4: 30000,  // 第四页：对数性质
+                5: 28000   // 第五页：常用对数系统
+            };
+            return durations[slideNum] || 20000;
+        };
+
+        // === 字幕脚本设置 ===
+        const subtitleScript = {
+            // 第一页：对数历史
+            1: `1614年，苏格兰数学家纳皮尔发明了对数，这是数学史上的重大突破。对数的出现，将复杂的乘除运算转化为简单的加减运算，极大地推动了科学的发展。开普勒利用对数完成了行星运动定律的计算，航海家们使用对数表进行精确导航。拉普拉斯曾说："对数的发明，让天文学家的寿命延长了一倍"。从17世纪的计算尺到20世纪的登月工程，对数一直在人类文明进步中扮演着重要角色。`,
+
+            // 第二页：对数定义讲解
+            2: `现在我们来理解对数的本质。对数是指数的逆运算。如果b的y次方等于x，那么以b为底x的对数就等于y。比如，2的3次方等于8，那么以2为底8的对数就是3。对数回答了一个重要问题：底数需要自乘多少次才能得到真数？右边的动画展示了指数过程和对数过程的关系。对数最伟大的贡献是将乘除运算转化为加减运算，这在没有计算器的时代具有革命性意义。`,
+
+            // 第三页：对数运算法则讲解
+            3: `对数运算有着优美的法则。观察右边的动画，我们可以看到对数世界和指数世界的对应关系。在指数世界中的乘法，对应到对数世界就变成了加法。同样，指数世界的除法变成对数世界的减法，指数世界的幂运算变成对数世界的乘法。这种转换让复杂的大数运算变得简单。比如要计算256乘以512，在对数世界中只需要计算8加9等于17，然后反查得到结果。这就是对数表在历史上如此重要的原因。`,
+
+            // 第四页：对数性质讲解
+            4: `让我们深入学习对数的运算性质。第一个是乘积的对数等于对数的和。比如log2(8×4)等于log2(8)加log2(4)，即3加2等于5。第二个是商的对数等于对数的差。第三个是幂的对数等于指数乘以对数。这些性质不是凭空而来的，它们反映了指数运算的本质规律。最后还有换底公式，它让我们能够在不同底数的对数之间自由转换。掌握这些性质，你就掌握了对数运算的精髓。`,
+
+            // 第五页：常用对数系统讲解
+            5: `数学中有两个最重要的对数系统。第一个是常用对数，以10为底，记作lg。它在科学计算中应用广泛，因为我们的数字系统是十进制的。lg(10)=1，lg(100)=2，lg(1000)=3，非常直观。第二个是自然对数，以e为底，记作ln。e约等于2.718，是一个神奇的常数，在微积分、复利计算、自然增长等领域无处不在。右边的图像展示了这两个函数的曲线，它们都经过点(1,0)，但增长速度不同。掌握这两个对数系统，对后续的数学学习至关重要。`
+        };
+
+        // 更新幻灯片信息
+        function updateSlideInfo() {
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('totalSlides').textContent = totalSlides;
+        }
+
+        // 显示指定的幻灯片
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            // 运行对应的可视化
+            runVisualization(index);
+            
+            // 渲染数学公式
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                setTimeout(() => {
+                    window.MathJax.typesetPromise([slides[index]]).catch((err) => console.log(err.message));
+                }, 50);
+            }
+        }
+
+        // 下一页
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 上一页
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 重新开始
+        function restart() {
+            currentSlide = 0;
+            showSlide(0);
+            updateSlideInfo();
+            if (!isAutoPlaying) {
+                speakContent(1);
+            }
+        }
+
+        // 虚拟人相关函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                }
+            }
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        
+                        setTimeout(() => {
+                            speakContent(currentSlide + 1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        updateStatus('连接断开', 'error');
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',                                    
+                    apiKey: '133adcc14bda6e315040f78700b38267',             
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',       
+                    sceneId: '216155854796361728',                       
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',    
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',         
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+            }
+        }
+
+        // === 虚拟人动作配置 ===
+        function getActionsForPage(slideNum) {
+            const actionMap = {
+                // 第一页动作：欢迎姿势，介绍历史
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 10 }],
+
+                // 第二页动作：往右强调，介绍对数定义
+                2: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+
+                // 第三页动作：左手往右引导，讲解运算法则动画
+                3: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],
+
+                // 第四页动作：左手介绍，讲解对数性质
+                4: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+
+                // 第五页动作：往右强调，总结对数系统
+                5: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }]
+            };
+            return actionMap[slideNum] || [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }];
+        }
+
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[slideNum];
+            if (!content) return;
+
+            try {
+                const actions = getActionsForPage(slideNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                await avatarPlatform.writeText(content, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 正在讲解第${slideNum}页`);
+
+                if (isAutoPlaying) {
+                    updateAutoPlaySubtitle(slideNum, content);
+                } else {
+                    updateSubtitle(content);
+                }
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function updateAutoPlaySubtitle(slideNum, text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea && isAutoPlaying) {
+                const prefix = `【第${slideNum}页/${totalSlides}页】`;
+                subtitleArea.textContent = prefix + text;
+            } else if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function getSlideTitle(slideNum) {
+            const titles = {
+                1: "对数的历史发展",
+                2: "对数的定义",
+                3: "对数运算法则",
+                4: "对数的性质",
+                5: "常用对数系统"
+            };
+            return titles[slideNum] || `第${slideNum}页`;
+        }
+
+        function switchToSlideSilent(slideNum) {
+            if (slideNum < 1 || slideNum > totalSlides) {
+                console.log(`❌ 页面切换失败：页码${slideNum}超出范围(1-${totalSlides})`);
+                return;
+            }
+            showSlide(slideNum - 1);
+            console.log(`✅ 成功切换到第${slideNum}页`);
+        }
+
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'recording');
+                document.body.classList.add('recording-mode');
+
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                for (let slide = 1; slide <= totalSlides; slide++) {
+                    try {
+                        if (!isAutoPlaying) {
+                            console.log('🛑 自动播放被停止');
+                            break;
+                        }
+
+                        console.log(`\n🎬 === 开始播放第${slide}页/${totalSlides}页 ===`);
+                        switchToSlideSilent(slide);
+                        updateStatus(`📖 第${slide}页/${totalSlides}页 - ${getSlideTitle(slide)}`, 'recording');
+
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            try {
+                                await speakContent(slide);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            } catch (error) {
+                                console.error(`❌ 第${slide}页语音播放失败:`, error);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            }
+                        } else {
+                            const slideTime = getSlideDuration(slide);
+                            await new Promise(resolve => setTimeout(resolve, slideTime));
+                        }
+
+                        const waitTime = slide === totalSlides ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${slide}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    handleEnterKey();
+                    break;
+            }
+        });
+
+        function handleEnterKey() {
+            if (!isTeaching) {
+                startTeaching();
+            } else if (isConnected) {
+                speakContent(currentSlide + 1);
+                console.log('🎵 Enter键触发：重新播放当前页内容');
+            } else {
+                console.log('⚠️ 虚拟人未连接，无法播放');
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        // 运行可视化函数
+        function runVisualization(slideIndex) {
+            switch (slideIndex) {
+                case 0: visualizeLogHistory('vis-log-history'); break;
+                case 1: visualizeLogDefinition('vis-log-definition'); break;
+                case 2: visualizeLogOperations('vis-log-operations'); break;
+                case 3: visualizeLogProperties('vis-log-properties'); break;
+                case 4: visualizeCommonLogs('vis-common-logs'); break;
+            }
+        }
+
+        // --- 可视化函数实现（从原代数页面复制） ---
+        
+        // 对数历史可视化
+        function visualizeLogHistory(containerId) {
+            function createStars() {
+                const container = document.getElementById('vis-log-history');
+                if (!container) return;
+                container.querySelectorAll('.star').forEach(star => star.remove());
+                for (let i = 0; i < 40; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.position = 'absolute';
+                    star.style.width = '2px';
+                    star.style.height = '2px';
+                    star.style.background = '#fff';
+                    star.style.borderRadius = '50%';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.opacity = Math.random();
+                    star.style.animation = `twinkle ${1 + Math.random() * 1.5}s infinite`;
+                    star.style.zIndex = '1';
+                    container.appendChild(star);
+                }
+            }
+
+            function drawConnections() {
+                d3.select('#vis-log-history .clock-container svg').remove();
+                const svg = d3.select('#vis-log-history .clock-container')
+                    .append('svg')
+                    .attr('width', '600')
+                    .attr('height', '600')
+                    .style('position', 'absolute')
+                    .style('top', '0')
+                    .style('left', '0')
+                    .style('pointer-events', 'none');
+                const connections = [ 
+                    {x1: 300, y1: 300, x2: 300, y2: 70}, 
+                    {x1: 300, y1: 300, x2: 530, y2: 150}, 
+                    {x1: 300, y1: 300, x2: 520, y2: 470}, 
+                    {x1: 300, y1: 300, x2: 90, y2: 460}, 
+                    {x1: 300, y1: 300, x2: 70, y2: 190} 
+                ];
+                connections.forEach((conn, i) => {
+                    setTimeout(() => {
+                        svg.append('line')
+                            .attr('x1', conn.x1)
+                            .attr('y1', conn.y1)
+                            .attr('x2', conn.x1)
+                            .attr('y2', conn.y1)
+                            .attr('stroke', '#ffd700')
+                            .attr('stroke-width', 2)
+                            .attr('opacity', 0.4)
+                            .transition()
+                            .duration(400)
+                            .attr('x2', conn.x2)
+                            .attr('y2', conn.y2);
+                    }, i * 100);
+                });
+            }
+
+            createStars();
+            setTimeout(() => document.getElementById('event1')?.classList.add('active'), 500);
+            setTimeout(() => document.getElementById('event2')?.classList.add('active'), 1750);
+            setTimeout(() => document.getElementById('event3')?.classList.add('active'), 3250);
+            setTimeout(() => document.getElementById('event4')?.classList.add('active'), 4750);
+            setTimeout(() => document.getElementById('event5')?.classList.add('active'), 6250);
+            setTimeout(() => { 
+                let q = document.getElementById('quote1'); 
+                if(q) {
+                    q.style.opacity = '1'; 
+                    q.style.transition = 'opacity 0.6s';
+                }
+            }, 2000);
+            setTimeout(() => { 
+                let q = document.getElementById('quote2'); 
+                if(q) {
+                    q.style.opacity = '1'; 
+                    q.style.transition = 'opacity 0.6s';
+                }
+            }, 4000);
+            setTimeout(drawConnections, 7000);
+        }
+
+        // 对数定义可视化
+        function visualizeLogDefinition(containerId) {
+            const svg = d3.select("#animation2");
+            if(svg.empty()) return;
+            svg.selectAll("*").remove();
+            const bounds = svg.node().getBoundingClientRect();
+            const width = bounds.width, height = bounds.height;
+            const centerX = width / 2;
+            const base = 2, number = 8;
+            const logResult = Math.log(number) / Math.log(base);
+
+            svg.append("text")
+                .attr("x", centerX)
+                .attr("y", 50)
+                .attr("text-anchor", "middle")
+                .style("font-size", "20px")
+                .text(`求 log₂(8) = ?`);
+            
+            svg.append("text")
+                .attr("x", centerX)
+                .attr("y", 80)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .text(`也就是，需要多少个 2 相乘才能得到 8？`);
+
+            const expGroup = svg.append("g");
+            expGroup.append("text")
+                .attr("x", 50)
+                .attr("y", 150)
+                .text("指数过程:")
+                .style("font-size", "16px")
+                .style("font-weight", "bold");
+
+            let pathData = "M 150 145";
+            for (let i = 1; i <= logResult; i++) { 
+                pathData += ` L ${150 + i * 50} 145`; 
+            }
+
+            const expPath = expGroup.append("path")
+                .attr("d", pathData)
+                .attr("stroke", "#3498db")
+                .attr("stroke-width", 2)
+                .attr("fill", "none");
+            
+            const totalLength = expPath.node().getTotalLength();
+
+            expPath.attr("stroke-dasharray", `${totalLength} ${totalLength}`)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(2000)
+                .ease(d3.easeLinear)
+                .attr("stroke-dashoffset", 0);
+
+            for (let i = 0; i <= logResult; i++) {
+                const val = Math.pow(base, i);
+                const node = expGroup.append("g")
+                    .attr("transform", `translate(${150 + i * 50}, 145)`)
+                    .style("opacity", 0);
+                
+                node.append("circle")
+                    .attr("r", 15)
+                    .attr("fill", i === 0 ? "#e67e22" : "#3498db");
+                
+                node.append("text")
+                    .text(val === 1 ? '起点' : val)
+                    .attr("y", 40)
+                    .attr("text-anchor", "middle")
+                    .style("fill", "#2c3e50");
+                
+                if (i > 0) {
+                    expGroup.append("text")
+                        .text(`×${base}`)
+                        .attr("x", 150 + (i - 1) * 50 + 25)
+                        .attr("y", 125)
+                        .attr("text-anchor", "middle")
+                        .style("opacity", 0)
+                        .transition()
+                        .delay(1000 + i*500)
+                        .duration(500)
+                        .style("opacity", 1);
+                }
+                
+                node.transition()
+                    .delay(1000 + i * 500)
+                    .duration(500)
+                    .style("opacity", 1);
+            }
+
+            const logGroup = svg.append("g")
+                .style("opacity", 0);
+            
+            logGroup.transition()
+                .delay(4500)
+                .duration(500)
+                .style("opacity", 1);
+
+            logGroup.append("text")
+                .attr("x", 50)
+                .attr("y", 300)
+                .text("对数过程:")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#000000");
+            
+            logGroup.append("text")
+                .attr("x", centerX)
+                .attr("y", 330)
+                .text(`从 8 开始，每次除以 2，数一下除了几次`)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#000000");
+
+            let count = 0;
+            function animateDivision(val, step) {
+                if (val < base) {
+                    logGroup.append("text")
+                        .attr("x", centerX)
+                        .attr("y", 450)
+                        .text(`总共除了 ${count} 次, 所以 log₂(8) = ${count}`)
+                        .attr("text-anchor", "middle")
+                        .style("font-size", "24px")
+                        .style("fill", "#000000")
+                        .style("font-weight", "bold")
+                        .style("opacity", 0)
+                        .transition()
+                        .duration(500)
+                        .style("opacity", 1);
+                    return;
+                }
+                
+                const startX = 150 + step * 100;
+                const g = logGroup.append("g")
+                    .style("opacity", 0);
+                
+                g.transition()
+                    .delay(4500 + step * 1500 + 500)
+                    .duration(500)
+                    .style("opacity", 1);
+                
+                g.append("rect")
+                    .attr("x", startX - 25)
+                    .attr("y", 350)
+                    .attr("width", 50)
+                    .attr("height", 30)
+                    .attr("fill", "#3498db")
+                    .attr("rx", 5);
+                
+                g.append("text")
+                    .text(val)
+                    .attr("x", startX)
+                    .attr("y", 370)
+                    .attr("text-anchor", "middle")
+                    .style("fill", "#000000")
+                    .style("font-weight", "bold");
+                
+                g.append("text")
+                    .text(`÷${base}`)
+                    .attr("x", startX + 50)
+                    .attr("y", 370)
+                    .attr("text-anchor", "middle")
+                    .style("font-weight", "bold");
+                
+                const nextVal = val / base;
+                count++;
+                
+                const gNext = logGroup.append("g")
+                    .style("opacity", 0);
+                
+                gNext.transition()
+                    .delay(4500 + step * 1500 + 1500)
+                    .duration(500)
+                    .style("opacity", 1);
+                
+                gNext.append("rect")
+                    .attr("x", startX + 75)
+                    .attr("y", 350)
+                    .attr("width", 50)
+                    .attr("height", 30)
+                    .attr("fill", "#2ecc71")
+                    .attr("rx", 5);
+                
+                gNext.append("text")
+                    .text(nextVal)
+                    .attr("x", startX + 100)
+                    .attr("y", 370)
+                    .attr("text-anchor", "middle")
+                    .style("fill", "#000000")
+                    .style("font-weight", "bold");
+                
+                logGroup.append("text")
+                    .text(`${count}次`)
+                    .attr("x", startX + 50)
+                    .attr("y", 410)
+                    .attr("text-anchor", "middle")
+                    .style("fill", "#000000")
+                    .style("font-weight", "bold")
+                    .style("opacity", 0)
+                    .transition()
+                    .delay(4500 + step * 1500 + 1500)
+                    .duration(500)
+                    .style("opacity", 1);
+                
+                animateDivision(nextVal, step + 1);
+            }
+            
+            animateDivision(number, 0);
+        }
+
+        // 对数运算法则可视化
+        function visualizeLogOperations(containerId) {
+            const svg = d3.select("#animation3");
+            if(svg.empty()) return;
+            svg.selectAll("*").remove();
+
+            // 获取容器实际尺寸
+            const container = d3.select(`#${containerId}`);
+            const containerRect = container.node().getBoundingClientRect();
+            const width = containerRect.width || 1000;
+            const height = containerRect.height || 500;
+            
+            // 设置SVG尺寸
+            svg.attr("width", width).attr("height", height);
+            
+            const margin = {top: 80, right: 50, bottom: 80, left: 80};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            // 创建背景区域
+            const upperBg = g.append("rect")
+                .attr("x", -20)
+                .attr("y", -30)
+                .attr("width", innerWidth + 40)
+                .attr("height", 60)
+                .attr("fill", "#ecf8ff")
+                .attr("rx", 8)
+                .style("opacity", 0.4);
+
+            const lowerBg = g.append("rect")
+                .attr("x", -20)
+                .attr("y", 60)
+                .attr("width", innerWidth + 40)
+                .attr("height", 60)
+                .attr("fill", "#f0f9e8")
+                .attr("rx", 8)
+                .style("opacity", 0.4);
+
+            const numbers = [2, 4, 8, 16, 32, 64, 128, 256, 512];
+            const logs = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+            const scaleNumbers = d3.scalePoint()
+                .domain(numbers)
+                .range([0, innerWidth])
+                .padding(0.3);
+            
+            const scaleLogs = d3.scalePoint()
+                .domain(logs)
+                .range([0, innerWidth])
+                .padding(0.3);
+
+            // 数字轴
+            const numberAxis = g.append("g")
+                .attr("class", "number-axis")
+                .attr("transform", `translate(0, 30)`);
+            
+            numberAxis.call(d3.axisBottom(scaleNumbers));
+            
+            numberAxis.selectAll("text")
+                .style("font-size", "12px")
+                .style("font-weight", "bold")
+                .style("fill", "#2c3e50");
+
+            // 对数轴
+            const logAxis = g.append("g")
+                .attr("transform", `translate(0, 90)`)
+                .attr("class", "log-axis");
+            
+            logAxis.call(d3.axisBottom(scaleLogs));
+            
+            logAxis.selectAll("text")
+                .style("font-size", "12px")
+                .style("font-weight", "bold")
+                .style("fill", "#2c3e50");
+
+            // 添加轴标签
+            g.append("text")
+                .attr("x", innerWidth / 2)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#34495e")
+                .text("数字世界 (乘法、除法、幂运算)");
+
+            g.append("text")
+                .attr("x", innerWidth / 2)
+                .attr("y", 120)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#34495e")
+                .text("对数世界 (加法、减法、乘法)");
+
+            // 添加垂直连接线（虚线）
+            numbers.forEach((num, i) => {
+                g.append("line")
+                    .attr("x1", scaleNumbers(num))
+                    .attr("y1", 30)
+                    .attr("x2", scaleLogs(logs[i]))
+                    .attr("y2", 90)
+                    .attr("stroke", "#9b59b6")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,5")
+                    .style("opacity", 0.6);
+            });
+
+            // 添加连接点
+            numbers.forEach((num, i) => {
+                // 上方的点
+                g.append("circle")
+                    .attr("cx", scaleNumbers(num))
+                    .attr("cy", 30)
+                    .attr("r", 4)
+                    .attr("fill", "#3498db")
+                    .attr("stroke", "#2980b9")
+                    .attr("stroke-width", 2);
+                
+                // 下方的点
+                g.append("circle")
+                    .attr("cx", scaleLogs(logs[i]))
+                    .attr("cy", 90)
+                    .attr("r", 4)
+                    .attr("fill", "#e74c3c")
+                    .attr("stroke", "#c0392b")
+                    .attr("stroke-width", 2);
+            });
+
+            // 添加示例说明
+            g.append("text")
+                .attr("x", 10)
+                .attr("y", innerHeight - 20)
+                .attr("text-anchor", "start")
+                .style("font-size", "14px")
+                .style("fill", "#7f8c8d")
+                .text("例如：2×4=8 对应 log₂(2)+log₂(4)=1+2=3=log₂(8)");
+        }
+
+        // 对数性质可视化
+        function visualizeLogProperties(containerId) {
+            const container = d3.select(`#${containerId}`);
+            if(container.empty()) return;
+            
+            container.html('');
+            
+            const svg = container.append('svg')
+                .attr('width', '100%')
+                .attr('height', '100%')
+                .style('margin-top', '-60px');
+
+            const bounds = container.node().getBoundingClientRect();
+            const width = bounds.width, height = bounds.height;
+            const centerX = width / 2;
+
+            const properties = [
+                { 
+                    title: "乘法在对数世界变成加法", 
+                    formula: "\\log(x \\cdot y) = \\log(x) + \\log(y)", 
+                    y: height*0.2, 
+                    color1: "#3498db", 
+                    color2: "#e74c3c", 
+                    operator: "+", 
+                    animation: "merge" 
+                },
+                { 
+                    title: "除法在对数世界变成减法", 
+                    formula: "\\log\\left(\\frac{x}{y}\\right) = \\log(x) - \\log(y)", 
+                    y: height*0.5, 
+                    color1: "#27ae60", 
+                    color2: "#f39c12", 
+                    operator: "-", 
+                    animation: "separate" 
+                },
+                { 
+                    title: "幂在对数世界变成乘法", 
+                    formula: "\\log(x^n) = n \\cdot \\log(x)", 
+                    y: height*0.8, 
+                    color1: "#9b59b6", 
+                    color2: "#e67e22", 
+                    operator: "×", 
+                    animation: "multiply" 
+                }
+            ];
+
+            properties.forEach((prop, index) => {
+                const propGroup = svg.append("g")
+                    .attr("transform", `translate(${centerX}, ${prop.y})`);
+
+                const circle1 = propGroup.append("circle")
+                    .attr("cx", -80)
+                    .attr("r", 35)
+                    .attr("fill", prop.color1)
+                    .attr("opacity", 1)
+                    .attr("stroke", "#2c3e50")
+                    .attr("stroke-width", 3);
+                
+                const circle2 = propGroup.append("circle")
+                    .attr("cx", 80)
+                    .attr("r", 35)
+                    .attr("fill", prop.color2)
+                    .attr("opacity", 1)
+                    .attr("stroke", "#2c3e50")
+                    .attr("stroke-width", 3);
+                
+                const operatorText = propGroup.append("text")
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "40px")
+                    .style("font-weight", "bold")
+                    .style("fill", "#2c3e50")
+                    .text(prop.operator);
+                
+                propGroup.append("text")
+                    .attr("x", -80)
+                    .attr("y", 8)
+                    .attr("text-anchor", "middle")
+                    .style("fill", "#2c3e50")
+                    .style("font-weight", "bold")
+                    .style("font-size", "16px")
+                    .text(index === 2 ? "log(x)" : "log(x)");
+                
+                propGroup.append("text")
+                    .attr("x", 80)
+                    .attr("y", 8)
+                    .attr("text-anchor", "middle")
+                    .style("fill", "#2c3e50")
+                    .style("font-weight", "bold")
+                    .style("font-size", "16px")
+                    .text(index === 2 ? "n" : "log(y)");
+
+                const titleDiv = propGroup.append("text")
+                    .attr("x", -200)
+                    .attr("y", 0)
+                    .style("font-size", "14px")
+                    .style("text-align", "left")
+                    .style("color", "#2c3e50")
+                    .style("font-weight", "bold")
+                    .text(prop.title)
+                    .style("opacity", 0);
+
+                titleDiv.transition()
+                    .delay(index * 500)
+                    .duration(500)
+                    .style("opacity", 1);
+
+                function animateProperty() {
+                    if (prop.animation === "merge") {
+                        circle1.transition().duration(2000).attr("cx", 0)
+                            .transition().duration(1000).attr("r", 40)
+                            .transition().duration(2000).attr("cx", -80).attr("r", 30);
+                        circle2.transition().duration(2000).attr("cx", 0)
+                            .transition().duration(1000).attr("r", 40)
+                            .transition().duration(2000).attr("cx", 80).attr("r", 30);
+                    } else if (prop.animation === "separate") {
+                        circle1.transition().duration(2000).attr("cx", -100)
+                            .transition().duration(1000).attr("cx", -80);
+                        circle2.transition().duration(2000).attr("cx", 100).attr("opacity", 0.3)
+                            .transition().duration(1000).attr("cx", 80).attr("opacity", 0.7);
+                    } else if (prop.animation === "multiply") {
+                        circle1.transition().duration(1000).attr("r", 40)
+                            .transition().duration(1000).attr("r", 30)
+                            .transition().duration(1000).attr("r", 40)
+                            .transition().duration(1000).attr("r", 30);
+                        circle2.transition().duration(1000).attr("r", 25)
+                            .transition().duration(1000).attr("r", 35)
+                            .transition().duration(1000).attr("r", 25)
+                            .transition().duration(1000).attr("r", 30);
+                    }
+                }
+                
+                setTimeout(() => { 
+                    animateProperty(); 
+                    setInterval(animateProperty, 6000); 
+                }, index * 1000);
+            });
+        }
+
+        // 常用对数系统可视化
+        function visualizeCommonLogs(containerId) {
+            const svg = d3.select("#animation5");
+            if(svg.empty()) return;
+            svg.selectAll("*").remove();
+            const bounds = svg.node().getBoundingClientRect();
+            const width = bounds.width, height = bounds.height;
+            const centerX = width / 2;
+
+            svg.append("text")
+                .attr("x", centerX)
+                .attr("y", 40)
+                .attr("text-anchor", "middle")
+                .style("font-size", "18px")
+                .style("font-weight", "bold")
+                .text("常用对数与自然对数对比");
+
+            const lgGroup = svg.append("g")
+                .attr("transform", `translate(${width*0.1}, 80)`);
+            
+            lgGroup.append("text")
+                .text("常用对数 (lg)")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#e74c3c");
+            
+            [{input: "10", output: "1"}, {input: "100", output: "2"}, {input: "1000", output: "3"}].forEach((ex, i) => {
+                const y = 30 + i * 40;
+                const g = lgGroup.append("g")
+                    .style("opacity", 0);
+                
+                g.append("rect")
+                    .attr("y", y)
+                    .attr("width", 150)
+                    .attr("height", 30)
+                    .attr("fill", "#ffebee")
+                    .attr("stroke", "#e74c3c")
+                    .attr("rx", 5);
+                
+                g.append("text")
+                    .text(`lg(${ex.input}) = ${ex.output}`)
+                    .attr("x", 75)
+                    .attr("y", y + 20)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "14px");
+                
+                g.transition()
+                    .delay(500 + i * 300)
+                    .duration(500)
+                    .style("opacity", 1);
+            });
+
+            const lnGroup = svg.append("g")
+                .attr("transform", `translate(${width*0.9 - 150}, 80)`);
+            
+            lnGroup.append("text")
+                .text("自然对数 (ln)")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#27ae60");
+            
+            [{input: "e", output: "1"}, {input: "e²", output: "2"}, {input: "1", output: "0"}].forEach((ex, i) => {
+                const y = 30 + i * 40;
+                const g = lnGroup.append("g")
+                    .style("opacity", 0);
+                
+                g.append("rect")
+                    .attr("y", y)
+                    .attr("width", 150)
+                    .attr("height", 30)
+                    .attr("fill", "#e8f5e8")
+                    .attr("stroke", "#27ae60")
+                    .attr("rx", 5);
+                
+                g.append("text")
+                    .text(`ln(${ex.input}) = ${ex.output}`)
+                    .attr("x", 75)
+                    .attr("y", y + 20)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "14px");
+                
+                g.transition()
+                    .delay(1500 + i * 300)
+                    .duration(500)
+                    .style("opacity", 1);
+            });
+
+            const curveGroup = svg.append("g")
+                .attr("transform", `translate(50, ${height-150})`);
+            
+            const xScale = d3.scaleLinear()
+                .domain([0.1, 10])
+                .range([0, width - 100]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([-2, 3])
+                .range([120, 0]);
+
+            curveGroup.append("line")
+                .attr("x1", 0)
+                .attr("y1", yScale(0))
+                .attr("x2", width-100)
+                .attr("y2", yScale(0))
+                .attr("stroke", "#333");
+            
+            curveGroup.append("line")
+                .attr("x1", xScale(1))
+                .attr("y1", 0)
+                .attr("x2", xScale(1))
+                .attr("y2", 120)
+                .attr("stroke", "#333");
+
+            // 绘制lg(x)函数曲线
+            const lgLine = d3.line()
+                .x(d => xScale(d))
+                .y(d => yScale(Math.log10(d)))
+                .curve(d3.curveMonotoneX);
+            
+            const lgData = d3.range(0.1, 10, 0.1);
+            
+            curveGroup.append("path")
+                .datum(lgData)
+                .attr("fill", "none")
+                .attr("stroke", "#e74c3c")
+                .attr("stroke-width", 3)
+                .attr("d", lgLine)
+                .style("opacity", 0)
+                .transition()
+                .delay(3000)
+                .duration(1000)
+                .style("opacity", 1);
+
+            // 绘制ln(x)函数曲线
+            const lnLine = d3.line()
+                .x(d => xScale(d))
+                .y(d => yScale(Math.log(d)))
+                .curve(d3.curveMonotoneX);
+            
+            const lnData = d3.range(0.1, 10, 0.1);
+            
+            curveGroup.append("path")
+                .datum(lnData)
+                .attr("fill", "none")
+                .attr("stroke", "#27ae60")
+                .attr("stroke-width", 3)
+                .attr("d", lnLine)
+                .style("opacity", 0)
+                .transition()
+                .delay(3500)
+                .duration(1000)
+                .style("opacity", 1);
+
+            // 添加函数标签
+            curveGroup.append("text")
+                .text("y = lg(x)")
+                .attr("x", xScale(8))
+                .attr("y", yScale(0.9))
+                .style("fill", "#e74c3c")
+                .style("font-weight", "bold")
+                .style("font-size", "14px");
+            
+            curveGroup.append("text")
+                .text("y = ln(x)")
+                .attr("x", xScale(6))
+                .attr("y", yScale(1.8))
+                .style("fill", "#27ae60")
+                .style("font-weight", "bold")
+                .style("font-size", "14px");
+        }
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            showSlide(0);
+            updateSlideInfo();
+            console.log('✨ 对数函数教学系统初始化完成');
+        });
+    </script>
+</body>
+</html>

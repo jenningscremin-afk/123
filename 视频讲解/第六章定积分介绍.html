@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定积分介绍 (概念篇)</title>
+    <link rel="stylesheet" href="./noto-serif-sc.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #2d3436 0%, #1e272e 100%);
+            background-image: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255,255,255,0.01) 2px,
+                    rgba(255,255,255,0.01) 4px
+                );
+            position: relative;
+            display: flex;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            padding: 30px;
+            display: flex;
+        }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .left-panel {
+            width: 35%;
+            height: 100%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            width: 65%;
+            height: 100%;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .chalk-text {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: normal;
+            text-shadow: 
+                0 0 2px rgba(255,255,255,0.8),
+                0 0 4px rgba(255,255,255,0.5);
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: writeTitle 1.5s ease-out;
+            color: #FFE066;
+            text-shadow: 
+                0 0 5px rgba(255,224,102,0.8),
+                0 0 10px rgba(255,224,102,0.5);
+        }
+
+        .emphasis {
+            color: #FF6B6B;
+            font-size: 18px;
+            text-shadow: 
+                0 0 3px rgba(255,107,107,0.8),
+                0 0 6px rgba(255,107,107,0.5);
+        }
+
+        .formula-box {
+            background: rgba(255,224,102,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed rgba(255,224,102,0.4);
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .chalk-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 15px 0;
+        }
+
+        .chalk-list li {
+            position: relative;
+            padding-left: 20px;
+            margin: 10px 0;
+            animation: slideIn 0.5s ease-out forwards;
+            opacity: 0;
+            font-size: 16px;
+        }
+
+        .chalk-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #FFE066;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+        }
+
+        .svg-animation {
+            width: 95%;
+            height: 95%;
+            max-width: 700px;
+            max-height: 600px;
+        }
+
+        /* 控制栏 */
+        .control-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 25px;
+            border-radius: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: rgba(255,224,102,0.2);
+            border: 2px solid #FFE066;
+            color: #FFE066;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(255,224,102,0.3);
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 页码指示器 */
+        .page-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #FFE066;
+            font-size: 16px;
+            z-index: 100;
+        }
+
+        .small-text {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* MathJax样式覆盖 */
+        .mjx-chtml {
+            color: #ffffff !important;
+            font-size: 16px !important;
+        }
+    </style>
+    <style>
+        /* 虚拟人与字幕样式（参考 反正切函数极限.html） */
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none !important; /* 完全隐藏状态指示器 */
+        }
+        .status-indicator.connected {
+            background: rgba(76, 175, 80, 0.8);
+            display: none !important; /* 强制隐藏 */
+        }
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+            display: none !important; /* 强制隐藏 */
+        }
+        .status-indicator.connecting {
+            background: rgba(255, 152, 0, 0.8);
+            display: none !important; /* 强制隐藏 */
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 录制模式下隐藏状态指示器 */
+        .recording-mode .status-indicator {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 录制模式下隐藏控制栏 */
+        .recording-mode .control-bar {
+            left: -300px;
+            transition: left 0.5s ease;
+        }
+
+        .avatar-container {
+            position: fixed;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px;
+            height: 850px;
+            overflow: hidden;
+            z-index: 50;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        .wrapper { width: 100%; height: 100%; background: transparent; pointer-events: auto; }
+
+        .subtitle-area {
+            position: absolute;
+            bottom: 8px;
+            left: 20px;
+            right: 20px;
+            min-height: 36px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            padding: 0 16px;
+            z-index: 110;
+            text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.7);
+            pointer-events: none;
+        }
+    </style>
+    <style>
+        /* 工具栏样式对齐模板（左侧悬浮，悬停展开） */
+        .control-bar {
+            position: fixed;
+            left: -240px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 270px;
+            height: auto;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 200;
+            border-radius: 0 20px 20px 0;
+            padding: 25px 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .control-bar:hover { left: 0; box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+        .control-bar::before {
+            content: '▶️';
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 8px;
+            border-radius: 0 15px 15px 0;
+            font-size: 0.9rem;
+            writing-mode: vertical-lr;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #333;
+        }
+        .btn {
+            padding: 14px 22px;
+            background: rgba(255, 255, 255, 0.25);
+            color: #333;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+        }
+        .btn:hover { background: rgba(255, 255, 255, 0.35); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.5); color: #222; }
+        .btn.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: 1px solid rgba(255,255,255,0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .btn.primary:hover { background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    </style>
+    <style>
+        /* 覆盖：参考 指数函数极限.html 的背景与字体 */
+        body {
+            font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', serif;
+            background: #1a1a2e;
+        }
+        .blackboard {
+            background: #1a1a2e !important;
+            background-image: none !important;
+        }
+        .chalk-text {
+            color: #ffffff !important;
+            text-shadow: none !important;
+            font-size: 16px !important;
+        }
+        .title {
+            color: #e1bee7 !important;
+            text-shadow: none !important;
+        }
+        /* 仅右侧SVG放大2倍 */
+        .right-panel .svg-animation {
+            width: 100% !important;
+            height: auto !important;
+            max-width: none !important;
+            max-height: none !important;
+            transform: translateX(-70px) scale(2);
+            transform-origin: left center;
+        }
+        .right-panel { overflow: visible; }
+        /* MathJax 文字颜色适配深色背景 */
+        .mjx-chtml { color: #ffffff !important; }
+    </style>
+</head>
+<body>
+    <div class="blackboard">
+        <div id="statusIndicator" class="status-indicator">等待连接</div>
+        <!-- 虚拟人显示区域 -->
+        <div class="avatar-container">
+            <div class="wrapper" id="avatarWrapper"></div>
+        </div>
+        <!-- 页码指示器 -->
+        <div class="page-indicator">第 <span id="currentPage">1</span> / 5 页</div>
+        
+        <!-- 第1页：引入问题 -->
+        <div class="page active" id="page1">
+            <div class="left-panel">
+                <h1 class="title chalk-text">一个古老的问题</h1>
+                <div class="board-content">
+                    <p class="chalk-text emphasis">如何计算曲线下的面积？</p>
+                    <ul class="chalk-list">
+                        <li class="chalk-text">古希腊：阿基米德方法</li>
+                        <li class="chalk-text">17世纪：牛顿&莱布尼茨</li>
+                        <li class="chalk-text">发现了微积分基本定理</li>
+                    </ul>
+                    <div class="formula-box">
+                        <p class="chalk-text small-text">这个发现改变了整个数学</p>
+                    </div>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="animation-container">
+                    <svg class="svg-animation" viewBox="0 0 700 600">
+                        <!-- 坐标轴 -->
+                        <line x1="100" y1="500" x2="600" y2="500" stroke="#FFE066" stroke-width="2"/>
+                        <line x1="100" y1="500" x2="100" y2="100" stroke="#FFE066" stroke-width="2"/>
+                        
+                        <!-- 曲线 -->
+                        <path id="mainCurve" d="M 100 400 Q 250 200, 400 300 T 600 150" 
+                              stroke="#FF6B6B" stroke-width="4" fill="none"/>
+                        
+                        <!-- 面积渐变填充 -->
+                        <defs>
+                            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:0.5"/>
+                                <stop offset="100%" style="stop-color:#4ECDC4;stop-opacity:0.2"/>
+                            </linearGradient>
+                        </defs>
+                        
+                        <path d="M 200 500 L 200 350 Q 300 250, 400 300 T 500 200 L 500 500 Z" 
+                              fill="url(#areaGradient)" opacity="0">
+                            <animate attributeName="opacity" values="0;0;0.8;0.8;0" dur="4s" repeatCount="indefinite"/>
+                        </path>
+                        
+                        <!-- 问号 -->
+                        <text x="350" y="380" fill="#FFE066" font-size="60" text-anchor="middle" opacity="0">
+                            ?
+                            <animate attributeName="opacity" values="0;1;1;0" dur="4s" repeatCount="indefinite"/>
+                        </text>
+                        
+                        <!-- 标签 -->
+                        <text x="350" y="50" fill="#FF6B6B" font-size="24" text-anchor="middle">如何求这个面积？</text>
+                        <text x="200" y="520" fill="#FFE066" font-size="18">a</text>
+                        <text x="500" y="520" fill="#FFE066" font-size="18">b</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第2页：积分的想法 -->
+        <div class="page" id="page2">
+            <div class="left-panel">
+                <h1 class="title chalk-text">积分的想法</h1>
+                <div class="board-content">
+                    <p class="chalk-text emphasis">切成小块，然后加起来</p>
+                    <div class="formula-box">
+                        <p class="chalk-text">$$\int_a^b f(x) \, dx$$</p>
+                    </div>
+                    <ul class="chalk-list">
+                        <li class="chalk-text">∫ 是拉长的 S (Sum)</li>
+                        <li class="chalk-text">dx 是极小的宽度</li>
+                        <li class="chalk-text">f(x) 是高度</li>
+                        <li class="chalk-text">积分 = 无限求和</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="animation-container">
+                    <svg class="svg-animation" viewBox="0 0 700 600">
+                        <!-- 坐标轴 -->
+                        <line x1="100" y1="480" x2="600" y2="480" stroke="#FFE066" stroke-width="2"/>
+                        <line x1="100" y1="480" x2="100" y2="100" stroke="#FFE066" stroke-width="2"/>
+                        
+                        <!-- 曲线 -->
+                        <path d="M 100 380 Q 250 180, 400 280 T 600 130" 
+                              stroke="#FF6B6B" stroke-width="4" fill="none"/>
+                        
+                        <!-- 矩形分割动画 - 4个矩形 -->
+                        <g id="rect4">
+                            <rect x="150" y="330" width="100" height="150" 
+                                  fill="rgba(78,205,196,0.4)" stroke="#4ECDC4" stroke-width="2">
+                                <animate attributeName="height" values="0;150" dur="0.4s" begin="0s;rect4.end+2s"/>
+                                <animate attributeName="y" values="480;330" dur="0.4s" begin="0s;rect4.end+2s"/>
+                            </rect>
+                            <rect x="250" y="230" width="100" height="250" 
+                                  fill="rgba(78,205,196,0.4)" stroke="#4ECDC4" stroke-width="2">
+                                <animate attributeName="height" values="0;250" dur="0.4s" begin="0.4s;rect4.end+2.4s"/>
+                                <animate attributeName="y" values="480;230" dur="0.4s" begin="0.4s;rect4.end+2.4s"/>
+                            </rect>
+                            <rect x="350" y="255" width="100" height="225" 
+                                  fill="rgba(78,205,196,0.4)" stroke="#4ECDC4" stroke-width="2">
+                                <animate attributeName="height" values="0;225" dur="0.4s" begin="0.8s;rect4.end+2.8s"/>
+                                <animate attributeName="y" values="480;255" dur="0.4s" begin="0.8s;rect4.end+2.8s"/>
+                            </rect>
+                            <rect x="450" y="180" width="100" height="300" 
+                                  fill="rgba(78,205,196,0.4)" stroke="#4ECDC4" stroke-width="2">
+                                <animate attributeName="height" values="0;300" dur="0.4s" begin="1.2s;rect4.end+3.2s" id="rect4"/>
+                                <animate attributeName="y" values="480;180" dur="0.4s" begin="1.2s;rect4.end+3.2s"/>
+                            </rect>
+                        </g>
+                        
+                        <!-- 标签 -->
+                        <text x="350" y="550" fill="#4ECDC4" font-size="20" text-anchor="middle">
+                            切成小矩形
+                        </text>
+                        
+                        <!-- dx 标注 -->
+                        <g opacity="0">
+                            <line x1="150" y1="490" x2="250" y2="490" stroke="#FFE066" stroke-width="1"/>
+                            <text x="200" y="510" fill="#FFE066" font-size="16" text-anchor="middle">dx</text>
+                            <animate attributeName="opacity" values="0;1;1;0" dur="4s" repeatCount="indefinite"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第3页：越分越细 -->
+        <div class="page" id="page3">
+            <div class="left-panel">
+                <h1 class="title chalk-text">分得越细越精确</h1>
+                <div class="board-content">
+                    <p class="chalk-text emphasis">极限的思想</p>
+                    <div class="formula-box">
+                        <p class="chalk-text small-text">$$\lim_{n \to \infty} \sum_{i=1}^{n} f(x_i) \Delta x$$</p>
+                    </div>
+                    <ul class="chalk-list">
+                        <li class="chalk-text">n = 4：粗略近似</li>
+                        <li class="chalk-text">n = 8：更好一些</li>
+                        <li class="chalk-text">n = 16：相当接近</li>
+                        <li class="chalk-text">n → ∞：完全精确！</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="animation-container">
+                    <svg class="svg-animation" viewBox="0 0 700 600">
+                        <!-- 坐标轴 -->
+                        <line x1="100" y1="450" x2="600" y2="450" stroke="#FFE066" stroke-width="2"/>
+                        <line x1="100" y1="450" x2="100" y2="100" stroke="#FFE066" stroke-width="2"/>
+                        
+                        <!-- 曲线 -->
+                        <path d="M 100 350 C 200 200, 300 250, 400 200 S 500 250, 600 150" 
+                              stroke="#FF6B6B" stroke-width="4" fill="none"/>
+                        
+                        <!-- 不同精度的矩形近似 -->
+                        <g id="approximation"></g>
+                        
+                        <!-- 文字说明 -->
+                        <text x="350" y="50" fill="#FFE066" font-size="22" text-anchor="middle" id="nValue">n = 16 个矩形</text>
+                        
+                        <text x="350" y="500" fill="#4ECDC4" font-size="18" text-anchor="middle">
+                            误差越来越小
+                            <animate attributeName="fill-opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+                        </text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第4页：速度与距离的例子 -->
+        <div class="page" id="page4">
+            <div class="left-panel">
+                <h1 class="title chalk-text">实际例子：开车</h1>
+                <div class="board-content">
+                    <p class="chalk-text emphasis">速度 → 距离</p>
+                    <ul class="chalk-list">
+                        <li class="chalk-text">速度: v(t) km/h</li>
+                        <li class="chalk-text">时间: t 小时</li>
+                        <li class="chalk-text">距离 = 速度×时间</li>
+                    </ul>
+                    <div class="formula-box">
+                        <p class="chalk-text">$$s = \int_0^t v(\tau) d\tau$$</p>
+                    </div>
+                    <p class="chalk-text small-text">积分就是累加所有瞬间的距离</p>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="animation-container">
+                    <svg class="svg-animation" viewBox="0 0 700 600">
+                        <!-- 道路 -->
+                        <rect x="50" y="250" width="600" height="100" fill="#2d3436"/>
+                        <line x1="50" y1="300" x2="650" y2="300" stroke="#FFE066" stroke-width="3" stroke-dasharray="20,10"/>
+                        
+                        <!-- 汽车 -->
+                        <g id="car">
+                            <rect x="0" y="270" width="80" height="40" fill="#FF6B6B" rx="8"/>
+                            <rect x="10" y="260" width="50" height="25" fill="#FF6B6B"/>
+                            <circle cx="20" cy="315" r="8" fill="#333"/>
+                            <circle cx="60" cy="315" r="8" fill="#333"/>
+                            <rect x="55" y="265" width="15" height="15" fill="#87CEEB" opacity="0.7"/>
+                            <animateTransform attributeName="transform" type="translate" 
+                                            values="80,0; 550,0; 80,0" dur="8s" repeatCount="indefinite"/>
+                        </g>
+                        
+                        <!-- 速度计 -->
+                        <g transform="translate(500, 50)">
+                            <circle cx="75" cy="75" r="70" fill="#2d3436" stroke="#FFE066" stroke-width="3"/>
+                            <text x="75" y="130" fill="#FFE066" font-size="16" text-anchor="middle">km/h</text>
+                            <!-- 指针 -->
+                            <line x1="75" y1="75" x2="75" y2="25" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round">
+                                <animateTransform attributeName="transform" type="rotate" 
+                                                values="0 75 75; 60 75 75; 120 75 75; 30 75 75; 0 75 75" 
+                                                dur="8s" repeatCount="indefinite"/>
+                            </line>
+                            <circle cx="75" cy="75" r="5" fill="#FF6B6B"/>
+                            <text x="75" y="80" fill="#4ECDC4" font-size="24" text-anchor="middle" id="speedValue">60</text>
+                        </g>
+                        
+                        <!-- 速度-时间图 -->
+                        <g transform="translate(50, 380)">
+                            <line x1="0" y1="150" x2="300" y2="150" stroke="#FFE066" stroke-width="2"/>
+                            <line x1="0" y1="150" x2="0" y2="0" stroke="#FFE066" stroke-width="2"/>
+                            
+                            <!-- 速度曲线 -->
+                            <polyline points="0,100 50,80 100,40 150,70 200,90 250,110 300,100" 
+                                     stroke="#4ECDC4" stroke-width="3" fill="none"/>
+                            
+                            <!-- 面积填充 -->
+                            <path d="M 0 150 L 0 100 L 50 80 L 100 40 L 150 70 L 200 90 L 250 110 L 300 100 L 300 150 Z" 
+                                  fill="rgba(78,205,196,0.3)">
+                                <animate attributeName="fill-opacity" values="0;0.3;0.3;0" dur="8s" repeatCount="indefinite"/>
+                            </path>
+                            
+                            <text x="150" y="180" fill="#FFE066" font-size="16" text-anchor="middle">时间</text>
+                            <text x="-20" y="75" fill="#FFE066" font-size="16">v(t)</text>
+                            <text x="150" y="75" fill="#4ECDC4" font-size="18" text-anchor="middle">面积 = 距离</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第5页（原第13页）：影响和应用 -->
+        <div class="page" id="page5">
+            <div class="left-panel">
+                <h1 class="title chalk-text">改变世界</h1>
+                <div class="board-content">
+                    <p class="chalk-text emphasis">微积分的应用</p>
+                    <ul class="chalk-list">
+                        <li class="chalk-text">物理：运动定律</li>
+                        <li class="chalk-text">工程：建筑设计</li>
+                        <li class="chalk-text">经济：最优化</li>
+                        <li class="chalk-text">AI：深度学习</li>
+                    </ul>
+                    <div class="formula-box">
+                        <p class="chalk-text small-text">现代科技的基础！</p>
+                    </div>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="animation-container">
+                    <svg class="svg-animation" viewBox="0 0 700 600">
+                        <!-- 中心：微积分 -->
+                        <circle cx="350" cy="300" r="60" fill="rgba(255,224,102,0.3)" stroke="#FFE066" stroke-width="3">
+                            <animate attributeName="r" values="60;70;60" dur="2s" repeatCount="indefinite"/>
+                        </circle>
+                        <text x="350" y="310" fill="#FFE066" font-size="20" text-anchor="middle">微积分</text>
+                        
+                        <!-- 应用领域 -->
+                        <!-- 物理 -->
+                        <g transform="translate(200, 150)">
+                            <circle cx="0" cy="0" r="50" fill="rgba(78,205,196,0.3)" stroke="#4ECDC4" stroke-width="2"/>
+                            <text x="0" y="5" fill="#4ECDC4" font-size="16" text-anchor="middle">物理</text>
+                            <text x="0" y="-60" fill="#ffffff" font-size="14" text-anchor="middle">F=ma</text>
+                        </g>
+                        
+                        <!-- 工程 -->
+                        <g transform="translate(500, 150)">
+                            <circle cx="0" cy="0" r="50" fill="rgba(255,107,107,0.3)" stroke="#FF6B6B" stroke-width="2"/>
+                            <text x="0" y="5" fill="#FF6B6B" font-size="16" text-anchor="middle">工程</text>
+                            <!-- 桥梁图标 -->
+                            <path d="M -30 -20 Q 0 -35, 30 -20" stroke="#ffffff" stroke-width="2" fill="none"/>
+                        </g>
+                        
+                        <!-- 经济 -->
+                        <g transform="translate(200, 450)">
+                            <circle cx="0" cy="0" r="50" fill="rgba(155,89,182,0.3)" stroke="#9B59B6" stroke-width="2"/>
+                            <text x="0" y="5" fill="#9B59B6" font-size="16" text-anchor="middle">经济</text>
+                            <!-- 增长曲线 -->
+                            <polyline points="-20,20 -10,10 0,15 10,5 20,-5" stroke="#ffffff" stroke-width="2" fill="none"/>
+                        </g>
+                        
+                        <!-- AI -->
+                        <g transform="translate(500, 450)">
+                            <circle cx="0" cy="0" r="50" fill="rgba(52,152,219,0.3)" stroke="#3498DB" stroke-width="2"/>
+                            <text x="0" y="5" fill="#3498DB" font-size="16" text-anchor="middle">AI</text>
+                            <!-- 神经网络图标 -->
+                            <circle cx="-15" cy="-15" r="3" fill="#ffffff"/>
+                            <circle cx="0" cy="-15" r="3" fill="#ffffff"/>
+                            <circle cx="15" cy="-15" r="3" fill="#ffffff"/>
+                            <circle cx="0" cy="15" r="3" fill="#ffffff"/>
+                            <line x1="-15" y1="-15" x2="0" y2="15" stroke="#ffffff" stroke-width="1"/>
+                            <line x1="0" y1="-15" x2="0" y2="15" stroke="#ffffff" stroke-width="1"/>
+                            <line x1="15" y1="-15" x2="0" y2="15" stroke="#ffffff" stroke-width="1"/>
+                        </g>
+                        
+                        <!-- 连接线 -->
+                        <line x1="290" y1="270" x2="230" y2="190" stroke="#FFE066" stroke-width="2" stroke-dasharray="5,5" opacity="0.5">
+                            <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite"/>
+                        </line>
+                        <line x1="410" y1="270" x2="470" y2="190" stroke="#FFE066" stroke-width="2" stroke-dasharray="5,5" opacity="0.5">
+                            <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite"/>
+                        </line>
+                        <line x1="290" y1="330" x2="230" y2="410" stroke="#FFE066" stroke-width="2" stroke-dasharray="5,5" opacity="0.5">
+                            <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite"/>
+                        </line>
+                        <line x1="410" y1="330" x2="470" y2="410" stroke="#FFE066" stroke-width="2" stroke-dasharray="5,5" opacity="0.5">
+                            <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite"/>
+                        </line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航按钮 -->
+        <div class="control-bar">
+            <button class="btn" id="prevBtn" onclick="changePage(-1)">上一页</button>
+            <button class="btn" id="nextBtn" onclick="changePage(1)">下一页</button>
+            <button class="btn" id="startBtn" onclick="startTeaching()" style="border-color:#4CAF50;color:#4CAF50">开始讲课</button>
+            <button class="btn" id="autoPlayBtn" onclick="startAutoPlay()" style="border-color:#03A9F4;color:#03A9F4">自动播放</button>
+        </div>
+        <div class="subtitle-area" id="subtitleArea"></div>
+    </div>
+
+    <!-- MathJax配置 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            chtml: {
+                scale: 1
+            }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <script type="module">
+        // 引入讯飞 Avatar SDK（模板同 指数函数极限.html）
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞官方SDK模块已加载');
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        let currentPage = 1;
+        const totalPages = 5;
+        // 虚拟人全局状态
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let isAutoPlaying = false;
+
+        // 讲稿（概念篇，按页）
+        const pageContent = {
+            1: "同学们好！先看屏幕：如果要给一个优美的拱门准备石料，怎样算出这个拱形下的面积？这件事难倒了人类几千年——我们今天就从‘笨办法’出发，走到能改变世界的‘聪明办法’。",
+            2: "直觉做法是：化整为零。把曲线下面积切成很多极窄的小长方形。每个小长方形的面积=高×宽，高是 f(x)，宽是 dx。长长的 S（∫）就是求和的符号。定积分，就是把无数个极窄的小长方形加起来。",
+            3: "你可能会担心：顶端有空隙会有误差。关键在‘分得越细越准’：n 从 4 到 8 再到 16，误差越来越小。把宽度逼近 0、块数趋于无穷时，误差消失，总和就等于真实面积——这就是定积分的极限思想。",
+            4: "再看一个贴近生活的例子：开车。速度在变，怎么求路程？把时间切成无数个极小片段，每个瞬间速度近似不变，‘速度×极小时间’得到瞬时路程，全部累加就是总路程。而这正是速度-时间图像下的面积。",
+            5: "定积分是一种‘累加’的思想：它能处理一切与累计效应相关的问题——从物理到工程，从经济到 AI。下节课我们用牛顿-莱布尼茨公式，把看似无穷的累加，变成一个简单的减法！"
+        };
+
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (!indicator) return;
+            indicator.textContent = message;
+            indicator.className = 'status-indicator';
+            if (type === 'connected') indicator.classList.add('connected');
+            if (type === 'recording') indicator.classList.add('recording');
+            if (type === 'connecting') indicator.classList.add('connecting');
+        }
+
+        function changePage(direction) {
+            const pages = document.querySelectorAll('.page');
+            pages[currentPage - 1].classList.remove('active');
+            
+            currentPage += direction;
+            
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            pages[currentPage - 1].classList.add('active');
+            document.getElementById('currentPage').textContent = currentPage;
+            
+            // 更新按钮状态
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+            
+            // 重新触发动画
+            const newPage = pages[currentPage - 1];
+            const animations = newPage.querySelectorAll('animate, animateTransform');
+            animations.forEach(anim => {
+                anim.beginElement();
+            });
+            // 若已连接且非自动播放，翻页时朗读当前页
+            if (!isAutoPlaying && isConnected && isTeaching) {
+                setTimeout(() => speakContent(currentPage), 500);
+            }
+            
+            // 特殊处理第3页的动态矩形
+            if (currentPage === 3) {
+                animateRectangles();
+            }
+        }
+
+        // 第3页的动态矩形动画
+        function animateRectangles() {
+            const container = document.querySelector('#page3 #approximation');
+            if (!container) return;
+            
+            let n = 8;
+            const colors = ['rgba(78,205,196,0.4)', 'rgba(255,107,107,0.4)', 'rgba(255,224,102,0.4)'];
+            let colorIndex = 0;
+            
+            function createRectangles() {
+                container.innerHTML = '';
+                const width = 500 / n;
+                
+                for (let i = 0; i < n; i++) {
+                    const x = 100 + i * width;
+                    const height = 150 + Math.sin(i * 0.5) * 100;
+                    const y = 450 - height;
+                    
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x);
+                    rect.setAttribute('y', y);
+                    rect.setAttribute('width', width);
+                    rect.setAttribute('height', height);
+                    rect.setAttribute('fill', colors[colorIndex % 3]);
+                    rect.setAttribute('stroke', '#4ECDC4');
+                    rect.setAttribute('stroke-width', '1');
+                    rect.style.animation = `slideUp 0.5s ${i * 0.05}s ease-out forwards`;
+                    rect.style.opacity = '0';
+                    
+                    container.appendChild(rect);
+                }
+                
+                // 更新文字
+                const nText = document.querySelector('#page3 #nValue');
+                if (nText) {
+                    nText.textContent = `n = ${n} 个矩形`;
+                }
+                
+                // 循环不同的精度
+                n = n === 8 ? 16 : (n === 16 ? 32 : 8);
+                colorIndex++;
+            }
+            
+            createRectangles();
+            setInterval(createRectangles, 3000);
+        }
+
+        // 速度值动画（第4页）
+        let speedInterval = setInterval(() => {
+            const speedValue = document.getElementById('speedValue');
+            if (speedValue) {
+                const speeds = [60, 80, 120, 40, 20];
+                const randomSpeed = speeds[Math.floor(Math.random() * speeds.length)];
+                speedValue.textContent = randomSpeed;
+            }
+        }, 2000);
+
+        // 初始化
+        document.getElementById('prevBtn').disabled = true;
+
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changePage(-1);
+            if (e.key === 'ArrowRight') changePage(1);
+        });
+
+        // CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    height: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+            @keyframes writeTitle {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // ===== 讯飞 Avatar 控制逻辑 =====
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') return resolve();
+                const to = setTimeout(() => reject(new Error('SDK加载超时')), 10000);
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(to);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            if (startBtn) { startBtn.textContent = '🔄 启动中...'; startBtn.disabled = true; }
+            try {
+                await waitForSDK();
+                updateStatus('SDK已加载', 'connecting');
+                if (avatarPlatform) avatarPlatform.destroy();
+                avatarPlatform = new AvatarPlatform({ useInlinePlayer: true });
+                avatarPlatform
+                    .on('connected', () => {
+                        isConnected = true; isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        if (startBtn) startBtn.textContent = '💖 虚拟人已就绪';
+                        setTimeout(() => speakContent(currentPage), 800);
+                    })
+                    .on('error', (err) => {
+                        console.error('Avatar error:', err);
+                        if (startBtn) { startBtn.textContent = '❌ 连接失败'; startBtn.disabled = false; }
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: 'b4889d02',
+                    apiKey: 'de174061f9ffd1f4e7f1827aa98881be',
+                    apiSecret: 'NWMyZThkMWVkMDZmYThlOTA5ZGE2NjM2',
+                    sceneId: '213607046975721472',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: { protocol: 'xrtc', alpha: 1, bitrate: 1000000, fps: 25 },
+                    avatar: { avatar_id: '110332017', width: 1920, height: 1080, scale: 1, move_h: 0, move_v: 0, audio_format: 1 },
+                    tts: { vcn: 'x4_yiting', speed: 50, pitch: 50, volume: 100 },
+                    avatar_dispatch: { interactive_mode: 1, content_analysis: 0 }
+                });
+
+                await avatarPlatform.start({ wrapper: document.getElementById('avatarWrapper') });
+            } catch (e) {
+                console.error('启动失败:', e);
+                updateStatus('启动失败', 'connecting');
+                if (startBtn) { startBtn.textContent = '🔄 重试'; startBtn.disabled = false; }
+            }
+        }
+
+        function updateSubtitle(text) {
+            const el = document.getElementById('subtitleArea');
+            if (el) el.textContent = text || '';
+        }
+
+        async function speakContent(pageNum) {
+            if (!isTeaching || !isConnected || !avatarPlatform) return;
+            const content = pageContent[pageNum];
+            if (!content) return;
+            try {
+                updateSubtitle(content);
+                // 手势动作映射（参考模板）
+                const actionMap = {
+                    1: 'A_RLH_welcome_O',
+                    2: 'A_LH_please_O',
+                    3: 'A_LH_introduced_O',
+                    4: 'A_RH_please_O',
+                    5: 'A_RLH_welcome_O'
+                };
+                const act = actionMap[pageNum];
+                if (act) { try { await avatarPlatform.writeCmd('action', act); } catch(e){} }
+                await avatarPlatform.writeText(content, { nlp: false });
+            } catch (err) {
+                console.error('讲解失败:', err);
+            }
+        }
+
+        async function startAutoPlay() {
+            const btn = document.getElementById('autoPlayBtn');
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                if (btn) btn.textContent = '自动播放';
+                updateStatus('播放已停止');
+                // 退出录制模式
+                document.body.classList.remove('recording-mode');
+                return;
+            }
+
+            isAutoPlaying = true;
+            if (btn) btn.textContent = '⏹️ 停止播放';
+
+            // 简短倒计时提示用户准备录屏
+            updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+            console.log(`⏰ 倒计时: 1秒`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            updateStatus('🎬 自动播放开始！', 'recording');
+            console.log('🚀 自动播放正式开始！');
+
+            // 进入录制模式 - 隐藏状态指示器和控制栏
+            document.body.classList.add('recording-mode');
+            console.log('📹 进入录制模式，隐藏UI元素');
+
+            if (!isConnected) {
+                console.log('🎬 后台尝试连接虚拟人...');
+                startTeaching().catch(error => {
+                    console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                });
+            }
+            for (let p = 1; p <= totalPages && isAutoPlaying; p++) {
+                const pages = document.querySelectorAll('.page');
+                pages.forEach(pg => pg.classList.remove('active'));
+                const target = document.getElementById('page' + p);
+                if (target) target.classList.add('active');
+                currentPage = p; document.getElementById('currentPage').textContent = p;
+                updateStatus(`📖 第${p}页/${totalPages}页 - ${getPageTitle(p)}`, 'recording');
+                const anims = target ? target.querySelectorAll('animate, animateTransform') : [];
+                anims.forEach(a => a.beginElement());
+                if (isConnected && isTeaching) {
+                    await speakContent(p);
+                    // 使用优化的固定时长，基于实际语音播放测试
+                    const pageTime = getPageDuration(p);
+                    console.log(`⏰ 等待第${p}页播放完成，固定时长: ${pageTime/1000}秒`);
+                    await new Promise(resolve => setTimeout(resolve, pageTime));
+                } else {
+                    // 没有语音时等待阅读时间
+                    const pageTime = getPageDuration(p);
+                    console.log(`⏰ 等待阅读时间 ${pageTime/1000}秒...`);
+                    await new Promise(resolve => setTimeout(resolve, pageTime));
+                }
+
+                // 页面间隔 - 简化间隔时间
+                const waitTime = p === totalPages ? 2000 : 1000;
+                console.log(`⏳ 页面间隔等待 ${waitTime/1000}秒...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+            // 播放完成，等待3秒后退出录制模式
+            if (isAutoPlaying) {
+                console.log('⏰ 等待3秒后结束录制...');
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+
+            isAutoPlaying = false;
+            if (btn) btn.textContent = '自动播放';
+            updateStatus('播放已停止');
+
+            // 退出录制模式 - 恢复UI元素显示
+            document.body.classList.remove('recording-mode');
+            console.log('📹 退出录制模式，恢复UI元素');
+        }
+
+        // 获取每页的固定播放时长 - 基于实际测试的语音播放规律
+        function getPageDuration(pageNum) {
+            /*
+            ⏰ 定积分介绍课程时间设计 (基于语音播放测试)：
+
+            📊 数据分析：
+            第1页: 概念引入 - 75字，需要停顿思考
+            第2页: 积分想法 - 68字，含公式解释
+            第3页: 极限思想 - 82字，最长内容
+            第4页: 实际例子 - 71字，生活化例子
+            第5页: 总结应用 - 79字，展望未来
+
+            🧮 实用公式：
+            教学语速 = 4.2 字/秒 (含停顿和思考时间)
+            公式解释 = 3.8 字/秒 (需要更多理解时间)
+
+            🎯 总播放时长: 约75秒 (1分15秒)
+            📹 适合教学视频的节奏设计
+            */
+            const durations = {
+                1: 18000,  // 75字，概念引入，需要更多思考时间
+                2: 16000,  // 68字，含积分符号解释
+                3: 20000,  // 82字，最长内容 + 极限概念
+                4: 15000,  // 71字，生活化例子，相对容易理解
+                5: 17000   // 79字，总结展望，需要强调
+            };
+            return durations[pageNum] || 16000; // 默认16秒
+        }
+
+        // 获取页面标题 - 用于状态显示
+        function getPageTitle(pageNum) {
+            const titles = {
+                1: "古老的问题",
+                2: "积分的想法",
+                3: "分得越细越精确",
+                4: "实际例子：开车",
+                5: "改变世界"
+            };
+            return titles[pageNum] || `第${pageNum}页`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微积分专业课件：极限与连续性 (90页动画版)</title>
+    <script>
+        // 为了更好地渲染数学公式
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #0a2463;
+            --secondary-color: #3e92cc;
+            --accent-color: #d8315b;
+            --text-color: #1e1b18;
+            --bg-color: #e8e9eb;
+            --slide-bg: linear-gradient(135deg, #ffffff 0%, #f7f8fa 100%);
+            --heading-font: 'Noto Serif SC', serif;
+            --body-font: 'Noto Serif SC', serif;
+            --code-font: 'Roboto Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--body-font);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 2500px;
+        }
+
+        #presentation-container {
+            width: 95%;
+            height: 95%;
+            max-width: 1280px;
+            max-height: 800px;
+            aspect-ratio: 16 / 10;
+            position: relative;
+            background: var(--bg-color);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 50px 70px;
+            background: var(--slide-bg);
+            opacity: 0;
+            visibility: hidden;
+            transform-style: preserve-3d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            backface-visibility: hidden;
+            transform: translateZ(0); /* GPU acceleration */
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        .slide h1, .slide h2 {
+            font-family: var(--heading-font);
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+        .slide h1 { font-size: 3.2rem; }
+        .slide h2 { font-size: 2.5rem; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; display: inline-block; }
+
+        .slide p, .slide li {
+            font-size: 1.4rem;
+            line-height: 1.8;
+            max-width: 900px;
+            margin-bottom: 15px;
+        }
+
+        .slide ul {
+            list-style-position: inside;
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .math-formula {
+            font-family: var(--code-font);
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            background: rgba(10, 36, 99, 0.05);
+            padding: 20px 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: inline-block;
+            border: 1px solid rgba(10, 36, 99, 0.1);
+        }
+
+        .slide-counter {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 1rem;
+            color: #aaa;
+            font-family: var(--code-font);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            align-items: center;
+        }
+        .text-left { text-align: left; }
+
+        /* --- 90 Unique Animations --- */
+        .slide.active.anim-1 { animation: fadeIn 1s forwards; }
+        .slide.active.anim-2 { animation: slideInFromRight 0.8s forwards; }
+        .slide.active.anim-3 { animation: slideInFromBottom 0.8s forwards; }
+        .slide.active.anim-4 { animation: zoomIn 0.7s forwards; }
+        .slide.active.anim-5 { animation: flipInY 1s forwards; }
+        .slide.active.anim-6 { animation: unfoldY 1.2s forwards; }
+        .slide.active.anim-7 { animation: rotateFall 1s forwards; }
+        .slide.active.anim-8 { animation: newspaperIn 1s forwards; }
+        .slide.active.anim-9 { animation: pushFromTop 0.8s forwards; }
+        .slide.active.anim-10 { animation: cubeRotateFromTop 1s forwards; }
+        .slide.active.anim-11 { animation: bounceIn 1s forwards; }
+        .slide.active.anim-12 { animation: circleReveal 1.5s forwards; }
+        .slide.active.anim-13 { animation: slideAndRotate 1s forwards; }
+        .slide.active.anim-14 { animation: scaleDown 0.8s forwards; }
+        .slide.active.anim-15 { animation: slideUpAndFade 1s forwards; }
+        .slide.active.anim-16 { animation: rotateIn3D 1.2s forwards; }
+        .slide.active.anim-17 { animation: slideInSkew 1s forwards; }
+        .slide.active.anim-18 { animation: growFromCenter 1s forwards; }
+        .slide.active.anim-19 { animation: cornerPeel 1.2s forwards; }
+        .slide.active.anim-20 { animation: dropAndBounce 1s forwards; }
+        .slide.active.anim-21 { animation: slideInFromLeft 0.8s forwards; }
+        .slide.active.anim-22 { animation: zoomOutToShow 0.8s forwards; }
+        .slide.active.anim-23 { animation: flipInX 1s forwards; }
+        .slide.active.anim-24 { animation: pushFromBottom 0.8s forwards; }
+        .slide.active.anim-25 { animation: lightSpeedIn 1s forwards; }
+        .slide.active.anim-26 { animation: hingeEffect 2s forwards; }
+        .slide.active.anim-27 { animation: rollIn 1s forwards; }
+        .slide.active.anim-28 { animation: slideDownAndRotate 1s forwards; }
+        .slide.active.anim-29 { animation: blurIn 1s forwards; }
+        .slide.active.anim-30 { animation: slideAndBounceFromLeft 1.2s forwards; }
+        .slide.active.anim-31 { animation: shutterInHor 1s forwards; }
+        .slide.active.anim-32 { animation: shutterInVer 1s forwards; }
+        .slide.active.anim-33 { animation: swirlInFwd 1s forwards; }
+        .slide.active.anim-34 { animation: puffIn 0.8s forwards; }
+        .slide.active.anim-35 { animation: slideInEllipticTop 1s forwards; }
+        .slide.active.anim-36 { animation: slideInEllipticRight 1s forwards; }
+        .slide.active.anim-37 { animation: trackingInExpand 1s forwards; }
+        .slide.active.anim-38 { animation: fadeInBlur 1s forwards; }
+        .slide.active.anim-39 { animation: fadeInTopLeft 1s forwards; }
+        .slide.active.anim-40 { animation: fadeInBottomRight 1s forwards; }
+        .slide.active.anim-41 { animation: swingInTopFwd 1s forwards; }
+        .slide.active.anim-42 { animation: swingInRightFwd 1s forwards; }
+        .slide.active.anim-43 { animation: slitInVertical 0.8s forwards; }
+        .slide.active.anim-44 { animation: slitInHorizontal 0.8s forwards; }
+        .slide.active.anim-45 { animation: rotateIn2TopLeft 1s forwards; }
+        .slide.active.anim-46 { animation: rotateIn2BottomRight 1s forwards; }
+        .slide.active.anim-47 { animation: focusIn 1s forwards; }
+        .slide.active.anim-48 { animation: jelloHorizontal 0.9s forwards; }
+        .slide.active.anim-49 { animation: heartbeat 1.5s forwards; }
+        .slide.active.anim-50 { animation: wobbleHorizontal 0.8s forwards; }
+        .slide.active.anim-51 { animation: vibrate1 0.3s forwards; }
+        .slide.active.anim-52 { animation: flickerIn 1s forwards; }
+        .slide.active.anim-53 { animation: shadowDropCenter 0.4s forwards; }
+        .slide.active.anim-54 { animation: textFocusIn 1s forwards; }
+        .slide.active.anim-55 { animation: textPopUpTop 0.8s forwards; }
+        .slide.active.anim-56 { animation: textShadowPopTr 0.6s forwards; }
+        .slide.active.anim-57 { animation: textFlickerInGlow 2s forwards; }
+        .slide.active.anim-58 { animation: textExpand 1s forwards; }
+        .slide.active.anim-59 { animation: slideInBlurredTop 0.8s forwards; }
+        .slide.active.anim-60 { animation: slideInBlurredRight 0.8s forwards; }
+        .slide.active.anim-61 { animation: scaleInCenter 0.7s forwards; }
+        .slide.active.anim-62 { animation: scaleInTop 0.7s forwards; }
+        .slide.active.anim-63 { animation: rotateInCenter 0.8s forwards; }
+        .slide.active.anim-64 { animation: rotateInHor 0.8s forwards; }
+        .slide.active.anim-65 { animation: flipInVerRight 0.8s forwards; }
+        .slide.active.anim-66 { animation: flipInHorBottom 0.8s forwards; }
+        .slide.active.anim-67 { animation: slitInDiag1 0.9s forwards; }
+        .slide.active.anim-68 { animation: slitInDiag2 0.9s forwards; }
+        .slide.active.anim-69 { animation: slideInFwdCenter 0.8s forwards; }
+        .slide.active.anim-70 { animation: slideInFwdTop 0.8s forwards; }
+        .slide.active.anim-71 { animation: bounceInTop 1.1s forwards; }
+        .slide.active.anim-72 { animation: bounceInRight 1.1s forwards; }
+        .slide.active.anim-73 { animation: fadeInFwd 0.8s forwards; }
+        .slide.active.anim-74 { animation: fadeInTr 0.8s forwards; }
+        .slide.active.anim-75 { animation: swingInLeftFwd 1s forwards; }
+        .slide.active.anim-76 { animation: swingInBottomFwd 1s forwards; }
+        .slide.active.anim-77 { animation: puffInCenter 0.9s forwards; }
+        .slide.active.anim-78 { animation: puffInHor 0.9s forwards; }
+        .slide.active.anim-79 { animation: slideInTop 0.8s forwards; }
+        .slide.active.anim-80 { animation: slideInRight 0.8s forwards; }
+        .slide.active.anim-81 { animation: slideRotateHorCenter 0.8s forwards; }
+        .slide.active.anim-82 { animation: slideRotateVerCenter 0.8s forwards; }
+        .slide.active.anim-83 { animation: rotateScaleUp 0.9s forwards; }
+        .slide.active.anim-84 { animation: rotateScaleDown 0.9s forwards; }
+        .slide.active.anim-85 { animation: rotate90HorizontalFwd 0.7s forwards; }
+        .slide.active.anim-86 { animation: rotate90VerticalFwd 0.7s forwards; }
+        .slide.active.anim-87 { animation: flipVerticalFwd 0.7s forwards; }
+        .slide.active.anim-88 { animation: flipHorizontalFwd 0.7s forwards; }
+        .slide.active.anim-89 { animation: zoomInLeft 1s forwards; }
+        .slide.active.anim-90 { animation: matrix3D 1.5s forwards; }
+
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInFromRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInFromLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInFromBottom { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes flipInY { from { transform: rotateY(-90deg); opacity: 0; } to { transform: rotateY(0); opacity: 1; } }
+        @keyframes flipInX { from { transform: rotateX(-90deg); opacity: 0; } to { transform: rotateX(0); opacity: 1; } }
+        @keyframes unfoldY { from { transform-origin: center top; transform: scaleY(0); } to { transform-origin: center top; transform: scaleY(1); } }
+        @keyframes rotateFall { from { transform: rotateZ(20deg) translateY(-100%) translateX(30%); opacity: 0; } to { transform: rotateZ(0) translateY(0) translateX(0); opacity: 1; } }
+        @keyframes newspaperIn { from { transform: scale(0) rotate(720deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
+        @keyframes pushFromTop { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        @keyframes pushFromBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes cubeRotateFromTop { from { transform-origin: bottom center; transform: rotateX(-90deg); opacity: 0; } to { transform-origin: bottom center; transform: rotateX(0); opacity: 1; } }
+        @keyframes bounceIn { 0%{opacity:0;transform:scale(.3)} 50%{opacity:1;transform:scale(1.05)} 70%{transform:scale(.9)} 100%{transform:scale(1)} }
+        @keyframes circleReveal { from { clip-path: circle(0% at 50% 50%); } to { clip-path: circle(125% at 50% 50%); } }
+        @keyframes slideAndRotate { from { transform: translateX(-100%) rotate(-90deg); opacity: 0; } to { transform: translateX(0) rotate(0); opacity: 1; } }
+        @keyframes scaleDown { from { transform: scale(1.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slideUpAndFade { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes rotateIn3D { from { transform: rotate3d(1, 1, 0, 180deg); opacity: 0; } to { transform: rotate3d(0, 0, 0, 0); opacity: 1; } }
+        @keyframes slideInSkew { from { transform: translateX(-100%) skewX(30deg); opacity: 0; } to { transform: translateX(0) skewX(0); opacity: 1; } }
+        @keyframes growFromCenter { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes cornerPeel { from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); } to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } }
+        @keyframes dropAndBounce { 0%{transform:translateY(-200px);animation-timing-function:ease-in;opacity:0} 40%{transform:translateY(0);animation-timing-function:ease-out} 60%{transform:translateY(-30px);animation-timing-function:ease-in} 80%{transform:translateY(0);animation-timing-function:ease-out} 100%{opacity:1} }
+        @keyframes zoomOutToShow { from { transform: scale(2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes lightSpeedIn { from{transform:translateX(-100%) skewX(-30deg);opacity:0} 60%{transform:translateX(20%) skewX(20deg);opacity:1} 80%{transform:translateX(-5%) skewX(-10deg)} to{transform:translateX(0) skewX(0)} }
+        @keyframes hingeEffect { 0%{transform-origin:top left;animation-timing-function:ease-in-out} 20%,60%{transform:rotate3d(0,0,1,80deg);transform-origin:top left;animation-timing-function:ease-in-out} 40%,80%{transform:rotate3d(0,0,1,60deg);transform-origin:top left;animation-timing-function:ease-in-out;opacity:1} to{transform:translateY(700px);opacity:0} }
+        @keyframes rollIn { from{transform:translateX(-100%) rotate(-540deg);opacity:0} to{transform:translateX(0) rotate(0);opacity:1} }
+        @keyframes slideDownAndRotate { from { transform: translateY(-100%) rotate(90deg); opacity: 0; } to { transform: translateY(0) rotate(0); opacity: 1; } }
+        @keyframes blurIn { from { filter: blur(10px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+        @keyframes slideAndBounceFromLeft { 0%{transform:translateX(-200px);animation-timing-function:ease-in;opacity:0} 40%{transform:translateX(0);animation-timing-function:ease-out} 60%{transform:translateX(30px);animation-timing-function:ease-in} 80%{transform:translateX(0);animation-timing-function:ease-out} 100%{opacity:1} }
+        @keyframes shutterInHor { from { clip-path: inset(0 50% 0 50%); } to { clip-path: inset(0 0 0 0); } }
+        @keyframes shutterInVer { from { clip-path: inset(50% 0 50% 0); } to { clip-path: inset(0 0 0 0); } }
+        @keyframes swirlInFwd { from{transform:rotate(-540deg) scale(0);opacity:0} to{transform:rotate(0) scale(1);opacity:1} }
+        @keyframes puffIn { from{transform:scale(2);filter:blur(4px);opacity:0} to{transform:scale(1);filter:blur(0);opacity:1} }
+        @keyframes slideInEllipticTop { from{transform:translateY(-600px) rotateX(-30deg) scale(0);transform-origin:50% 100%;opacity:0} to{transform:translateY(0) rotateX(0) scale(1);transform-origin:50% 1400px;opacity:1} }
+        @keyframes slideInEllipticRight { from{transform:translateX(800px) rotateY(-30deg) scale(0);transform-origin:-100% 50%;opacity:0} to{transform:translateX(0) rotateY(0) scale(1);transform-origin:1800px 50%;opacity:1} }
+        @keyframes trackingInExpand { from{letter-spacing:-.5em;opacity:0} 40%{opacity:.6} to{letter-spacing:normal;opacity:1} }
+        @keyframes fadeInBlur { from { filter: blur(5px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+        @keyframes fadeInTopLeft { from { transform: translate(-50px, -50px); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+        @keyframes fadeInBottomRight { from { transform: translate(50px, 50px); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+        @keyframes swingInTopFwd { from{transform:rotateX(-100deg);transform-origin:top;opacity:0} to{transform:rotateX(0);transform-origin:top;opacity:1} }
+        @keyframes swingInRightFwd { from{transform:rotateY(100deg);transform-origin:right;opacity:0} to{transform:rotateY(0);transform-origin:right;opacity:1} }
+        @keyframes slitInVertical { from{transform:translateZ(-800px) rotateY(90deg);opacity:0} to{transform:translateZ(0) rotateY(0);opacity:1} }
+        @keyframes slitInHorizontal { from{transform:translateZ(-800px) rotateX(90deg);opacity:0} to{transform:translateZ(0) rotateX(0);opacity:1} }
+        @keyframes rotateIn2TopLeft { from{transform:rotate(-45deg);transform-origin:0 0;opacity:0} to{transform:rotate(0);transform-origin:0 0;opacity:1} }
+        @keyframes rotateIn2BottomRight { from{transform:rotate(45deg);transform-origin:100% 100%;opacity:0} to{transform:rotate(0);transform-origin:100% 100%;opacity:1} }
+        @keyframes focusIn { 0%{filter:blur(12px);opacity:0} 100%{filter:blur(0);opacity:1} }
+        @keyframes jelloHorizontal { 0%{transform:scale3d(1,1,1)} 30%{transform:scale3d(1.25,.75,1)} 40%{transform:scale3d(.75,1.25,1)} 50%{transform:scale3d(1.15,.85,1)} 65%{transform:scale3d(.95,1.05,1)} 75%{transform:scale3d(1.05,.95,1)} 100%{transform:scale3d(1,1,1)} }
+        @keyframes heartbeat { from{transform:scale(1);transform-origin:center center;animation-timing-function:ease-out} 10%{transform:scale(.91);animation-timing-function:ease-in} 17%{transform:scale(.98);animation-timing-function:ease-out} 33%{transform:scale(.87);animation-timing-function:ease-in} 45%{transform:scale(1);animation-timing-function:ease-out} }
+        @keyframes wobbleHorizontal { 15%{transform:translateX(-30px) rotate(-5deg)} 30%{transform:translateX(15px) rotate(3deg)} 45%{transform:translateX(-15px) rotate(-3deg)} 60%{transform:translateX(9px) rotate(2deg)} 75%{transform:translateX(-6px) rotate(-1deg)} 100%{transform:translateX(0)} }
+        @keyframes vibrate1 { 0%{transform:translate(0)} 20%{transform:translate(-2px,2px)} 40%{transform:translate(-2px,-2px)} 60%{transform:translate(2px,2px)} 80%{transform:translate(2px,-2px)} 100%{transform:translate(0)} }
+        @keyframes flickerIn { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes shadowDropCenter { 0%{box-shadow:0 0 0 0 transparent} 100%{box-shadow:0 0 20px 0 rgba(0,0,0,.35)} }
+        @keyframes textFocusIn { 0%{filter:blur(12px);opacity:0} 100%{filter:blur(0);opacity:1} }
+        @keyframes textPopUpTop { 0%{transform:translateY(0);text-shadow:none} 100%{transform:translateY(-30px);text-shadow:0 30px 20px rgba(0,0,0,.2)} }
+        @keyframes textShadowPopTr { 0%{text-shadow:0 0 #555,0 0 #555;transform:translate(0,0)} 100%{text-shadow:1px -1px 0 #555,2px -2px 0 #555,3px -3px 0 #555,4px -4px 0 #555;transform:translate(-4px,4px)} }
+        @keyframes textFlickerInGlow { 0%{opacity:0} 10%{opacity:0;text-shadow:none} 10.1%{opacity:1;text-shadow:none} 20.1%{opacity:1;text-shadow:0 0 30px rgba(255,255,255,.5)} 30.1%{opacity:1;text-shadow:0 0 30px rgba(255,255,255,.5),0 0 60px rgba(255,255,255,.3)} 100%{opacity:1} }
+        @keyframes textExpand { from { transform: scale(0.8); } to { transform: scale(1.2); } }
+        @keyframes slideInBlurredTop { 0%{transform:translateY(-1000px) scaleY(2.5) scaleX(.2);transform-origin:50% 0;filter:blur(40px);opacity:0} 100%{transform:translateY(0) scaleY(1) scaleX(1);transform-origin:50% 50%;filter:blur(0);opacity:1} }
+        @keyframes slideInBlurredRight { 0%{transform:translateX(1000px) scaleX(2.5) scaleY(.2);transform-origin:0 50%;filter:blur(40px);opacity:0} 100%{transform:translateX(0) scaleX(1) scaleY(1);transform-origin:50% 50%;filter:blur(0);opacity:1} }
+        @keyframes scaleInCenter { 0%{transform:scale(0);opacity:1} 100%{transform:scale(1);opacity:1} }
+        @keyframes scaleInTop { 0%{transform:scale(0);transform-origin:50% 0;opacity:1} 100%{transform:scale(1);transform-origin:50% 0;opacity:1} }
+        @keyframes rotateInCenter { 0%{transform:rotate(-360deg);opacity:0} 100%{transform:rotate(0);opacity:1} }
+        @keyframes rotateInHor { 0%{transform:rotateX(-180deg);opacity:0} 100%{transform:rotateX(0);opacity:1} }
+        @keyframes flipInVerRight { 0%{transform:rotateY(-180deg);opacity:0} 100%{transform:rotateY(0);opacity:1} }
+        @keyframes flipInHorBottom { 0%{transform:rotateX(180deg);opacity:0} 100%{transform:rotateX(0);opacity:1} }
+        @keyframes slitInDiag1 { 0%{transform:rotate(-20deg) skewX(-20deg) scale(0);opacity:0} 100%{transform:rotate(0) skewX(0) scale(1);opacity:1} }
+        @keyframes slitInDiag2 { 0%{transform:rotate(20deg) skewX(20deg) scale(0);opacity:0} 100%{transform:rotate(0) skewX(0) scale(1);opacity:1} }
+        @keyframes slideInFwdCenter { 0%{transform:translateZ(-1400px);opacity:0} 100%{transform:translateZ(0);opacity:1} }
+        @keyframes slideInFwdTop { 0%{transform:translateZ(-1400px) translateY(-800px);opacity:0} 100%{transform:translateZ(0) translateY(0);opacity:1} }
+        @keyframes bounceInTop { 0%{transform:translateY(-500px);animation-timing-function:ease-in;opacity:0} 38%{transform:translateY(0);animation-timing-function:ease-out;opacity:1} 55%{transform:translateY(-65px);animation-timing-function:ease-in} 72%{transform:translateY(0);animation-timing-function:ease-out} 81%{transform:translateY(-28px);animation-timing-function:ease-in} 90%{transform:translateY(0);animation-timing-function:ease-out} 95%{transform:translateY(-8px);animation-timing-function:ease-in} 100%{transform:translateY(0);animation-timing-function:ease-out} }
+        @keyframes bounceInRight { 0%{transform:translateX(600px);animation-timing-function:ease-in;opacity:0} 38%{transform:translateX(0);animation-timing-function:ease-out;opacity:1} 55%{transform:translateX(68px);animation-timing-function:ease-in} 72%{transform:translateX(0);animation-timing-function:ease-out} 81%{transform:translateX(32px);animation-timing-function:ease-in} 90%{transform:translateX(0);animation-timing-function:ease-out} 95%{transform:translateX(8px);animation-timing-function:ease-in} 100%{transform:translateX(0);animation-timing-function:ease-out} }
+        @keyframes fadeInFwd { 0%{transform:translateZ(-80px);opacity:0} 100%{transform:translateZ(0);opacity:1} }
+        @keyframes fadeInTr { 0%{transform:translateY(-50px) translateX(50px);opacity:0} 100%{transform:translateY(0) translateX(0);opacity:1} }
+        @keyframes swingInLeftFwd { from{transform:rotateY(-100deg);transform-origin:left;opacity:0} to{transform:rotateY(0);transform-origin:left;opacity:1} }
+        @keyframes swingInBottomFwd { from{transform:rotateX(100deg);transform-origin:bottom;opacity:0} to{transform:rotateX(0);transform-origin:bottom;opacity:1} }
+        @keyframes puffInCenter { 0%{transform:scale(2);filter:blur(4px);opacity:0} 100%{transform:scale(1);filter:blur(0);opacity:1} }
+        @keyframes puffInHor { 0%{transform:scaleX(2);filter:blur(4px);opacity:0} 100%{transform:scaleX(1);filter:blur(0);opacity:1} }
+        @keyframes slideInTop { 0%{transform:translateY(-1000px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+        @keyframes slideInRight { 0%{transform:translateX(1000px);opacity:0} 100%{transform:translateX(0);opacity:1} }
+        @keyframes slideRotateHorCenter { 0%{transform:translateX(-100%) rotate(360deg);opacity:0} 100%{transform:translateX(0) rotate(0);opacity:1} }
+        @keyframes slideRotateVerCenter { 0%{transform:translateY(-100%) rotate(360deg);opacity:0} 100%{transform:translateY(0) rotate(0);opacity:1} }
+        @keyframes rotateScaleUp { 0%{transform:scale(0) rotateZ(0)} 50%{transform:scale(.5) rotateZ(180deg)} 100%{transform:scale(1) rotateZ(360deg)} }
+        @keyframes rotateScaleDown { 0%{transform:scale(2) rotateZ(0);opacity:0} 50%{transform:scale(1.5) rotateZ(180deg);opacity:.5} 100%{transform:scale(1) rotateZ(360deg);opacity:1} }
+        @keyframes rotate90HorizontalFwd { 0%{transform:rotateX(90deg)} 100%{transform:rotateX(0)} }
+        @keyframes rotate90VerticalFwd { 0%{transform:rotateY(90deg)} 100%{transform:rotateY(0)} }
+        @keyframes flipVerticalFwd { 0%{transform:rotateY(180deg)} 100%{transform:rotateY(0)} }
+        @keyframes flipHorizontalFwd { 0%{transform:rotateX(180deg)} 100%{transform:rotateX(0)} }
+        @keyframes zoomInLeft { 0%{transform:scale(0) translateX(-1000px);opacity:0} 100%{transform:scale(1) translateX(0);opacity:1} }
+        @keyframes matrix3D { 0%{transform:matrix3d(0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1);opacity:0} 4.3%{transform:matrix3d(.23,0,0,0,0,.59,0,0,0,0,1,0,-225.1,162,0,1)} 10.2%{transform:matrix3d(.6,0,0,0,0,1.1,0,0,0,0,1,0,-122.9,88.5,0,1)} 13.5%{transform:matrix3d(.8,0,0,0,0,1.25,0,0,0,0,1,0,-77.7,56,0,1)} 16.2%{transform:matrix3d(.92,0,0,0,0,1.3,0,0,0,0,1,0,-43.3,31.2,0,1)} 22.7%{transform:matrix3d(1.05,0,0,0,0,1.26,0,0,0,0,1,0,10.9,7.8,0,1)} 29.2%{transform:matrix3d(1.06,0,0,0,0,1.13,0,0,0,0,1,0,18.4,13.2,0,1)} 35.7%{transform:matrix3d(1.04,0,0,0,0,1.05,0,0,0,0,1,0,10.9,7.8,0,1)} 42.2%{transform:matrix3d(1.01,0,0,0,0,1.01,0,0,0,0,1,0,2.5,1.8,0,1)} 55.2%{transform:matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);opacity:1} 100%{transform:matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);opacity:1} }
+
+    </style>
+</head>
+<body>
+
+<div id="presentation-container">
+    <div class="slide active" id="slide-1">
+        <h1>微积分：极限与连续性</h1>
+        <p>欢迎来到微积分世界的基石。本章，我们将从静态的代数和几何，迈向描述动态变化的微积分。</p>
+    </div>
+    <div class="slide" id="slide-2">
+        <h2>核心概念：极限</h2>
+        <p>“极限”是整个微积分学的灵魂。它使我们能够精确地描述和计算那些看似无法企及的量，例如瞬时速度或曲线的切线斜率。</p>
+    </div>
+    <div class="slide" id="slide-3">
+        <h2>核心概念：连续性</h2>
+        <p>基于极限，我们探讨“连续性”。一个连续的函数，其图像是“一笔画”出来的，没有任何中断或跳跃。</p>
+    </div>
+    <div class="slide" id="slide-4">
+        <h2>为何重要？</h2>
+        <p>理解极限与连续性，不仅是学习导数和积分的前提，更是培养严谨数学思维、精确描述和解决实际问题的关键。</p>
+    </div>
+    <div class="slide" id="slide-5">
+        <h2>学习目标 (1/2)</h2>
+        <ul>
+            <li>理解数列极限和函数极限的概念。</li>
+            <li>掌握极限的四则运算法则。</li>
+            <li>会运用两个重要极限计算函数的极限。</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-6">
+        <h2>学习目标 (2/2)</h2>
+        <ul>
+            <li>理解无穷小、无穷大的概念，会用等价无穷小求极限。</li>
+            <li>理解连续性，能够判断函数的间断点。</li>
+            <li>能够运用软件求解极限问题。</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-7">
+        <h2>思想启蒙：芝诺悖论</h2>
+        <p>阿基里斯与乌龟的悖论。快速的英雄阿基里斯追赶慢速的乌龟，每次当他到达乌龟之前的位置，乌龟都已前进一小段。这看似无限的过程，引出了对无穷与极限的思考。</p>
+    </div>
+    <div class="slide" id="slide-8">
+        <h2>悖论与极限</h2>
+        <p>这个追赶过程，揭示了极限的雏形：两者之间的距离会越来越小，不断趋近于零。极限帮助我们理解了“无限逼近”与“最终到达”之间的关系。</p>
+    </div>
+    <div class="slide" id="slide-9">
+        <h2>第一节：数列极限</h2>
+        <p>我们首先从一个具体的、离散的情形开始：按特定法则排列的一串数字——数列。</p>
+    </div>
+    <div class="slide" id="slide-10">
+        <h2>数列与函数</h2>
+        <p>数列的本质，是定义域为正整数集的特殊函数，记作 $\{a_n\}$ 或 $a_n = f(n)$。</p>
+    </div>
+    <div class="slide" id="slide-11">
+        <h2>应用：图像压缩</h2>
+        <p>JPEG等压缩算法，就是逐步逼近的数学过程。先捕捉核心轮廓，再逐步增添细节，无限接近原始图像。这正体现了数列极限的思想。</p>
+    </div>
+    <div class="slide" id="slide-12">
+        <h2>数列极限的定义</h2>
+        <p>当 $n$ 趋于无穷大时，若数列的通项 $x_n$ 无限地接近某个固定的数 $a$，我们就说数列 $\{x_n\}$ 的极限是 $a$。</p>
+        <div class="math-formula">$\lim_{n \to \infty} x_n = a$</div>
+    </div>
+    <div class="slide" id="slide-13">
+        <h2>收敛与发散</h2>
+        <p>如果数列的极限存在且为有限值，则称数列“收敛”。否则，称数列“发散”。</p>
+    </div>
+    <div class="slide" id="slide-14">
+        <h2>案例解析 1 (发散)</h2>
+        <p>数列 $x_n = n$。项为：$1, 2, 3, 4, \ldots$。随着 $n$ 增大，项也无限增大，没有趋近于固定值，因此极限不存在，数列发散。</p>
+    </div>
+    <div class="slide" id="slide-15">
+        <h2>案例解析 2 (收敛)</h2>
+        <p>数列 $x_n = \frac{n}{n+1}$。项为：$\frac{1}{2}, \frac{2}{3}, \frac{3}{4}, \ldots$。随着 $n$ 增大，项越来越接近 1。</p>
+        <div class="math-formula">$\lim_{n \to \infty} \frac{n}{n+1} = 1$</div>
+    </div>
+    <div class="slide" id="slide-16">
+        <h2>案例解析 3 (震荡发散)</h2>
+        <p>数列 $x_n = \frac{1}{2} [1 + (-1)^n]$。项为：$0, 1, 0, 1, \ldots$。项在0和1之间跳动，没有趋近于单一固定值，因此极限不存在。</p>
+    </div>
+    <div class="slide" id="slide-17">
+        <h2>案例解析 4 (收敛)</h2>
+        <p>数列 $x_n = \frac{1}{(-3)^n}$。项为：$-\frac{1}{3}, \frac{1}{9}, -\frac{1}{27}, \ldots$。项的绝对值越来越小，趋近于0。</p>
+        <div class="math-formula">$\lim_{n \to \infty} \frac{1}{(-3)^n} = 0$</div>
+    </div>
+    <div class="slide" id="slide-18">
+        <h2>发散的常见情形</h2>
+        <ul>
+            <li>(1) 趋向于正无穷或负无穷。</li>
+            <li>(2) 在几个固定值之间跳动（震荡）。</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-19">
+        <h2>第二节：函数极限</h2>
+        <p>从离散的数列走向连续的函数。我们研究当自变量 $x$ 发生变化时，函数值 $f(x)$ 的变化趋势。</p>
+    </div>
+    <div class="slide" id="slide-20">
+        <h2>2.1 当 $x \to \infty$ 时的极限</h2>
+        <p>我们首先考察当自变量 $x$ 的绝对值无限增大时，函数值的行为。</p>
+    </div>
+    <div class="slide" id="slide-21">
+        <h2>$x \to \infty$ 极限的定义</h2>
+        <p>如果当 $|x| \to \infty$ 时，函数值 $f(x)$ 无限接近于一个确定的常数 $A$，那么 $A$ 就称为函数 $f(x)$ 的极限。</p>
+        <div class="math-formula">$\lim_{x \to \infty} f(x) = A$</div>
+    </div>
+    <div class="slide" id="slide-22">
+        <h2>$x \to +\infty$ 与 $x \to -\infty$</h2>
+        <p>$x \to \infty$ 包含两种情况：$x$ 趋向正无穷大 ($x \to +\infty$) 和 $x$ 趋向负无穷大 ($x \to -\infty$)。</p>
+    </div>
+    <div class="slide" id="slide-23">
+        <h2>案例：$y = \arctan x$</h2>
+        <p>考察反正切函数。当 $x$ 沿着 $x$ 轴向右无限延伸时 ($x \to +\infty$)，函数值 $y$ 趋近于 $\frac{\pi}{2}$。</p>
+        <div class="math-formula">$\lim_{x \to +\infty} \arctan x = \frac{\pi}{2}$</div>
+    </div>
+    <div class="slide" id="slide-24">
+        <h2>案例：$y = \arctan x$ (续)</h2>
+        <p>当 $x$ 沿着 $x$ 轴向左无限延伸时 ($x \to -\infty$)，函数值 $y$ 趋近于 $-\frac{\pi}{2}$。</p>
+        <div class="math-formula">$\lim_{x \to -\infty} \arctan x = -\frac{\pi}{2}$</div>
+    </div>
+    <div class="slide" id="slide-25">
+        <h2>定理 1：双侧极限与单侧极限</h2>
+        <p>$\lim_{x \to \infty} f(x) = A$ 存在的充分必要条件是，它在正无穷和负无穷的极限都存在且都等于 $A$。</p>
+        <div class="math-formula">$\lim_{x \to +\infty} f(x) = \lim_{x \to -\infty} f(x) = A$</div>
+    </div>
+    <div class="slide" id="slide-26">
+        <h2>反正切函数的无穷极限</h2>
+        <p>由于 $\frac{\pi}{2} \neq -\frac{\pi}{2}$，反正切函数在正负无穷的极限不相等，因此 $\lim_{x \to \infty} \arctan x$ 不存在。</p>
+    </div>
+    <div class="slide" id="slide-27">
+        <h2>2.2 当 $x \to x_0$ 时的极限</h2>
+        <p>现在，我们考察当自变量 $x$ 趋近于某一个具体的点 $x_0$ 时，函数值的行为。</p>
+    </div>
+    <div class="slide" id="slide-28">
+        <h2>$x \to x_0$ 极限的定义</h2>
+        <p>若当 $x$ 无限趋近于 $x_0$ 时（但 $x \neq x_0$），函数值 $f(x)$ 无限趋近于常数 $A$，则 $A$ 称为函数在 $x_0$ 点的极限。</p>
+        <div class="math-formula">$\lim_{x \to x_0} f(x) = A$</div>
+    </div>
+    <div class="slide" id="slide-29">
+        <h2>左极限与右极限</h2>
+        <p>趋近于点 $x_0$ 也有两个方向：从 $x_0$ 的左边趋近 ($x \to x_0^-$) 和从 $x_0$ 的右边趋近 ($x \to x_0^+$)。</p>
+    </div>
+    <div class="slide" id="slide-30">
+        <h2>左极限 (Left-Hand Limit)</h2>
+        <p>当 $x$ 从 $x_0$ 的左边趋于 $x_0$ 时 $f(x)$ 的极限，记作 $\lim_{x \to x_0^-} f(x)$。</p>
+    </div>
+    <div class="slide" id="slide-31">
+        <h2>右极限 (Right-Hand Limit)</h2>
+        <p>当 $x$ 从 $x_0$ 的右边趋于 $x_0$ 时 $f(x)$ 的极限，记作 $\lim_{x \to x_0^+} f(x)$。</p>
+    </div>
+    <div class="slide" id="slide-32">
+        <h2>定理 2：极限存在的充要条件</h2>
+        <p>$\lim_{x \to x_0} f(x) = A$ 存在的充分必要条件是，该点的左极限和右极限都存在且都等于 $A$。</p>
+        <div class="math-formula">$\lim_{x \to x_0^-} f(x) = \lim_{x \to x_0^+} f(x) = A$</div>
+    </div>
+    <div class="slide" id="slide-33">
+        <h2>案例：$y = \ln|x|$ 在 $x \to 0$</h2>
+        <p>当 $x$ 从右边趋近于0 ($x \to 0^+$) 时，$y \to -\infty$。当 $x$ 从左边趋近于0 ($x \to 0^-$) 时，$y$ 也趋向于 $-\infty$。虽然两侧趋势一致，但因为极限值不是一个具体的常数，所以极限不存在。</p>
+    </div>
+    <div class="slide" id="slide-34">
+        <h2>第三节：无穷小量与无穷大量</h2>
+        <p>这是两个描述函数变化趋势的重要概念，是极限理论的基石。</p>
+    </div>
+    <div class="slide" id="slide-35">
+        <h2>无穷小量 (Infinitesimal)</h2>
+        <p>在自变量的某个变化过程中，极限为 0 的函数，称为该过程中的无穷小量。它不是一个很小的数，而是一个趋向于0的变量。</p>
+        <div class="math-formula">$\lim_{x \to \gamma} f(x) = 0$</div>
+    </div>
+    <div class="slide" id="slide-36">
+        <h2>无穷小量的性质</h2>
+        <ul>
+            <li>有限个无穷小的代数和仍为无穷小。</li>
+            <li>有限个无穷小的乘积仍为无穷小。</li>
+            <li>有界函数与无穷小的乘积仍为无穷小。</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-37">
+        <h2>无穷大量 (Infinity)</h2>
+        <p>在自变量的某个变化过程中，极限为无穷大的函数，称为该过程中的无穷大量。它不是一个很大的数，而是一个无限增大的变量。</p>
+        <div class="math-formula">$\lim_{x \to \gamma} f(x) = \infty$</div>
+    </div>
+    <div class="slide" id="slide-38">
+        <h2>无穷小与无穷大的关系</h2>
+        <p>在同一变化过程中，一个不为零的无穷小的倒数是无穷大；一个无穷大的倒数是无穷小。</p>
+    </div>
+    <div class="slide" id="slide-39">
+        <h2>第四节：极限的运算</h2>
+        <p>当极限存在时，我们可以对它们进行代数运算。</p>
+    </div>
+    <div class="slide" id="slide-40">
+        <h2>极限运算法则 (前提)</h2>
+        <p>设 $\lim f(x) = A$ 且 $\lim g(x) = B$，其中A, B为有限常数。</p>
+    </div>
+    <div class="slide" id="slide-41">
+        <h2>加减法则</h2>
+        <p>和（差）的极限等于极限的和（差）。</p>
+        <div class="math-formula">$\lim [f(x) \pm g(x)] = A \pm B$</div>
+    </div>
+    <div class="slide" id="slide-42">
+        <h2>乘法法则</h2>
+        <p>积的极限等于极限的积。</p>
+        <div class="math-formula">$\lim [f(x) \cdot g(x)] = A \cdot B$</div>
+    </div>
+    <div class="slide" id="slide-43">
+        <h2>除法法则</h2>
+        <p>商的极限等于极限的商（前提是分母极限不为0）。</p>
+        <div class="math-formula">$\lim \frac{f(x)}{g(x)} = \frac{A}{B} \quad (B \neq 0)$</div>
+    </div>
+    <div class="slide" id="slide-44">
+        <h2>极限运算方法：定型</h2>
+        <p>求解极限的第一步：将 $x$ 趋近的值直接代入函数，判断其类型。</p>
+    </div>
+    <div class="slide" id="slide-45">
+        <h2>确定型</h2>
+        <p>如果代入后得到确定的数值，该值即为极限。如果得到 $\frac{A}{0} (A \neq 0)$ 型，则极限为无穷大（不存在）。</p>
+    </div>
+    <div class="slide" id="slide-46">
+        <h2>未定型 (Indeterminate Forms)</h2>
+        <p>如果代入后得到 $\frac{0}{0}, \frac{\infty}{\infty}, 0 \cdot \infty, \infty - \infty, 0^0, \infty^0, 1^\infty$ 等形式，则需要进一步处理。</p>
+    </div>
+    <div class="slide" id="slide-47">
+        <h2>方法一：因式分解</h2>
+        <p>适用于 $\frac{0}{0}$ 型，通过因式分解约去导致分母为零的公因式。</p>
+        <div class="math-formula">$\lim_{x \to 2} \frac{x^2 - 4}{x - 2} = \lim_{x \to 2} \frac{(x-2)(x+2)}{x-2} = 4$</div>
+    </div>
+    <div class="slide" id="slide-48">
+        <h2>方法二：根式有理化</h2>
+        <p>适用于含根式的 $\frac{0}{0}$ 型，分子或分母乘以其共轭根式来消除根号。</p>
+    </div>
+    <div class="slide" id="slide-49">
+        <h2>方法三：无穷大比较法</h2>
+        <p>适用于 $\frac{\infty}{\infty}$ 型，分子分母同时除以最高次幂的项。</p>
+        <div class="math-formula">$\lim_{x \to \infty} \frac{2x^2+1}{3x^2-1} = \lim_{x \to \infty} \frac{2+1/x^2}{3-1/x^2} = \frac{2}{3}$</div>
+    </div>
+    <div class="slide" id="slide-50">
+        <h2>方法四：通分法</h2>
+        <p>适用于 $\infty - \infty$ 型，通过通分将表达式化为 $\frac{0}{0}$ 或 $\frac{\infty}{\infty}$ 型再求解。</p>
+    </div>
+    <div class="slide" id="slide-51">
+        <h2>4.3 两个重要极限</h2>
+        <p>这是两个在微积分中极为重要且频繁使用的极限公式。</p>
+    </div>
+    <div class="slide" id="slide-52">
+        <h2>第一重要极限</h2>
+        <p>处理 $\frac{0}{0}$ 型未定式，尤其与三角函数相关。</p>
+        <div class="math-formula">$\lim_{x \to 0} \frac{\sin x}{x} = 1$</div>
+    </div>
+    <div class="slide" id="slide-53">
+        <h2>第一重要极限的推广</h2>
+        <p>当 $f(x) \to 0$ 时，我们有更普遍的形式：</p>
+        <div class="math-formula">$\lim_{f(x) \to 0} \frac{\sin[f(x)]}{f(x)} = 1$</div>
+    </div>
+    <div class="slide" id="slide-54">
+        <h2>第二重要极限</h2>
+        <p>处理 $1^{\infty}$ 型未定式，与自然常数 $e$ 相关。</p>
+        <div class="math-formula">$\lim_{x \to \infty} \left(1 + \frac{1}{x}\right)^x = e$</div>
+    </div>
+    <div class="slide" id="slide-55">
+        <h2>第二重要极限的另一形式</h2>
+        <p>通过变量替换，我们得到当 $x \to 0$ 时的形式：</p>
+        <div class="math-formula">$\lim_{x \to 0} (1 + x)^{\frac{1}{x}} = e$</div>
+    </div>
+    <div class="slide" id="slide-56">
+        <h2>第二重要极限的推广</h2>
+        <p>当 $f(x) \to \infty$ 时，我们有：</p>
+        <div class="math-formula">$\lim_{f(x) \to \infty} \left(1 + \frac{1}{f(x)}\right)^{f(x)} = e$</div>
+    </div>
+    <div class="slide" id="slide-57">
+        <h2>4.4 无穷小的比较</h2>
+        <p>当多个函数都趋向于0时，它们趋向0的“速度”是不同的。我们可以比较这些无穷小。</p>
+    </div>
+    <div class="slide" id="slide-58">
+        <h2>比较方法</h2>
+        <p>设 $\alpha$ 和 $\beta$ 是同一过程中的无穷小，计算它们的比值的极限 $\lim \frac{\beta}{\alpha}$。</p>
+    </div>
+    <div class="slide" id="slide-59">
+        <h2>无穷小的阶</h2>
+        <ul>
+            <li>若 $\lim \frac{\beta}{\alpha} = 0$，$\beta$ 是比 $\alpha$ 高阶的无穷小。</li>
+            <li>若 $\lim \frac{\beta}{\alpha} = \infty$，$\beta$ 是比 $\alpha$ 低阶的无穷小。</li>
+            <li>若 $\lim \frac{\beta}{\alpha} = k \neq 0$，$\beta$ 与 $\alpha$ 是同阶的无穷小。</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-60">
+        <h2>等价无穷小</h2>
+        <p>一种特殊且极其有用的情况：当 $\lim \frac{\beta}{\alpha} = 1$ 时，称 $\beta$ 与 $\alpha$ 是等价的无穷小，记作 $\alpha \sim \beta$。</p>
+    </div>
+    <div class="slide" id="slide-61">
+        <h2>等价无穷小代换定理</h2>
+        <p>在求极限时，如果表达式是乘除关系，我们可以将因子直接替换为它的等价无穷小，从而极大简化计算。</p>
+    </div>
+    <div class="slide" id="slide-62">
+        <h2>常用等价无穷小 ($x \to 0$)</h2>
+        <ul>
+            <li>$\sin x \sim x$</li>
+            <li>$\tan x \sim x$</li>
+            <li>$\arcsin x \sim x$</li>
+            <li>$\arctan x \sim x$</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-63">
+        <h2>常用等价无穷小 ($x \to 0$) (续)</h2>
+        <ul>
+            <li>$1 - \cos x \sim \frac{1}{2}x^2$</li>
+            <li>$\ln(1+x) \sim x$</li>
+            <li>$e^x - 1 \sim x$</li>
+        </ul>
+    </div>
+    <div class="slide" id="slide-64">
+        <h2>代换规则注意</h2>
+        <p>等价无穷小代换主要用于乘除运算。在加减运算中直接替换部分项可能会导致错误！</p>
+    </div>
+    <div class="slide" id="slide-65">
+        <h2>第五节：函数的连续性</h2>
+        <p>连续性是函数的一个重要性质，直观上表示函数的图像没有中断。</p>
+    </div>
+    <div class="slide" id="slide-66">
+        <h2>函数增量</h2>
+        <p>当自变量从 $x_0$ 变到 $x_0 + \Delta x$ 时，函数值的变化量 $\Delta y = f(x_0 + \Delta x) - f(x_0)$ 称为函数的增量。</p>
+    </div>
+    <div class="slide" id="slide-67">
+        <h2>连续性的定义</h2>
+        <p>如果函数 $f(x)$ 在点 $x_0$ 处的极限等于该点的函数值，那么称函数在该点连续。</p>
+        <div class="math-formula">$\lim_{x \to x_0} f(x) = f(x_0)$</div>
+    </div>
+    <div class="slide" id="slide-68">
+        <h2>连续的三个条件</h2>
+        <p>函数 $f(x)$ 在点 $x_0$ 连续，必须同时满足：</p>
+        <ol>
+            <li style="text-align: left; margin-left: 150px;">1. $f(x)$ 在 $x_0$ 处有定义。</li>
+            <li style="text-align: left; margin-left: 150px;">2. $\lim_{x \to x_0} f(x)$ 存在。</li>
+            <li style="text-align: left; margin-left: 150px;">3. 极限值等于函数值。</li>
+        </ol>
+    </div>
+    <div class="slide" id="slide-69">
+        <h2>左连续与右连续</h2>
+        <p>如果 $\lim_{x \to x_0^+} f(x) = f(x_0)$，称函数右连续。如果 $\lim_{x \to x_0^-} f(x) = f(x_0)$，称函数左连续。</p>
+    </div>
+    <div class="slide" id="slide-70">
+        <h2>连续的充要条件</h2>
+        <p>函数在某点连续，当且仅当它在该点既是左连续又是右连续。</p>
+    </div>
+    <div class="slide" id="slide-71">
+        <h2>函数的间断点</h2>
+        <p>如果函数在某点不连续，则该点称为函数的间断点 (Discontinuity)。</p>
+    </div>
+    <div class="slide" id="slide-72">
+        <h2>间断点的分类</h2>
+        <p>根据函数在间断点附近的行为，间断点主要分为两大类。</p>
+    </div>
+    <div class="slide" id="slide-73">
+        <h2>第一类间断点</h2>
+        <p>特征：左右极限都存在。</p>
+    </div>
+    <div class="slide" id="slide-74">
+        <h2>可去间断点</h2>
+        <p>第一类间断点之一。左右极限存在且相等，但不等于函数值（或函数在该点无定义）。可以通过补充或修改定义使函数连续。</p>
+        <div class="math-formula">$\lim_{x \to x_0^-} f(x) = \lim_{x \to x_0^+} f(x) \neq f(x_0)$</div>
+    </div>
+    <div class="slide" id="slide-75">
+        <h2>跳跃间断点</h2>
+        <p>第一类间断点之二。左右极限都存在，但不相等。函数图像在此处发生“跳跃”。</p>
+        <div class="math-formula">$\lim_{x \to x_0^-} f(x) \neq \lim_{x \to x_0^+} f(x)$</div>
+    </div>
+    <div class="slide" id="slide-76">
+        <h2>第二类间断点</h2>
+        <p>特征：至少有一个单侧极限不存在。</p>
+    </div>
+    <div class="slide" id="slide-77">
+        <h2>无穷间断点</h2>
+        <p>第二类间断点之一。至少有一个单侧极限是无穷大。函数图像在此处有垂直渐近线。</p>
+    </div>
+    <div class="slide" id="slide-78">
+        <h2>震荡间断点</h2>
+        <p>第二类间断点之二。当 $x$ 趋近于间断点时，函数值在一定范围内无限次地振荡，导致极限不存在。</p>
+    </div>
+    <div class="slide" id="slide-79">
+        <h2>5.3 初等函数的连续性</h2>
+        <p>一个非常重要的结论：一切初等函数在其定义域内都是连续的。</p>
+    </div>
+    <div class="slide" id="slide-80">
+        <h2>什么是初等函数？</h2>
+        <p>由基本初等函数（常数、幂、指、对、三角、反三角）经过有限次四则运算和复合运算得到的函数。</p>
+    </div>
+    <div class="slide" id="slide-81">
+        <h2>连续函数的性质</h2>
+        <p>连续函数具有一些非常重要的性质，这些性质构成了微积分基本定理的基础。</p>
+    </div>
+    <div class="slide" id="slide-82">
+        <h2>最值定理</h2>
+        <p>如果函数 $f(x)$ 在闭区间 $[a, b]$ 上连续，则它在该区间上必定能取到最大值和最小值。</p>
+    </div>
+    <div class="slide" id="slide-83">
+        <h2>零点定理</h2>
+        <p>若函数 $f(x)$ 在 $[a, b]$ 上连续，且 $f(a)$ 与 $f(b)$ 异号，则在 $(a, b)$ 内至少存在一点 $c$，使得 $f(c) = 0$。</p>
+    </div>
+    <div class="slide" id="slide-84">
+        <h2>介值定理</h2>
+        <p>若函数 $f(x)$ 在 $[a, b]$ 上连续，则对于 $f(a)$ 与 $f(b)$ 之间的任意数 $m$，都至少存在一点 $c \in (a, b)$，使得 $f(c) = m$。</p>
+    </div>
+    <div class="slide" id="slide-85">
+        <h2>极限符号与函数符号的互换</h2>
+        <p>如果函数 $f(x)$ 在 $x_0$ 点连续，那么求极限和求函数值可以交换次序。</p>
+        <div class="math-formula">$\lim_{x \to x_0} f(x) = f(\lim_{x \to x_0} x) = f(x_0)$</div>
+    </div>
+    <div class="slide" id="slide-86">
+        <h2>本章知识总结 (1/3)</h2>
+        <div class="content-grid">
+            <div class="text-left">
+                <h2>极限</h2>
+                <ul>
+                    <li>数列极限：离散的逼近</li>
+                    <li>函数极限：连续的逼近</li>
+                    <li>左右极限是判断极限存在的关键</li>
+                </ul>
+            </div>
+            <div class="text-left">
+                <h2>重要极限</h2>
+                <ul>
+                    <li>$\lim \frac{\sin x}{x} = 1$ ($\frac{0}{0}$型)</li>
+                    <li>$\lim (1+\frac{1}{x})^x = e$ ($1^\infty$型)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="slide" id="slide-87">
+        <h2>本章知识总结 (2/3)</h2>
+        <div class="content-grid">
+            <div class="text-left">
+                <h2>未定式求解</h2>
+                <ul>
+                    <li>因式分解</li>
+                    <li>有理化</li>
+                    <li>同除最高次幂</li>
+                    <li>等价无穷小代换</li>
+                </ul>
+            </div>
+            <div class="text-left">
+                <h2>无穷小</h2>
+                <ul>
+                    <li>极限为0的变量</li>
+                    <li>高阶、低阶、同阶、等价</li>
+                    <li>等价代换是核心技巧</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="slide" id="slide-88">
+        <h2>本章知识总结 (3/3)</h2>
+        <div class="content-grid">
+            <div class="text-left">
+                <h2>连续性</h2>
+                <ul>
+                    <li>$\lim_{x \to x_0} f(x) = f(x_0)$</li>
+                    <li>初等函数在其定义域内连续</li>
+                </ul>
+            </div>
+            <div class="text-left">
+                <h2>间断点</h2>
+                <ul>
+                    <li>第一类 (可去, 跳跃)</li>
+                    <li>第二类 (无穷, 震荡)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="slide" id="slide-89">
+        <h2>极限思想的延伸</h2>
+        <p>极限是通向导数与积分的桥梁。理解了极限，就掌握了分析变化率和累积效应的钥匙。</p>
+    </div>
+    <div class="slide" id="slide-90">
+        <h1>感谢观看</h1>
+        <p>极限与连续性的学习到此结束。请勤加练习，为后续的学习打下坚实基础！</p>
+    </div>
+
+    <div class="slide-counter" id="slide-counter">1 / 90</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const counter = document.getElementById('slide-counter');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            if (index < 0 || index >= totalSlides) {
+                return;
+            }
+
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                // Remove all animation classes
+                for (let j = 1; j <= totalSlides; j++) {
+                    slide.classList.remove(`anim-${j}`);
+                }
+            });
+
+            currentSlide = index;
+            const slideToShow = slides[currentSlide];
+
+            // Add the new animation class
+            const animClass = `anim-${(currentSlide % totalSlides) + 1}`;
+            slideToShow.classList.add(animClass);
+            slideToShow.classList.add('active');
+
+            counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+
+            // Trigger MathJax to typeset the new slide
+            if (window.MathJax && window.MathJax.typeset) {
+                window.MathJax.typeset([slideToShow]);
+            }
+        }
+
+        function nextSlide() {
+            showSlide((currentSlide + 1) % totalSlides);
+        }
+
+        function prevSlide() {
+            showSlide((currentSlide - 1 + totalSlides) % totalSlides);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Initial load
+        const firstSlide = document.getElementById('slide-1');
+        firstSlide.classList.add(`anim-1`);
+    });
+</script>
+
+</body>
+</html>

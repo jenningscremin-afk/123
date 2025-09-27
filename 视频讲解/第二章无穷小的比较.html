@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无穷小的比较 - 虚拟人教学系统</title>
+    <!-- 本地Tailwind CSS -->
+
+
+    <!-- 本地Tailwind CSS -->
+    <script src="./tailwind.min.js"></script>
+
+    <!-- 本地思源宋体字体文件 -->
+    <link rel="stylesheet" href="./noto-serif-sc.css">
+
+    <!-- MathJax配置 - 必须在脚本加载前 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            startup: {
+                pageReady: () => {
+                    console.log('MathJax is ready.');
+                    return MathJax.startup.defaultPageReady();
+                }
+            }
+        };
+    </script>
+    <!-- 本地MathJax -->
+    <script id="MathJax-script" src="./mathjax-tex-mml-chtml.js"></script>
+    <style>
+        /* 自定义样式 - Tailwind CSS已通过外部文件加载 */
+        .slide-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 更多Tailwind CSS类 */
+        .w-1\/2 { width: 50%; }
+        .w-1\/3 { width: 33.333333%; }
+        .w-2\/3 { width: 66.666667%; }
+        .h-1\/2 { height: 50%; }
+        .text-6xl { font-size: 3.75rem; }
+        .text-7xl { font-size: 4.5rem; }
+        .text-8xl { font-size: 6rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        .mt-12 { margin-top: 3rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .ml-4 { margin-left: 1rem; }
+        .mr-4 { margin-right: 1rem; }
+        .p-2 { padding: 0.5rem; }
+        .p-8 { padding: 2rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-gray-500 { color: #6b7280; }
+        .text-purple-400 { color: #c084fc; }
+        .text-indigo-400 { color: #818cf8; }
+        .text-pink-400 { color: #f472b6; }
+        .bg-gray-700 { background-color: #374151; }
+        .bg-blue-600 { background-color: #2563eb; }
+        .bg-green-600 { background-color: #059669; }
+        .bg-red-600 { background-color: #dc2626; }
+        .bg-purple-600 { background-color: #9333ea; }
+        .border-2 { border-width: 2px; }
+        .border-4 { border-width: 4px; }
+        .border-blue-400 { border-color: #60a5fa; }
+        .border-green-400 { border-color: #34d399; }
+        .border-red-400 { border-color: #f87171; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .hover\:scale-110:hover { transform: scale(1.1); }
+        .hover\:shadow-2xl:hover { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .animation-pane { position: relative; }
+
+        /* CSS重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255,255,255,0.02) 2px,
+                    rgba(255,255,255,0.02) 4px
+                );
+            pointer-events: none;
+        }
+        
+        /* 虚拟人显示区域 */
+        .avatar-container {
+            position: fixed;
+            top: 60%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; 
+            height: 850px;
+            overflow: hidden; 
+            z-index: 50;
+            pointer-events: none; 
+            background: transparent;
+        }
+        .wrapper {
+            width: 100%; 
+            height: 100%;
+            background: transparent; 
+            pointer-events: auto;
+        }
+        
+
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .slide-content {
+            display: flex;
+            flex-direction: row;
+            gap: 0;
+            width: 100%;
+            max-width: 1600px;
+            height: 90%;
+        }
+        
+        .blackboard-text {
+            font-family: 'Noto Serif SC', serif;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0;
+            background: transparent;
+            border-radius: 15px;
+            backdrop-filter: none;
+            box-shadow: none;
+        }
+        
+        .blackboard-text h1 {
+            color: #ffffff;
+        }
+        
+        .blackboard-text h2 {
+            color: #ffffff;
+            border-bottom: 2px solid #cccccc;
+            padding-bottom: 0.5rem;
+        }
+        
+        .blackboard-text h3 { color: #ffffff; }
+        .blackboard-text strong { color: #ffffff; font-weight: bold; }
+        
+        .math-formula {
+            background: rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 3px solid #cccccc;
+            font-family: 'Times New Roman', 'Courier New', monospace;
+        }
+        
+        .animation-pane {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            background: transparent;
+            box-shadow: none;
+        }
+        
+        /* 左侧控制栏 - 参考无穷大.html的设计 */
+        .control-bar {
+            position: fixed; 
+            left: -220px; 
+            top: 50%;
+            transform: translateY(-50%); 
+            width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            gap: 10px; 
+            z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; 
+            transition: left 0.3s ease;
+        }
+        .control-bar:hover { left: 0; }
+        .control-bar::before {
+            content: '▶️'; 
+            position: absolute;
+            top: 50%; 
+            right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; 
+            border-radius: 0 10px 10px 0;
+            font-size: 0.8rem; 
+            writing-mode: vertical-lr;
+        }
+        
+        .btn {
+            padding: 12px 20px; 
+            background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer; 
+            font-size: 13px; 
+            font-weight: bold;
+            transition: all 0.3s ease; 
+            width: 100%; 
+            text-align: center;
+        }
+        .btn:hover { 
+            background: linear-gradient(135deg, #555, #777); 
+            transform: translateY(-2px); 
+        }
+        .btn.primary { 
+            background: linear-gradient(135deg, #FF69B4, #FF1493); 
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* 字幕区域 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; 
+            left: 50px; 
+            right: 50px;
+            height: 50px; 
+            background: rgba(0,0,0,0.8);
+            border-radius: 8px; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            z-index: 60; 
+            color: white;
+            font-size: 0.9rem; 
+            text-align: center;
+            padding: 0 20px; 
+            line-height: 1.4;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; 
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; 
+            border-radius: 5px;
+            font-size: 12px; 
+            z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none; /* 默认隐藏 */
+        }
+        .status-indicator.connected { background: rgba(76, 175, 80, 0.8); }
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-indicator.error { background: rgba(244, 67, 54, 0.8); }
+        .status-indicator.connecting { background: rgba(255, 152, 0, 0.8); }
+
+        /* 录制模式下隐藏UI元素 */
+        .recording-mode .status-indicator {
+            opacity: 0; 
+            pointer-events: none;
+        }
+        .recording-mode .control-bar {
+            left: -300px; 
+            transition: left 0.5s ease;
+        }
+
+        /* 英文和数学符号使用默认字体 */
+        .math-text {
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* 确保数学公式中的英文字母使用默认字体 */
+        .blackboard-text .math-formula,
+        .blackboard-text sub,
+        .blackboard-text sup {
+            font-family: 'Times New Roman', serif;
+        }
+    </style>
+</head>
+<body class="blackboard">
+
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    
+    <!-- 虚拟人显示区域 -->
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+
+    <div id="slide-container" class="slide-container flex-grow">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 text-center">
+                    <h1 class="text-7xl font-bold mb-8">无穷小的比较</h1>
+                    <p class="text-3xl text-gray-300">洞察趋近于零的"速度"</p>
+                    <div class="mt-12 text-xl text-gray-400">
+                        <p>当 x → 0 时</p>
+                        <p class="mt-2">$\sin x$, $\tan x$, $x^2$, $x^3$...</p>
+                        <p class="mt-2">谁更快接近零？</p>
+                    </div>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas1" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Core Concept -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 text-lg p-8">
+                    <h2 class="text-4xl font-bold mb-8">核心思想：为什么要比较？</h2>
+                    <div class="space-y-6">
+                        <p class="flex items-start">
+                            <span class="text-2xl mr-3">🎯</span>
+                            <span><strong>目的：</strong>在复杂的极限运算中找到捷径，简化计算。</span>
+                        </p>
+                        <p class="flex items-start">
+                            <span class="text-2xl mr-3">🏃</span>
+                            <span><strong>类比：</strong>把所有无穷小想象成以"0"为终点的赛跑选手。比较无穷小，就是比较谁跑得"更快"。</span>
+                        </p>
+                        <div class="mt-8 p-4 bg-black bg-opacity-30 rounded-lg">
+                            <p class="text-center text-yellow-400">关键洞察</p>
+                            <p class="mt-2 text-center">不同的无穷小趋于零的速度不同</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas2" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Evaluation Criteria -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 text-lg p-8">
+                    <h2 class="text-4xl font-bold mb-8">评判标准：如何定量比较？</h2>
+                    <p class="mt-6">在数学中，我们需要精确的"裁判"来判断速度。</p>
+                    <div class="mt-8 p-6 bg-gradient-to-r from-transparent to-black to-transparent bg-opacity-30 rounded-lg">
+                        <p class="text-2xl"><strong>工具：</strong>计算比值极限</p>
+                        <div class="text-center mt-8 text-5xl math-formula">
+                            $$\lim_{x \to 0} \frac{\beta(x)}{\alpha(x)}$$
+                        </div>
+                    </div>
+                    <p class="mt-8 text-gray-300">这个极限值告诉我们两个无穷小的相对速度</p>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas3" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Three Results -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 p-6">
+                    <h2 class="text-3xl font-bold mb-8">三种赛跑结果</h2>
+                    <div class="space-y-6 text-base">
+                        <div class="p-4 bg-gradient-to-r from-blue-900 to-transparent rounded-lg">
+                            <p class="text-lg"><strong>情况一：$\lim \frac{\beta}{\alpha} = 0$</strong></p>
+                            <p class="mt-2">β 是比 α <strong class="text-cyan-400">高阶</strong>的无穷小 (β = o(α))</p>
+                            <p class="text-gray-400 mt-1">💡 β 趋于0的速度远快于 α</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-r from-red-900 to-transparent rounded-lg">
+                            <p class="text-lg"><strong>情况二：$\lim \frac{\beta}{\alpha} = \infty$</strong></p>
+                            <p class="mt-2">β 是比 α <strong class="text-orange-400">低阶</strong>的无穷小</p>
+                            <p class="text-gray-400 mt-1">💡 β 趋于0的速度远慢于 α</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-r from-green-900 to-transparent rounded-lg">
+                            <p class="text-lg"><strong>情况三：$\lim \frac{\beta}{\alpha} = k \neq 0$</strong></p>
+                            <p class="mt-2">β 与 α 是<strong class="text-green-400">同阶</strong>的无穷小</p>
+                            <p class="text-gray-400 mt-1">💡 两者速度在同一量级</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas4" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Equivalent Infinitesimals -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 p-8">
+                    <h2 class="text-3xl font-bold mb-8">最重要的特例：等价无穷小</h2>
+                    <div class="space-y-6 text-lg">
+                        <div class="p-6 bg-gradient-to-br from-yellow-900 to-transparent rounded-lg border-2 border-yellow-600">
+                            <p><strong class="text-2xl">定义：</strong>当 $\lim \frac{\beta}{\alpha} = 1$ 时</p>
+                            <p class="mt-3"><strong class="text-2xl">记号：</strong>α ~ β</p>
+                            <p class="mt-3"><strong class="text-2xl">本质：</strong>完美的"替身"</p>
+                        </div>
+                        <div class="mt-8 p-4 bg-black bg-opacity-40 rounded-lg">
+                            <p class="text-center text-yellow-400 text-2xl">常用等价无穷小</p>
+                            <div class="mt-4 text-base space-y-2">
+                                <p>$\sin x \sim x$</p>
+                                <p>$\tan x \sim x$</p>
+                                <p>$1 - \cos x \sim \frac{x^2}{2}$</p>
+                                <p>$e^x - 1 \sim x$</p>
+                                <p>$\ln(1+x) \sim x$</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas5" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Core Application -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 text-lg p-8">
+                    <h2 class="text-4xl font-bold mb-8">核心应用：等价无穷小替换</h2>
+                    <p class="mt-6">用简单的等价无穷小替换复杂的表达式</p>
+                    <h3 class="text-3xl mt-10 mb-6">⚠️ 使用规则</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center p-4 bg-green-900 bg-opacity-30 rounded-lg">
+                            <span class="text-3xl mr-4">✅</span>
+                            <div>
+                                <strong class="text-lg">乘除关系：</strong>
+                                <span class="ml-2 bg-green-600 text-white px-3 py-1 rounded-md">放心替换</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-4 bg-red-900 bg-opacity-30 rounded-lg">
+                            <span class="text-3xl mr-4">⚠️</span>
+                            <div>
+                                <strong class="text-lg">加减关系：</strong>
+                                <span class="ml-2 bg-red-600 text-white px-3 py-1 rounded-md">务必谨慎</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 p-4 bg-yellow-900 bg-opacity-20 rounded-lg">
+                        <p class="text-center">记住：加减时可能会"抵消"重要信息！</p>
+                    </div>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas6" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Summary -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="blackboard-text w-1/2 text-lg p-8">
+                    <h2 class="text-4xl font-bold mb-8">总结与思考</h2>
+                    <div class="space-y-6">
+                        <p class="text-2xl">"等价无穷小替换"是极限计算中最锋利的刀刃之一。</p>
+                        <div class="mt-10 p-6 bg-gradient-to-br from-purple-900 to-transparent rounded-lg">
+                            <p class="text-2xl text-yellow-400 mb-4">🤔 思考题</p>
+                            <p>为什么替换法则在乘除时是"利器"，在加减时却是"陷阱"？</p>
+                            <p class="mt-4 text-gray-400">提示：考虑 $(\sin x - \tan x)$ 与 $(x - x)$ 的区别</p>
+                        </div>
+                        <div class="mt-8 text-center">
+                            <p class="text-3xl text-yellow-400">掌握无穷小的比较</p>
+                            <p class="text-xl mt-2">就是掌握极限计算的精髓！</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="animation-pane w-1/2">
+                    <canvas id="canvas7" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 字幕区域 -->
+    <div class="subtitle-area" id="subtitleArea">
+        欢迎学习"无穷小的比较"！点击"开始讲课"启动虚拟人讲师。
+    </div>
+
+    <!-- 左侧控制栏 -->
+    <div class="control-bar">
+        <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 12px;">
+            第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">7</span> 页
+        </div>
+        <button class="btn" onclick="previousSlide()">⬅️ 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 ➡️</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+        <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 10px; line-height: 1.2;">
+            💡 录制提示：<br>
+            点击自动播放后立即开始录屏<br>
+            系统会自动完成全部演示
+        </div>
+        <div style="color: #ccc; margin-top: 1rem; text-align: center; font-size: 11px;">
+            💡 快捷键：Enter播放
+        </div>
+    </div>
+
+    <!-- 讯飞官方SDK -->
+    <script type="module">
+        try {
+            // 根据类型定义文件，导入正确的导出
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            // 挂载到全局对象
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+            console.log('可用事件:', { SDKEvents, PlayerEvents, RecorderEvents });
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+
+        // 触发自定义事件，通知SDK已准备就绪
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 1;
+        const totalSlides = 7;
+        let isAutoPlaying = false;
+
+        // 每页的讲稿内容
+        const subtitleScript = {
+            1: "欢迎学习无穷小的比较！我们即将探讨一个微积分中的重要概念：当函数趋于零时，哪个函数趋于零的速度更快？这个问题的答案将帮助我们理解极限计算的精髓。",
+            2: "为什么要比较无穷小呢？目的很简单：在复杂的极限运算中找到捷径，简化计算。我们可以把所有无穷小想象成以零为终点的赛跑选手，比较无穷小，就是比较谁跑得更快！",
+            3: "在数学中，我们需要精确的裁判来判断速度。这个工具就是计算比值极限：β除以α当x趋于0时的极限值。这个极限值告诉我们两个无穷小的相对速度关系。",
+            4: "根据比值极限的结果，我们得到三种可能的赛跑结果：如果极限等于0，β是高阶无穷小，趋于零更快；如果极限是无穷，β是低阶无穷小，趋于零更慢；如果极限等于非零常数，两者是同阶无穷小。",
+            5: "最重要的特例是等价无穷小：当比值极限等于1时，我们记作α约等于β。这是完美的替身关系！常用的等价无穷小包括：sin x约等于x，tan x约等于x，1减cos x约等于x平方除以2等等。",
+            6: "等价无穷小的核心应用是替换：用简单的等价无穷小替换复杂的表达式。但要注意使用规则：乘除关系时可以放心替换，但加减关系时务必谨慎，因为可能会抵消重要信息！",
+            7: "总结一下：等价无穷小替换是极限计算中最锋利的刀刃之一。思考题：为什么替换法则在乘除时是利器，在加减时却是陷阱？掌握无穷小的比较，就是掌握极限计算的精髓！"
+        };
+
+        // Animation Engine - 保持原有的动画引擎代码
+        class AnimationEngine {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.animationId = null;
+                this.isActive = false;
+                this.time = 0;
+                this.particles = [];
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+            
+            resizeCanvas() {
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = this.canvas.offsetHeight;
+            }
+            
+            start() {
+                this.isActive = true;
+                this.time = 0;
+                this.init();
+                this.animate();
+            }
+            
+            stop() {
+                this.isActive = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+            }
+            
+            init() {
+                // Override in subclasses
+            }
+            
+            update(deltaTime) {
+                // Override in subclasses
+            }
+            
+            draw() {
+                // Override in subclasses
+            }
+            
+            animate() {
+                if (!this.isActive) return;
+                
+                const deltaTime = 1/60;
+                this.time += deltaTime;
+                
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.update(deltaTime);
+                this.draw();
+                
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+            
+            drawGlow(x, y, radius, color, intensity = 1) {
+                const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+                const [r, g, b] = this.hexToRgb(color);
+                gradient.addColorStop(0, `rgba(${r},${g},${b},${0.8 * intensity})`);
+                gradient.addColorStop(0.5, `rgba(${r},${g},${b},${0.3 * intensity})`);
+                gradient.addColorStop(1, `rgba(${r},${g},${b},0)`);
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+            }
+            
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? [
+                    parseInt(result[1], 16),
+                    parseInt(result[2], 16),
+                    parseInt(result[3], 16)
+                ] : [255, 255, 255];
+            }
+
+            drawMathText(text, x, y, fontSize = 16, color = '#fff') {
+                this.ctx.fillStyle = color;
+                this.ctx.font = `${fontSize}px "Times New Roman", serif`;
+                this.ctx.textAlign = 'center';
+
+                const mathText = text
+                    .replace(/\^2/g, '²')
+                    .replace(/\^3/g, '³')
+                    .replace(/sqrt/g, '√')
+                    .replace(/alpha/g, 'α')
+                    .replace(/beta/g, 'β')
+                    .replace(/gamma/g, 'γ')
+                    .replace(/delta/g, 'δ')
+                    .replace(/infinity/g, '∞')
+                    .replace(/sin/g, 'sin')
+                    .replace(/cos/g, 'cos')
+                    .replace(/tan/g, 'tan')
+                    .replace(/ln/g, 'ln')
+                    .replace(/lim/g, 'lim')
+                    .replace(/\//g, '∕');
+
+                this.ctx.fillText(mathText, x, y);
+            }
+        }
+
+        // 保持原有的所有动画类...
+        // [这里包含所有7个动画类的完整代码，与原版相同]
+        
+        // Slide 1: Convergence Visualization
+        class ConvergenceAnimation extends AnimationEngine {
+            init() {
+                this.functions = [
+                    { name: 'x³', func: x => x * x * x, color: '#ff6b6b', speed: 3 },
+                    { name: 'x²', func: x => x * x, color: '#4ecdc4', speed: 2 },
+                    { name: 'x', func: x => x, color: '#ffe66d', speed: 1 },
+                    { name: '√x', func: x => Math.sqrt(Math.abs(x)), color: '#a8e6cf', speed: 0.5 }
+                ];
+                this.traces = this.functions.map(() => []);
+                this.xValue = 1;
+            }
+            
+            update(deltaTime) {
+                this.xValue = Math.max(0.001, this.xValue - deltaTime * 0.3);
+                
+                this.functions.forEach((func, i) => {
+                    const y = func.func(this.xValue);
+                    this.traces[i].push({ x: this.xValue, y: y });
+                    if (this.traces[i].length > 100) {
+                        this.traces[i].shift();
+                    }
+                });
+                
+                if (this.xValue <= 0.001) {
+                    this.xValue = 1;
+                    this.traces = this.functions.map(() => []);
+                }
+            }
+            
+            draw() {
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                const scale = 200;
+                
+                // Draw axes
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(50, cy);
+                this.ctx.lineTo(this.canvas.width - 50, cy);
+                this.ctx.moveTo(cx, 50);
+                this.ctx.lineTo(cx, this.canvas.height - 50);
+                this.ctx.stroke();
+                
+                // Draw zero point
+                this.drawGlow(cx, cy, 30, '#ffd700', Math.sin(this.time * 2) * 0.5 + 0.5);
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = 'bold 24px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('0', cx, cy + 40);
+                
+                // Draw function traces
+                this.traces.forEach((trace, i) => {
+                    if (trace.length < 2) return;
+                    
+                    const func = this.functions[i];
+                    this.ctx.strokeStyle = func.color;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    
+                    trace.forEach((point, j) => {
+                        const x = cx + point.x * scale;
+                        const y = cy - point.y * scale;
+                        if (j === 0) {
+                            this.ctx.moveTo(x, y);
+                        } else {
+                            this.ctx.lineTo(x, y);
+                        }
+                    });
+                    this.ctx.stroke();
+                    
+                    // Draw current point
+                    if (trace.length > 0) {
+                        const lastPoint = trace[trace.length - 1];
+                        const x = cx + lastPoint.x * scale;
+                        const y = cy - lastPoint.y * scale;
+                        
+                        this.drawGlow(x, y, 20, func.color);
+                        this.ctx.fillStyle = func.color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(x, y, 8, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // Draw label
+                        this.drawMathText(func.name, x + 20, y, 20, func.color);
+                    }
+                });
+                
+                // Draw current x value
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '22px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`x = ${this.xValue.toFixed(3)}`, 50, 50);
+            }
+        }
+
+        // Slide 2: Race Track Animation
+        class RaceTrackAnimation extends AnimationEngine {
+            init() {
+                this.runners = [
+                    { name: 'x³', position: 0, speed: 4, color: '#ff6b6b', lane: 1 },
+                    { name: 'x²', position: 0, speed: 3, color: '#4ecdc4', lane: 2 },
+                    { name: 'x', position: 0, speed: 2, color: '#ffe66d', lane: 3 },
+                    { name: '√x', position: 0, speed: 1, color: '#a8e6cf', lane: 4 }
+                ];
+                this.trackLength = this.canvas.width - 200;
+                this.raceStarted = false;
+                this.winner = null;
+                
+                // Particle effects
+                this.particles = [];
+            }
+            
+            update(deltaTime) {
+                if (this.time > 1 && !this.raceStarted) {
+                    this.raceStarted = true;
+                }
+                
+                if (this.raceStarted && !this.winner) {
+                    this.runners.forEach(runner => {
+                        runner.position += runner.speed * deltaTime * 50;
+                        
+                        // Add trail particles
+                        if (Math.random() < 0.3) {
+                            this.particles.push({
+                                x: 100 + runner.position,
+                                y: 100 + runner.lane * 80,
+                                vx: -Math.random() * 50,
+                                vy: (Math.random() - 0.5) * 20,
+                                color: runner.color,
+                                life: 1
+                            });
+                        }
+                        
+                        if (runner.position >= this.trackLength) {
+                            runner.position = this.trackLength;
+                            if (!this.winner) {
+                                this.winner = runner;
+                            }
+                        }
+                    });
+                }
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx * deltaTime;
+                    p.y += p.vy * deltaTime;
+                    p.life -= deltaTime * 2;
+                    return p.life > 0;
+                });
+                
+                // Reset race
+                if (this.winner && this.time > 6) {
+                    this.init();
+                    this.time = 0;
+                }
+            }
+            
+            draw() {
+                // Draw track
+                this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                this.ctx.fillRect(100, 100, this.trackLength, 400);
+                
+                // Draw lanes
+                for (let i = 1; i <= 4; i++) {
+                    this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([10, 10]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(100, 100 + i * 80);
+                    this.ctx.lineTo(100 + this.trackLength, 100 + i * 80);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+                
+                // Draw finish line
+                const finishX = 100 + this.trackLength;
+                this.ctx.strokeStyle = '#ffd700';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(finishX, 100);
+                this.ctx.lineTo(finishX, 500);
+                this.ctx.stroke();
+                
+                // Draw "0" at finish
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = 'bold 48px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('0', finishX, 80);
+                
+                // Draw particles
+                this.particles.forEach(p => {
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                this.ctx.globalAlpha = 1;
+                
+                // Draw runners
+                this.runners.forEach(runner => {
+                    const x = 100 + runner.position;
+                    const y = 100 + runner.lane * 80;
+                    
+                    // Draw glow
+                    if (runner === this.winner) {
+                        this.drawGlow(x, y, 40, runner.color, Math.sin(this.time * 10) * 0.5 + 0.5);
+                    }
+                    
+                    // Draw runner
+                    this.ctx.fillStyle = runner.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 20, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Draw label
+                    this.drawMathText(runner.name, x, y + 5, 20, '#fff');
+                });
+                
+                // Draw start signal
+                if (!this.raceStarted) {
+                    this.ctx.fillStyle = `rgba(255,0,0,${Math.sin(this.time * 5) * 0.5 + 0.5})`;
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('准备...', this.canvas.width / 2, 50);
+                } else if (this.winner) {
+                    this.ctx.fillStyle = '#ffd700';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`${this.winner.name} 最快到达0！`, this.canvas.width / 2, 50);
+                }
+            }
+        }
+
+        // Slide 3: Ratio Visualization
+        class RatioAnimation extends AnimationEngine {
+            init() {
+                this.alpha = { value: 1, target: 0 };
+                this.beta = { value: 1, target: 0 };
+                this.ratio = 0;
+                this.mode = 0; // 0: high order, 1: low order, 2: same order
+                this.modeTimer = 0;
+                this.graphPoints = [];
+            }
+            
+            update(deltaTime) {
+                this.modeTimer += deltaTime;
+                
+                if (this.modeTimer > 4) {
+                    this.modeTimer = 0;
+                    this.mode = (this.mode + 1) % 3;
+                    this.graphPoints = [];
+                }
+                
+                // Update values based on mode
+                const t = this.modeTimer / 4;
+                const x = 1 - t * 0.99;
+                
+                switch(this.mode) {
+                    case 0: // β = o(α)
+                        this.alpha.value = x;
+                        this.beta.value = x * x * x;
+                        break;
+                    case 1: // β lower order
+                        this.alpha.value = x * x;
+                        this.beta.value = x;
+                        break;
+                    case 2: // same order
+                        this.alpha.value = x;
+                        this.beta.value = 2 * x;
+                        break;
+                }
+                
+                this.ratio = this.beta.value / this.alpha.value;
+                this.graphPoints.push({ x: t, y: this.ratio });
+                if (this.graphPoints.length > 100) {
+                    this.graphPoints.shift();
+                }
+            }
+            
+            draw() {
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                
+                // Draw balance scale
+                this.drawScale(cx, cy - 100);
+                
+                // Draw values
+                this.drawMathText(`β = ${this.beta.value.toFixed(4)}`, cx - 150, cy - 120, 22, '#4ecdc4');
+                this.drawMathText(`α = ${this.alpha.value.toFixed(4)}`, cx + 150, cy - 120, 22, '#ffe66d');
+
+                // Draw ratio
+                this.drawMathText(`β/α = ${this.ratio.toFixed(2)}`, cx, cy + 50, 22, '#fff');
+                
+                // Draw result
+                let result = '';
+                let color = '';
+                switch(this.mode) {
+                    case 0:
+                        result = 'β = o(α) - 高阶无穷小';
+                        color = '#4ecdc4';
+                        break;
+                    case 1:
+                        result = 'β 是低阶无穷小';
+                        color = '#ff6b6b';
+                        break;
+                    case 2:
+                        result = 'β 与 α 同阶';
+                        color = '#a8e6cf';
+                        break;
+                }
+                
+                this.ctx.fillStyle = color;
+                this.ctx.font = 'bold 22px Arial';
+                this.ctx.fillText(result, cx, cy + 150);
+                
+                // Draw ratio graph
+                this.drawGraph(50, cy + 200, 300, 150);
+            }
+            
+            drawScale(x, y) {
+                // Draw beam
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x - 200, y);
+                this.ctx.lineTo(x + 200, y);
+                this.ctx.stroke();
+                
+                // Draw fulcrum
+                this.ctx.beginPath();
+                this.ctx.moveTo(x - 30, y + 50);
+                this.ctx.lineTo(x, y);
+                this.ctx.lineTo(x + 30, y + 50);
+                this.ctx.closePath();
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.fill();
+                
+                // Draw pans with tilt based on ratio
+                const tilt = Math.atan(Math.log(this.ratio + 0.1) / 5);
+                
+                // Left pan (β)
+                this.ctx.save();
+                this.ctx.translate(x - 150, y);
+                this.ctx.rotate(-tilt);
+                this.ctx.fillStyle = '#4ecdc4';
+                this.ctx.fillRect(-30, -10, 60, 20);
+                
+                // Weight representation
+                const betaSize = 20 + this.beta.value * 30;
+                this.ctx.beginPath();
+                this.ctx.arc(0, -betaSize - 10, betaSize, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+                
+                // Right pan (α)
+                this.ctx.save();
+                this.ctx.translate(x + 150, y);
+                this.ctx.rotate(-tilt);
+                this.ctx.fillStyle = '#ffe66d';
+                this.ctx.fillRect(-30, -10, 60, 20);
+                
+                // Weight representation
+                const alphaSize = 20 + this.alpha.value * 30;
+                this.ctx.beginPath();
+                this.ctx.arc(0, -alphaSize - 10, alphaSize, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+            }
+            
+            drawGraph(x, y, width, height) {
+                // Draw axes
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y);
+                this.ctx.lineTo(x + width, y);
+                this.ctx.moveTo(x, y);
+                this.ctx.lineTo(x, y - height);
+                this.ctx.stroke();
+                
+                // Draw graph
+                if (this.graphPoints.length > 1) {
+                    this.ctx.strokeStyle = '#ffd700';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    
+                    this.graphPoints.forEach((point, i) => {
+                        const px = x + point.x * width;
+                        const py = y - Math.min(point.y / 5, 1) * height;
+                        
+                        if (i === 0) {
+                            this.ctx.moveTo(px, py);
+                        } else {
+                            this.ctx.lineTo(px, py);
+                        }
+                    });
+                    this.ctx.stroke();
+                }
+            }
+        }
+
+        // Slide 4: Three Cases Animation
+        class ThreeCasesAnimation extends AnimationEngine {
+            init() {
+                this.cases = [
+                    { 
+                        title: '高阶', 
+                        alpha: x => x, 
+                        beta: x => x * x * x,
+                        color1: '#ffe66d',
+                        color2: '#4ecdc4'
+                    },
+                    { 
+                        title: '低阶', 
+                        alpha: x => x * x, 
+                        beta: x => Math.sqrt(Math.abs(x)),
+                        color1: '#ffe66d',
+                        color2: '#ff6b6b'
+                    },
+                    { 
+                        title: '同阶', 
+                        alpha: x => x, 
+                        beta: x => 2 * x,
+                        color1: '#ffe66d',
+                        color2: '#a8e6cf'
+                    }
+                ];
+                this.t = 1;
+                this.graphs = this.cases.map(() => []);
+            }
+            
+            update(deltaTime) {
+                this.t = Math.max(0.01, this.t - deltaTime * 0.2);
+                
+                this.cases.forEach((c, i) => {
+                    const alpha = c.alpha(this.t);
+                    const beta = c.beta(this.t);
+                    this.graphs[i].push({ t: this.t, alpha, beta, ratio: beta/alpha });
+                    if (this.graphs[i].length > 50) {
+                        this.graphs[i].shift();
+                    }
+                });
+                
+                if (this.t <= 0.01) {
+                    this.t = 1;
+                    this.graphs = this.cases.map(() => []);
+                }
+            }
+            
+            draw() {
+                const width = this.canvas.width / 3;
+                const height = this.canvas.height - 100;
+                
+                this.cases.forEach((c, i) => {
+                    const x = i * width + width / 2;
+                    const y = 50;
+                    
+                    // Draw panel
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    this.ctx.fillRect(i * width + 10, y, width - 20, height);
+                    
+                    // Draw title
+                    this.ctx.fillStyle = '#ffd700';
+                    this.ctx.font = 'bold 22px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(c.title, x, y + 30);
+
+                    // Draw current ratio
+                    const currentRatio = this.graphs[i].length > 0 ?
+                        this.graphs[i][this.graphs[i].length - 1].ratio : 0;
+                    this.drawMathText(`β/α = ${currentRatio.toFixed(3)}`, x, y + 60, 20, '#fff');
+                    
+                    // Draw graph
+                    const graphY = y + 100;
+                    const graphHeight = height - 150;
+                    
+                    // Draw axes
+                    this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i * width + 30, graphY + graphHeight);
+                    this.ctx.lineTo(i * width + width - 30, graphY + graphHeight);
+                    this.ctx.stroke();
+                    
+                    // Draw functions
+                    if (this.graphs[i].length > 1) {
+                        // Alpha function
+                        this.ctx.strokeStyle = c.color1;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.graphs[i].forEach((point, j) => {
+                            const px = i * width + 30 + (1 - point.t) * (width - 60);
+                            const py = graphY + graphHeight - point.alpha * graphHeight;
+                            if (j === 0) {
+                                this.ctx.moveTo(px, py);
+                            } else {
+                                this.ctx.lineTo(px, py);
+                            }
+                        });
+                        this.ctx.stroke();
+                        
+                        // Beta function
+                        this.ctx.strokeStyle = c.color2;
+                        this.ctx.beginPath();
+                        this.graphs[i].forEach((point, j) => {
+                            const px = i * width + 30 + (1 - point.t) * (width - 60);
+                            const py = graphY + graphHeight - point.beta * graphHeight;
+                            if (j === 0) {
+                                this.ctx.moveTo(px, py);
+                            } else {
+                                this.ctx.lineTo(px, py);
+                            }
+                        });
+                        this.ctx.stroke();
+                    }
+                    
+                    // Draw legend
+                    this.ctx.fillStyle = c.color1;
+                    this.ctx.fillRect(i * width + 30, y + height - 30, 20, 3);
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.textAlign = 'left';
+                    this.ctx.fillText('α', i * width + 55, y + height - 25);
+                    
+                    this.ctx.fillStyle = c.color2;
+                    this.ctx.fillRect(i * width + 90, y + height - 30, 20, 3);
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.fillText('β', i * width + 115, y + height - 25);
+                });
+            }
+        }
+
+        // Slide 5: Equivalent Infinitesimals
+        class EquivalentAnimation extends AnimationEngine {
+            init() {
+                this.pairs = [
+                    { f1: x => Math.sin(x), f2: x => x, name1: 'sin x', name2: 'x' },
+                    { f1: x => Math.tan(x), f2: x => x, name1: 'tan x', name2: 'x' },
+                    { f1: x => 1 - Math.cos(x), f2: x => x*x/2, name1: '1-cos x', name2: 'x²/2' },
+                    { f1: x => Math.exp(x) - 1, f2: x => x, name1: 'e^x-1', name2: 'x' }
+                ];
+                this.currentPair = 0;
+                this.x = 0.5;
+                this.switchTimer = 0;
+                this.particles = [];
+            }
+            
+            update(deltaTime) {
+                this.x = Math.max(0.001, this.x - deltaTime * 0.1);
+                this.switchTimer += deltaTime;
+                
+                if (this.switchTimer > 3) {
+                    this.switchTimer = 0;
+                    this.currentPair = (this.currentPair + 1) % this.pairs.length;
+                    this.x = 0.5;
+                }
+                
+                // Create convergence particles
+                const pair = this.pairs[this.currentPair];
+                const y1 = pair.f1(this.x);
+                const y2 = pair.f2(this.x);
+                const diff = Math.abs(y1 - y2);
+                
+                if (Math.random() < 0.5) {
+                    const cy = this.canvas.height / 2;
+                    this.particles.push({
+                        x: this.canvas.width / 2 + (Math.random() - 0.5) * 200,
+                        y: cy + (Math.random() - 0.5) * 100,
+                        vx: (Math.random() - 0.5) * 50,
+                        vy: (Math.random() - 0.5) * 50,
+                        life: 1,
+                        color: diff < 0.01 ? '#ffd700' : '#4ecdc4'
+                    });
+                }
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx * deltaTime;
+                    p.y += p.vy * deltaTime;
+                    p.life -= deltaTime;
+                    return p.life > 0;
+                });
+            }
+            
+            draw() {
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                const pair = this.pairs[this.currentPair];
+                
+                // Draw background particles
+                this.particles.forEach(p => {
+                    this.ctx.globalAlpha = p.life * 0.5;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                this.ctx.globalAlpha = 1;
+                
+                // Draw main display
+                const y1 = pair.f1(this.x);
+                const y2 = pair.f2(this.x);
+                const ratio = y1 / y2;
+                
+                // Draw function names
+                this.drawMathText(pair.name1, cx - 150, cy - 100, 22, '#4ecdc4');
+                this.drawMathText(pair.name2, cx + 150, cy - 100, 22, '#ffe66d');
+                
+                // Draw values
+                this.ctx.font = '20px Arial';
+                this.ctx.fillStyle = '#4ecdc4';
+                this.ctx.fillText(y1.toFixed(6), cx - 150, cy - 50);
+
+                this.ctx.fillStyle = '#ffe66d';
+                this.ctx.fillText(y2.toFixed(6), cx + 150, cy - 50);
+                
+                // Draw equivalence symbol
+                const scale = 1 + Math.sin(this.time * 3) * 0.1;
+                this.ctx.save();
+                this.ctx.translate(cx, cy);
+                this.ctx.scale(scale, scale);
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = 'bold 48px Arial';
+                this.ctx.fillText('～', 0, 0);
+                this.ctx.restore();
+                
+                // Draw ratio
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = 'bold 22px Arial';
+                this.ctx.fillText(`比值: ${ratio.toFixed(4)} → 1`, cx, cy + 100);
+
+                // Draw x value
+                this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                this.ctx.font = '20px Arial';
+                this.ctx.fillText(`x = ${this.x.toFixed(4)} → 0`, cx, cy + 150);
+                
+                // Draw convergence indicator
+                const convergence = Math.abs(ratio - 1);
+                const barWidth = 300;
+                const barHeight = 20;
+                const barX = cx - barWidth / 2;
+                const barY = cy + 200;
+                
+                // Background
+                this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                this.ctx.fillRect(barX, barY, barWidth, barHeight);
+                
+                // Fill
+                const fillWidth = barWidth * (1 - Math.min(convergence, 1));
+                const gradient = this.ctx.createLinearGradient(barX, 0, barX + fillWidth, 0);
+                gradient.addColorStop(0, '#4ecdc4');
+                gradient.addColorStop(1, '#ffd700');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(barX, barY, fillWidth, barHeight);
+                
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = '20px Arial';
+                this.ctx.fillText('收敛程度', cx, barY - 5);
+            }
+        }
+
+        // Slide 6: Replacement Rules Animation
+        class ReplacementRulesAnimation extends AnimationEngine {
+            init() {
+                this.examples = [
+                    {
+                        type: 'multiply',
+                        expr1: 'sin x · tan x',
+                        expr2: 'x · x',
+                        result: 'x²',
+                        valid: true
+                    },
+                    {
+                        type: 'divide',
+                        expr1: 'sin x / tan x',
+                        expr2: 'x / x',
+                        result: '1',
+                        valid: true
+                    },
+                    {
+                        type: 'add',
+                        expr1: 'sin x + tan x',
+                        expr2: 'x + x',
+                        result: '2x ≠ sin x + tan x',
+                        valid: false
+                    },
+                    {
+                        type: 'subtract',
+                        expr1: 'tan x - sin x',
+                        expr2: 'x - x',
+                        result: '0 ≠ tan x - sin x',
+                        valid: false
+                    }
+                ];
+                this.currentExample = 0;
+                this.animationPhase = 0;
+                this.phaseTimer = 0;
+                this.explosionParticles = [];
+            }
+            
+            update(deltaTime) {
+                this.phaseTimer += deltaTime;
+                
+                if (this.phaseTimer > 2) {
+                    this.phaseTimer = 0;
+                    this.animationPhase = (this.animationPhase + 1) % 3;
+                    
+                    if (this.animationPhase === 0) {
+                        this.currentExample = (this.currentExample + 1) % this.examples.length;
+                        
+                        // Create explosion for invalid operations
+                        const example = this.examples[this.currentExample];
+                        if (!example.valid && this.animationPhase === 2) {
+                            this.createExplosion(this.canvas.width / 2, this.canvas.height / 2);
+                        }
+                    }
+                }
+                
+                // Update explosion particles
+                this.explosionParticles = this.explosionParticles.filter(p => {
+                    p.x += p.vx * deltaTime;
+                    p.y += p.vy * deltaTime;
+                    p.life -= deltaTime * 2;
+                    return p.life > 0;
+                });
+            }
+            
+            createExplosion(x, y) {
+                for (let i = 0; i < 30; i++) {
+                    const angle = (Math.PI * 2 * i) / 30;
+                    const speed = 100 + Math.random() * 200;
+                    this.explosionParticles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        color: '#ff0000',
+                        life: 1
+                    });
+                }
+            }
+            
+            draw() {
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                const example = this.examples[this.currentExample];
+                
+                // Draw explosion particles
+                this.explosionParticles.forEach(p => {
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                this.ctx.globalAlpha = 1;
+                
+                // Draw example
+                this.ctx.font = 'bold 36px Arial';
+                this.ctx.textAlign = 'center';
+                
+                // Phase 0: Show original
+                if (this.animationPhase === 0) {
+                    this.drawMathText(example.expr1, cx, cy - 50, 22, '#fff');
+                }
+                // Phase 1: Show replacement
+                else if (this.animationPhase === 1) {
+                    this.drawMathText(example.expr1, cx, cy - 100, 22, 'rgba(255,255,255,0.5)');
+
+                    this.ctx.fillStyle = '#ffd700';
+                    this.ctx.font = 'bold 22px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('↓', cx, cy - 50);
+
+                    this.drawMathText(example.expr2, cx, cy, 22, '#4ecdc4');
+                }
+                // Phase 2: Show result
+                else {
+                    this.drawMathText(example.expr1, cx, cy - 150, 22, 'rgba(255,255,255,0.3)');
+                    this.drawMathText(example.result, cx, cy, 22, '#4ecdc4');
+                    
+                    // Draw validity indicator
+                    if (example.valid) {
+                        this.ctx.strokeStyle = '#00ff00';
+                        this.ctx.lineWidth = 5;
+                        this.ctx.beginPath();
+                        this.ctx.arc(cx, cy + 100, 40, 0, Math.PI * 2);
+                        this.ctx.stroke();
+                        
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(cx - 20, cy + 100);
+                        this.ctx.lineTo(cx - 5, cy + 115);
+                        this.ctx.lineTo(cx + 25, cy + 85);
+                        this.ctx.stroke();
+                        
+                        this.ctx.fillStyle = '#00ff00';
+                        this.ctx.font = 'bold 20px Arial';
+                        this.ctx.fillText('可以替换', cx, cy + 170);
+                    } else {
+                        this.ctx.strokeStyle = '#ff0000';
+                        this.ctx.lineWidth = 5;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(cx - 30, cy + 70);
+                        this.ctx.lineTo(cx + 30, cy + 130);
+                        this.ctx.moveTo(cx - 30, cy + 130);
+                        this.ctx.lineTo(cx + 30, cy + 70);
+                        this.ctx.stroke();
+                        
+                        this.ctx.fillStyle = '#ff0000';
+                        this.ctx.font = 'bold 20px Arial';
+                        this.ctx.fillText('不能直接替换！', cx, cy + 170);
+                    }
+                }
+                
+                // Draw operation type
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = 'bold 22px Arial';
+                let opSymbol = '';
+                switch(example.type) {
+                    case 'multiply': opSymbol = '乘法 ×'; break;
+                    case 'divide': opSymbol = '除法 ÷'; break;
+                    case 'add': opSymbol = '加法 +'; break;
+                    case 'subtract': opSymbol = '减法 −'; break;
+                }
+                this.ctx.fillText(opSymbol, cx, 50);
+            }
+        }
+
+        // Slide 7: Summary Mind Map
+        class SummaryMindMapAnimation extends AnimationEngine {
+            init() {
+                this.nodes = [
+                    { x: 0, y: 0, text: '无穷小\n比较', size: 40, color: '#ffd700', level: 0 },
+                    { x: -200, y: -150, text: '高阶\no(α)', size: 30, color: '#4ecdc4', level: 1 },
+                    { x: 200, y: -150, text: '低阶', size: 30, color: '#ff6b6b', level: 1 },
+                    { x: 0, y: -150, text: '同阶', size: 30, color: '#a8e6cf', level: 1 },
+                    { x: 0, y: -250, text: '等价\nα~β', size: 35, color: '#ffd700', level: 2 },
+                    { x: -150, y: 150, text: '乘除✓', size: 25, color: '#00ff00', level: 2 },
+                    { x: 150, y: 150, text: '加减✗', size: 25, color: '#ff0000', level: 2 }
+                ];
+                
+                this.connections = [
+                    [0, 1], [0, 2], [0, 3], [3, 4], [0, 5], [0, 6]
+                ];
+                
+                this.rotationAngle = 0;
+                this.pulsePhase = 0;
+                this.floatingParticles = [];
+                
+                // Initialize floating particles
+                for (let i = 0; i < 20; i++) {
+                    this.floatingParticles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 3 + 1,
+                        speed: Math.random() * 20 + 10,
+                        angle: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+            
+            update(deltaTime) {
+                this.rotationAngle += deltaTime * 0.1;
+                this.pulsePhase += deltaTime * 2;
+                
+                // Update floating particles
+                this.floatingParticles.forEach(p => {
+                    p.x += Math.cos(p.angle) * p.speed * deltaTime;
+                    p.y += Math.sin(p.angle) * p.speed * deltaTime;
+                    
+                    // Wrap around screen
+                    if (p.x < 0) p.x = this.canvas.width;
+                    if (p.x > this.canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = this.canvas.height;
+                    if (p.y > this.canvas.height) p.y = 0;
+                });
+                
+                // Animate nodes
+                this.nodes.forEach((node, i) => {
+                    if (node.level > 0) {
+                        node.offsetY = Math.sin(this.pulsePhase + i) * 5;
+                    }
+                });
+            }
+            
+            draw() {
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                
+                // Draw floating particles
+                this.floatingParticles.forEach(p => {
+                    this.ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                // Draw connections
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                this.ctx.lineWidth = 2;
+                this.connections.forEach(([from, to]) => {
+                    const fromNode = this.nodes[from];
+                    const toNode = this.nodes[to];
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(
+                        cx + fromNode.x, 
+                        cy + fromNode.y + (fromNode.offsetY || 0)
+                    );
+                    this.ctx.lineTo(
+                        cx + toNode.x, 
+                        cy + toNode.y + (toNode.offsetY || 0)
+                    );
+                    this.ctx.stroke();
+                });
+                
+                // Draw nodes
+                this.nodes.forEach((node, i) => {
+                    const x = cx + node.x;
+                    const y = cy + node.y + (node.offsetY || 0);
+                    
+                    // Draw glow
+                    const glowIntensity = node.level === 0 ? 
+                        Math.sin(this.pulsePhase) * 0.5 + 0.5 : 0.3;
+                    this.drawGlow(x, y, node.size * 2, node.color, glowIntensity);
+                    
+                    // Draw node circle
+                    this.ctx.fillStyle = node.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, node.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Draw text
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.font = `bold ${node.size * 0.4}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    const lines = node.text.split('\n');
+                    lines.forEach((line, j) => {
+                        this.ctx.fillText(
+                            line, 
+                            x, 
+                            y + (j - (lines.length - 1) / 2) * node.size * 0.5
+                        );
+                    });
+                });
+                
+                // Draw thinking prompts
+                this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                this.ctx.font = 'italic 20px Arial';
+                this.ctx.textAlign = 'center';
+                
+                const prompts = [
+                    '为什么加减不能替换？',
+                    '等价无穷小的本质是什么？',
+                    '如何判断无穷小的阶？'
+                ];
+                
+                const promptIndex = Math.floor(this.time / 5) % prompts.length;
+                this.ctx.fillText(prompts[promptIndex], cx, this.canvas.height - 50);
+            }
+        }
+
+        // Main controller
+        class PresentationController {
+            constructor() {
+                this.slides = document.querySelectorAll('.slide');
+                this.currentSlide = 0;
+                this.animations = [];
+                
+                this.initAnimations();
+                this.showSlide(0);
+            }
+            
+            initAnimations() {
+                const canvases = [
+                    document.getElementById('canvas1'),
+                    document.getElementById('canvas2'),
+                    document.getElementById('canvas3'),
+                    document.getElementById('canvas4'),
+                    document.getElementById('canvas5'),
+                    document.getElementById('canvas6'),
+                    document.getElementById('canvas7')
+                ];
+                
+                this.animations = [
+                    new ConvergenceAnimation(canvases[0]),
+                    new RaceTrackAnimation(canvases[1]),
+                    new RatioAnimation(canvases[2]),
+                    new ThreeCasesAnimation(canvases[3]),
+                    new EquivalentAnimation(canvases[4]),
+                    new ReplacementRulesAnimation(canvases[5]),
+                    new SummaryMindMapAnimation(canvases[6])
+                ];
+            }
+            
+            showSlide(index) {
+                // Hide all slides
+                this.slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                
+                this.currentSlide = index;
+                updateSlideInfo();
+                
+                // Control animations
+                this.animations.forEach((anim, i) => {
+                    if (i === index) {
+                        anim.start();
+                    } else {
+                        anim.stop();
+                    }
+                });
+
+                // Re-render MathJax for the current slide
+                setTimeout(() => {
+                    if (window.MathJax) {
+                        if (window.MathJax.typeset) {
+                            window.MathJax.typeset([this.slides[index]]);
+                        } else if (window.MathJax.Hub) {
+                            window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub, this.slides[index]]);
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        let presentationController;
+
+        // 状态更新函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                } else if (type === 'success') {
+                    indicator.classList.add('connected');
+                }
+            }
+        }
+
+        // 检测SDK加载状态
+        function checkSDKStatus() {
+            if (typeof AvatarPlatform !== 'undefined') {
+                console.log('✅ 讯飞官方SDK已加载 - 版本:', AvatarPlatform.getVersion ? AvatarPlatform.getVersion() : '未知');
+                updateStatus('SDK已加载', 'connected');
+                return true;
+            } else {
+                console.log('⏳ 讯飞SDK模块正在加载中...');
+                updateStatus('SDK加载中...', 'connecting');
+                return false;
+            }
+        }
+
+        // 监听SDK准备就绪事件
+        window.addEventListener('sdkReady', function() {
+            console.log('🎉 SDK模块加载完成，准备就绪！');
+            checkSDKStatus();
+        });
+
+        // 等待SDK加载完成
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                // 监听SDK准备就绪事件
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000); // 10秒超时
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        // 启动虚拟人教学
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                // 等待SDK加载完成
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                // 如果已有实例，先销毁
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                // 创建虚拟人实例
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                // 设置事件监听
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        
+                        // 连接成功后开始讲解第一页
+                        setTimeout(() => {
+                            speakContent(1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        updateStatus('连接断开', 'error');
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                    });
+
+                // 设置API配置 - 请替换为您的真实配置
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',                                    // 您的AppID
+                    apiKey: '133adcc14bda6e315040f78700b38267',             // 您的API密钥
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',       // 您的API密钥
+                    sceneId: '216155854796361728',                       // 您的场景ID
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                // 设置全局参数
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',    // 沐沐形象ID
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',         // 小娟-温情4.0
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                // 启动虚拟人
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                
+                if (error.message.includes('SDK未加载')) {
+                    const suggestion = `SDK加载失败！\n\n💡 建议解决方案：\n\n` +
+                        `1. 🌐 检查网络连接是否正常\n` +
+                        `2. 🔧 如果使用代理，请允许讯飞域名\n` +
+                        `3. 🔄 刷新页面重新尝试\n` +
+                        `4. 📞 如问题持续，请联系技术支持`;
+                    
+                    setTimeout(() => {
+                        if (confirm(suggestion + '\n\n是否立即刷新页面重试？')) {
+                            location.reload();
+                        }
+                    }, 100);
+                } else {
+                    alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+                }
+            }
+        }
+
+        // 根据页面内容选择合适的动作
+        function getActionsForPage(slideNum) {
+            const actionMap = {
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 8 }],
+                2: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                3: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 6 }],
+                4: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],
+                5: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],
+                6: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],
+                7: [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }]
+            };
+            return actionMap[slideNum] || [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }];
+        }
+
+        // 动作控制函数
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        // 语音播报
+        async function speakContent(slideNum) {
+            console.log(`🔍 检查播放条件: isTeaching=${isTeaching}, isConnected=${isConnected}, avatarPlatform=${!!avatarPlatform}`);
+            
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[slideNum];
+            if (!content) return;
+
+            try {
+                // 先执行动作
+                const actions = getActionsForPage(slideNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                // 然后播放语音内容
+                await avatarPlatform.writeText(content, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 沐沐讲解第${slideNum}页，动作: ${actions[0]?.value}`);
+
+                // 更新字幕显示
+                if (isAutoPlaying) {
+                    updateAutoPlaySubtitle(slideNum, content);
+                } else {
+                    updateSubtitle(content);
+                }
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        // 更新字幕显示
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        // 自动播放时的字幕更新
+        function updateAutoPlaySubtitle(slideNum, text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea && isAutoPlaying) {
+                const prefix = `【第${slideNum}页/${totalSlides}页】`;
+                subtitleArea.textContent = prefix + text;
+            } else if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        // 页面控制函数
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                if (presentationController) {
+                    presentationController.showSlide(currentSlide - 1); // showSlide使用0基索引
+                }
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide);
+                }
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                if (presentationController) {
+                    presentationController.showSlide(currentSlide - 1); // showSlide使用0基索引
+                }
+                updateSlideInfo();
+                if (!isAutoPlaying) {
+                    speakContent(currentSlide);
+                }
+            }
+        }
+
+        function restart() {
+            currentSlide = 1;
+            if (presentationController) {
+                presentationController.showSlide(0); // 显示第一页
+            }
+            updateSlideInfo();
+            if (!isAutoPlaying) {
+                speakContent(1);
+            }
+        }
+
+        function updateSlideInfo() {
+            const currentSlideElement = document.getElementById('currentSlide');
+            const totalSlidesElement = document.getElementById('totalSlides');
+            if (currentSlideElement) {
+                currentSlideElement.textContent = currentSlide;
+            }
+            if (totalSlidesElement) {
+                totalSlidesElement.textContent = totalSlides;
+            }
+        }
+
+        function updateSlideInfo() {
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('totalSlides').textContent = totalSlides;
+        }
+
+        // 获取页面标题
+        function getSlideTitle(slideNum) {
+            const titles = {
+                1: "无穷小的比较",
+                2: "核心思想：为什么要比较？",
+                3: "评判标准：如何定量比较？",
+                4: "三种赛跑结果",
+                5: "最重要的特例：等价无穷小",
+                6: "核心应用：等价无穷小替换",
+                7: "总结与思考"
+            };
+            return titles[slideNum] || `第${slideNum}页`;
+        }
+
+        // 获取每页的固定播放时长
+        function getSlideDuration(slideNum) {
+            const durations = {
+                1: 16000,  // 概念介绍
+                2: 18000,  // 核心思想
+                3: 15000,  // 评判标准
+                4: 20000,  // 三种结果
+                5: 22000,  // 等价无穷小
+                6: 20000,  // 核心应用
+                7: 18000   // 总结
+            };
+            return durations[slideNum] || 15000;
+        }
+
+        // 静默页面切换
+        function switchToSlideSilent(slideNum) {
+            if (slideNum < 1 || slideNum > totalSlides) {
+                console.log(`❌ 页面切换失败：页码${slideNum}超出范围(1-${totalSlides})`);
+                return;
+            }
+
+            console.log(`🔄 开始切换到第${slideNum}页...`);
+            if (presentationController) {
+                presentationController.showSlide(slideNum - 1);
+                console.log(`✅ 成功切换到第${slideNum}页`);
+            } else {
+                console.log(`❌ presentationController未初始化`);
+            }
+        }
+
+        // 自动播放功能
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                // 更新按钮状态
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                // 倒计时提示
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'recording');
+
+                // 进入录制模式
+                document.body.classList.add('recording-mode');
+
+                // 如果虚拟人未连接，在后台尝试连接
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                // 逐页播放
+                for (let slide = 1; slide <= totalSlides; slide++) {
+                    try {
+                        if (!isAutoPlaying) {
+                            console.log('🛑 自动播放被停止');
+                            break;
+                        }
+
+                        console.log(`\n🎬 === 开始播放第${slide}页/${totalSlides}页 ===`);
+
+                        // 切换到指定页面
+                        switchToSlideSilent(slide);
+                        updateStatus(`📖 第${slide}页/${totalSlides}页 - ${getSlideTitle(slide)}`, 'recording');
+
+                        // 等待页面渲染
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        // 播放语音
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            try {
+                                await speakContent(slide);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            } catch (error) {
+                                console.error(`❌ 第${slide}页语音播放失败:`, error);
+                                const slideTime = getSlideDuration(slide);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            }
+                        } else {
+                            const slideTime = getSlideDuration(slide);
+                            await new Promise(resolve => setTimeout(resolve, slideTime));
+                        }
+
+                        // 页面间隔
+                        const waitTime = slide === totalSlides ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${slide}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                // 播放完成
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+
+                // 退出录制模式
+                document.body.classList.remove('recording-mode');
+
+                // 恢复按钮状态
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    handleEnterKey();
+                    break;
+            }
+        });
+
+        // Enter键控制
+        function handleEnterKey() {
+            if (!isTeaching) {
+                startTeaching();
+            } else if (isConnected) {
+                speakContent(currentSlide + 1);
+                console.log('🎵 Enter键触发：重新播放当前页内容');
+            } else {
+                console.log('⚠️ 虚拟人未连接，无法播放');
+            }
+        }
+
+        // 页面关闭清理
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        // 手动触发MathJax渲染
+        function renderMathJax() {
+            if (window.MathJax) {
+                if (window.MathJax.typeset) {
+                    window.MathJax.typeset();
+                } else if (window.MathJax.Hub) {
+                    window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub]);
+                }
+                console.log('MathJax rendering triggered');
+            } else {
+                console.log('MathJax not loaded yet');
+                // 如果MathJax还没加载，等待一下再试
+                setTimeout(renderMathJax, 1000);
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            presentationController = new PresentationController();
+            console.log('✨ 无穷小比较教学系统初始化完成');
+            checkSDKStatus();
+
+            // 延迟渲染MathJax，确保所有内容都已加载
+            setTimeout(() => {
+                renderMathJax();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

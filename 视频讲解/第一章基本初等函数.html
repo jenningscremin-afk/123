@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一章：基本初等函数 - 虚拟人教学系统</title>
+    
+    <!-- 本地资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- MathJax配置和字幕间隙修复经验：
+    1. 字幕区域必须使用display: block布局，不能用flex（会导致文本元素间距拉大）
+    2. MathJax公式容器需要display: inline !important，并移除所有margin/padding/border
+    3. 使用MutationObserver监听DOM变化，确保新添加的公式也得到正确样式
+    4. 公式渲染后可能需要二次渲染（setTimeout延迟）
+    5. line-height设为1.4，font-size设为18px让内容可读性良好
+    -->
+    <script>
+        // 字幕数学公式间隙修复经验：
+        // 1. 字幕容器改为block布局（防止flex导致的间隙）
+        // 2. MathJax容器设为display: inline并移除所有间距
+        // 3. MutationObserver监听DOM变化持续调整新公式
+        // 4. setTimeout延迟确保MathJax.typesetPromise正确执行
+        // 5. 适当的line-height(1.4)和font-size(18px)保证可读性
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: function() {
+                    MathJax.startup.defaultReady();
+                    console.log('MathJax is ready');
+                    
+                    // 在MathJax加载完成后调整公式样式 - 消除间隙
+                    MathJax.startup.promise.then(() => {
+                        const adjustFormulas = () => {
+                            document.querySelectorAll('mjx-container').forEach(container => {
+                                container.style.display = 'inline';
+                                container.style.margin = '0';
+                                container.style.padding = '0';
+                                container.style.verticalAlign = 'baseline';
+                                container.style.fontSize = 'inherit';
+                                container.style.visibility = 'visible';
+                                container.style.opacity = '1';
+                                container.style.lineHeight = '1';
+                                container.style.border = 'none';
+                                container.style.background = 'transparent';
+                                container.removeAttribute('display');
+                                
+                                // 确保子元素也无间隙
+                                container.querySelectorAll('*').forEach(el => {
+                                    el.style.visibility = 'visible';
+                                    el.style.opacity = '1';
+                                    el.style.margin = '0';
+                                    el.style.padding = '0';
+                                });
+                            });
+                            
+                            // 特别处理字幕区域的公式 - 完全消除间隙
+                            const subtitleArea = document.getElementById('subtitleArea');
+                            if (subtitleArea) {
+                                subtitleArea.querySelectorAll('mjx-container').forEach(container => {
+                                    container.style.display = 'inline !important';
+                                    container.style.visibility = 'visible !important';
+                                    container.style.opacity = '1 !important';
+                                    container.style.color = 'white !important';
+                                    container.style.margin = '0 !important';
+                                    container.style.padding = '0 !important';
+                                    container.style.verticalAlign = 'baseline !important';
+                                    container.style.lineHeight = 'inherit !important';
+                                    container.style.fontSize = 'inherit !important';
+                                    container.style.border = 'none !important';
+                                    container.style.background = 'transparent !important';
+                                });
+                            }
+                            
+                            console.log('Formulas adjusted - gaps eliminated');
+                        };
+                        
+                        // 立即调整现有公式
+                        adjustFormulas();
+                        
+                        // 监听DOM变化以调整新添加的公式
+                        const observer = new MutationObserver(adjustFormulas);
+                        observer.observe(document.body, { childList: true, subtree: true });
+                    });
+                }
+            }
+        };
+    </script>
+    <!-- 使用更可靠的MathJax CDN -->
+    <script type="text/javascript" id="MathJax-script" async
+            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js">
+    </script>
+    
+    <style>
+        :root {
+            --chalkboard-bg: transparent;
+            --chalk-text: #ecf0f1;
+            --visualization-bg: #fdfdfd00;
+            --primary-color: #3498db;
+            --accent-color: #e67e22;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #9b59b6;
+            --text-color: #34495e;
+            --heading-font: 'Noto Serif SC', serif;
+        }
+
+        /* 优化MathJax公式样式 - 消除间隙 */
+        mjx-container {
+            display: inline !important;
+            vertical-align: baseline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+            font-size: inherit !important;
+            white-space: nowrap !important;
+            border: none !important;
+            background: transparent !important;
+        }
+        
+        mjx-container[display="true"],
+        mjx-container[display="block"] {
+            display: inline !important;
+            vertical-align: baseline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* MathJax内部元素样式 */
+        mjx-container mjx-math {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+        
+        mjx-container mjx-semantics {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .chalkboard mjx-container {
+            font-size: 1.1em !important;
+            color: #ecf0f1 !important;
+        }
+        
+        .subtitle-area mjx-container {
+            font-size: inherit !important;
+            color: white !important;
+            display: inline !important;
+            visibility: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            vertical-align: baseline !important;
+            opacity: 1 !important;
+            line-height: inherit !important;
+        }
+        
+        /* 确保字幕区域中的数学公式正确显示 */
+        .subtitle-area mjx-container {
+            font-size: inherit !important;
+            color: white !important;
+            display: inline !important;
+            visibility: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            vertical-align: baseline !important;
+            opacity: 1 !important;
+            line-height: inherit !important;
+            white-space: nowrap !important;
+            border: none !important;
+            background: transparent !important;
+            box-sizing: border-box !important;
+        }
+
+        /* 确保字幕区域中的数学公式无缝连接 */
+        .subtitle-area mjx-container * {
+            color: white !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        /* 消除字幕中数学公式之间的任何可能间隙 */
+        .subtitle-area .math-inline {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            white-space: nowrap !important;
+            vertical-align: baseline !important;
+            line-height: inherit !important;
+            font-size: inherit !important;
+        }
+
+        /* 强制字幕区域内文本连续 */
+        .subtitle-area > * {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            white-space: nowrap !important;
+        }
+
+        /* 防止MathJax容器添加额外间距 */
+        .subtitle-area mjx-container[jax="CHTML"] {
+            display: inline-block !important;
+            vertical-align: baseline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+
+        body {
+            font-family: var(--heading-font);
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+
+        /* 虚拟人显示区域 */
+        .avatar-container {
+            position: fixed;
+            top: 60%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; 
+            height: 850px;
+            overflow: hidden; 
+            z-index: 50;
+            pointer-events: none; 
+            background: transparent;
+        }
+        
+        .wrapper {
+            width: 100%; 
+            height: 100%;
+            background: transparent; 
+            pointer-events: auto;
+        }
+
+        .slide-container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+        }
+        
+        .slide { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: opacity 0.6s ease-in-out; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 2rem; 
+            background-color: transparent; 
+        }
+        
+        .slide.active { 
+            opacity: 1; 
+            visibility: visible; 
+        }
+        
+        .slide-content { 
+            display: flex; 
+            flex-direction: row; 
+            gap: 2rem; 
+            width: 100%; 
+            max-width: 1400px; 
+            height: 95%; 
+        }
+        
+        .blackboard-text {
+            font-family: 'Noto Serif SC', serif;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        
+        .blackboard-text h1 { 
+            color: #f1c40f; 
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.5); 
+        }
+        
+        .blackboard-text h2,
+        .chalkboard h2 {
+            color: #f1c40f;
+            border-bottom: 2px solid #f39c12;
+            font-size: 2.8rem;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .blackboard-text h3,
+        .chalkboard h3 {
+            color: #1abc9c;
+            font-size: 1.8rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .blackboard-text strong, .highlight { 
+            color: #e74c3c; 
+            font-weight: bold;
+        }
+
+        .chalkboard {
+            flex: 0 0 35%;
+            background-color: transparent !important;
+            background: transparent !important;
+            color: var(--chalk-text);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 5px solid #bdc3c7;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .chalkboard p, .chalkboard li {
+            font-size: 1.3rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        /* 段落和列表项的样式 */
+        .chalkboard p {
+            white-space: normal;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .chalkboard li {
+            white-space: normal;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .chalkboard ol {
+            padding-left: 25px;
+        }
+
+        .chalkboard ul {
+            list-style-type: '→ ';
+            padding-left: 20px;
+        }
+
+        .visualization {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 10%, #c3cfe2 100%);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .visualization.full-width {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+
+        /* 左侧控制栏 */
+        .control-bar {
+            position: fixed; 
+            left: -220px; 
+            top: 50%;
+            transform: translateY(-50%); 
+            width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            gap: 10px; 
+            z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; 
+            transition: left 0.3s ease;
+        }
+        
+        .control-bar:hover { 
+            left: 0; 
+        }
+        
+        .control-bar::before {
+            content: '▶'; 
+            position: absolute;
+            top: 50%; 
+            right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; 
+            border-radius: 0 10px 10px 0;
+            font-size: 16px;
+            writing-mode: vertical-lr;
+        }
+        
+        .btn {
+            padding: 12px 20px; 
+            background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease; 
+            width: 100%; 
+            text-align: center;
+        }
+        
+        .btn:hover { 
+            background: linear-gradient(135deg, #555, #777); 
+            transform: translateY(-2px); 
+        }
+        
+        .btn.primary { 
+            background: linear-gradient(135deg, #FF69B4, #FF1493); 
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 字幕区域 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px;
+            left: 50px;
+            right: 50px;
+            height: auto;
+            min-height: 50px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 8px;
+            display: block;
+            z-index: 60;
+            color: white;
+            font-size: 18px;
+            padding: 15px 20px;
+            line-height: 1.4;
+            overflow: visible;
+            word-spacing: normal;
+            word-break: keep-all;
+            white-space: normal;
+            text-align: center;
+        }
+
+        /* 状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; 
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; 
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none;
+        }
+        
+        .status-indicator.connected { 
+            background: rgba(76, 175, 80, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-indicator.error { 
+            background: rgba(244, 67, 54, 0.8); 
+            display: block;
+        }
+        
+        .status-indicator.connecting { 
+            background: rgba(255, 152, 0, 0.8); 
+            display: block;
+        }
+
+        /* 录制模式下隐藏UI元素 */
+        .recording-mode .status-indicator {
+            opacity: 0; 
+            pointer-events: none;
+        }
+        
+        .recording-mode .control-bar {
+            left: -300px; 
+            transition: left 0.5s ease;
+        }
+        
+        /* 修复字幕中的数学公式显示 - 消除间隙 */
+        .math-inline {
+            display: inline !important;
+            white-space: nowrap !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            vertical-align: baseline !important;
+            line-height: inherit !important;
+        }
+        
+        /* 确保字幕区域中的数学公式无缝连接 */
+        .subtitle-area .math-inline {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            vertical-align: baseline !important;
+            line-height: inherit !important;
+            white-space: nowrap !important;
+        }
+        
+        /* 字幕区域MathJax容器优化 */
+        .subtitle-area mjx-container {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            vertical-align: baseline !important;
+            line-height: inherit !important;
+            font-size: inherit !important;
+            white-space: nowrap !important;
+            border: none !important;
+            background: transparent !important;
+        }
+        
+        /* 字幕区域文本流畅性 */
+        .subtitle-area {
+            white-space: normal !important;
+            word-spacing: 0 !important;
+            letter-spacing: 0 !important;
+            line-height: 1.4 !important;
+        }
+        
+        /* 强制所有MathJax元素在字幕中无间隙显示 */
+        .subtitle-area mjx-container[display="true"],
+        .subtitle-area mjx-container[display="block"] {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            vertical-align: baseline !important;
+        }
+        
+        /* 消除MathJax内部元素的间隙 */
+        .subtitle-area mjx-container mjx-math,
+        .subtitle-area mjx-container mjx-semantics {
+            display: inline !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: inherit !important;
+        }
+    </style>
+</head>
+<body class="blackboard">
+
+    <div id="statusIndicator" class="status-indicator">等待连接</div>
+    
+    <!-- 虚拟人显示区域 -->
+    <div class="avatar-container">
+        <div class="wrapper" id="avatarWrapper"></div>
+    </div>
+
+    <div id="slide-container" class="slide-container">
+        
+        <!-- 第1页：基本初等函数星系 -->
+        <div class="slide active">
+            <div class="slide-content">
+                <div class="visualization full-width" id="vis-elementary-intro"></div>
+            </div>
+        </div>
+
+        <!-- 第2页：常数函数与幂函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>常数函数与幂函数</h2>
+                    <h3>常数函数</h3>
+                    <p>\(y = c\)，其中c是常数</p>
+                    <p>图像是一条<span class="highlight">水平直线</span></p>
+
+                    <h3>幂函数</h3>
+                    <p>\(y = x^a\)，其中a是常数</p>
+                    <p>不同的a值产生不同的函数形态：</p>
+                    <ul>
+                        <li>\(a > 1\)：增长越来越快</li>
+                        <li>\(0 < a < 1\)：增长越来越慢</li>
+                        <li>\(a < 0\)：反比例关系</li>
+                    </ul>
+                </div>
+                <div class="visualization" id="vis-power-functions"></div>
+            </div>
+        </div>
+
+        <!-- 第3页：指数函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>指数函数</h2>
+                    <h3>定义</h3>
+                    <p>\(y = a^x\)，其中\(a > 0\)且\(a \neq 1\)</p>
+
+                    <h3>性质</h3>
+                    <ul>
+                        <li>定义域：全体实数</li>
+                        <li>值域：\((0, +\infty)\)</li>
+                        <li>过点\((0, 1)\)</li>
+                        <li>\(a > 1\)时单调递增</li>
+                        <li>\(0 < a < 1\)时单调递减</li>
+                    </ul>
+                </div>
+                <div class="visualization" id="vis-exponential"></div>
+            </div>
+        </div>
+
+        <!-- 第4页：对数函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>对数函数</h2>
+                    <h3>定义</h3>
+                    <p>\(y = \log_a x\)，其中\(a > 0\)且\(a \neq 1\)</p>
+
+                    <h3>性质</h3>
+                    <ul>
+                        <li>定义域：\((0, +\infty)\)</li>
+                        <li>值域：全体实数</li>
+                        <li>过点\((1, 0)\)</li>
+                        <li>是指数函数的反函数</li>
+                    </ul>
+                </div>
+                <div class="visualization" id="vis-logarithmic"></div>
+            </div>
+        </div>
+
+        <!-- 第5页：指对数互为反函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>指对数关系</h2>
+                    <p>指数函数和对数函数<span class="highlight">互为反函数</span></p>
+                    <p>它们的图像关于直线\(y = x\)对称</p>
+                    
+                    <h3>关系式</h3>
+                    <p>若\(y = a^x\)，则\(x = \log_a y\)</p>
+                    <p>\(a^{\log_a x} = x\)</p>
+                    <p>\(\log_a(a^x) = x\)</p>
+                </div>
+                <div class="visualization" id="vis-exp-log-inverse"></div>
+            </div>
+        </div>
+
+        <!-- 第6页：三角函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>三角函数</h2>
+                    <h3>基本三角函数</h3>
+                    <ul>
+                        <li>正弦函数：\(y = \sin x\)</li>
+                        <li>余弦函数：\(y = \cos x\)</li>
+                        <li>正切函数：\(y = \tan x\)</li>
+                    </ul>
+
+                    <h3>周期性</h3>
+                    <p>正弦、余弦的周期是\(2\pi\)</p>
+                    <p>正切的周期是\(\pi\)</p>
+                </div>
+                <div class="visualization" id="vis-trigonometric"></div>
+            </div>
+        </div>
+
+        <!-- 第7页：反三角函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>反三角函数</h2>
+                    <h3>主要反三角函数</h3>
+                    <ul>
+                        <li>反正弦：\(y = \arcsin x\)，定义域\([-1, 1]\)</li>
+                        <li>反余弦：\(y = \arccos x\)，定义域\([-1, 1]\)</li>
+                        <li>反正切：\(y = \arctan x\)，定义域\(\mathbb{R}\)</li>
+                    </ul>
+                    
+                    <p>反三角函数是三角函数在特定区间的反函数</p>
+                </div>
+                <div class="visualization" id="vis-inverse-trig"></div>
+            </div>
+        </div>
+
+        <!-- 第8页：复合函数 -->
+        <div class="slide">
+            <div class="slide-content">
+                <div class="chalkboard">
+                    <h2>复合函数</h2>
+                    <h3>定义</h3>
+                    <p>若\(u = g(x)\)，\(y = f(u)\)</p>
+                    <p>则\(y = f(g(x))\)是复合函数</p>
+
+                    <h3>计算顺序</h3>
+                    <p>由内向外，层层计算</p>
+                    <p>例：\(f(g(2))\)</p>
+                    <ol>
+                        <li>先算\(g(2)\)</li>
+                        <li>再算\(f(g(2))\)</li>
+                    </ol>
+                </div>
+                <div class="visualization" id="vis-composite"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字幕区域 -->
+    <div class="subtitle-area" id="subtitleArea">
+        欢迎学习基本初等函数！点击开始讲课可启动虚拟人讲师。
+    </div>
+
+    <!-- 左侧控制栏 -->
+    <div class="control-bar">
+        <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            第 <span id="currentSlide">1</span> 页 / 共 <span id="totalSlides">8</span> 页
+        </div>
+        <button class="btn" onclick="previousSlide()">← 上一页</button>
+        <button class="btn primary" onclick="startTeaching()" id="startBtn">🎤 开始讲课</button>
+        <button class="btn" onclick="nextSlide()">下一页 →</button>
+        <button class="btn" onclick="restart()">🔄 重新开始</button>
+        <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+        <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 16px; font-weight: bold; line-height: 1.2;">
+            💡 录制提示：<br>
+            点击自动播放后立即开始录屏<br>
+            系统会自动完成全部演示
+        </div>
+        <div style="color: #ccc; margin-top: 1rem; text-align: center; font-size: 16px; font-weight: bold;">
+            💡 快捷键：空格/→下一页 ←上一页 Enter播放
+        </div>
+    </div>
+
+    <!-- 讯飞官方SDK -->
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+        }
+
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        // 全局变量
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentSlide = 0;
+        let isAutoPlaying = false;
+        const totalSlides = 8;
+
+        // 每页的播放时长（毫秒）
+        const getSlideDuration = (slideNum) => {
+            const durations = {
+                1: 34000,  // 基本初等函数星系（125字，34秒）
+                2: 31000,  // 常数函数与幂函数（115字，31秒）
+                3: 27000,  // 指数函数（100字，27秒）
+                4: 26000,  // 对数函数（95字，26秒）
+                5: 25000,  // 指对数互为反函数（90字，25秒）
+                6: 25000,  // 三角函数（90字，25秒）
+                7: 22000,  // 反三角函数（80字，22秒）
+                8: 25000   // 复合函数（90字，25秒）
+            };
+            return durations[slideNum] || 20000;
+        };
+
+        // 讲稿脚本配置（纯文字和谐音版本，供数字人朗读）
+        const subtitleScript = {
+            1: `现在我们进入基本初等函数的学习。基本初等函数是数学中最重要的函数家族，包括常数函数、幂函数、指数函数、对数函数、三角函数和反三角函数六大类。这些函数就像星系中的恒星，每一类都有其独特的性质和应用。今天我们将系统地学习这些函数，理解它们的定义、性质和相互关系。请观察右侧的函数星系动画，它形象地展示了这六大函数家族的关系。`,
+
+            2: `首先学习常数函数和幂函数。常数函数外等于c是最简单的函数，它的图像是一条水平直线，无论艾克斯取什么值，外始终保持不变。幂函数外等于艾克斯的诶次方则更加丰富多彩，当诶大于1时，函数增长越来越快；当诶在0到1之间时，函数增长越来越慢；当诶小于0时，函数呈现反比例关系。右侧的动画展示了不同诶值下幂函数形态的变化，请仔细观察。`,
+
+            3: `接下来是指数函数，形式为外等于诶的艾克斯次方。这是一类非常重要的函数，在自然界和经济学中广泛存在。指数函数的定义域是全体实数，值域是正实数。当底数诶大于1时，函数单调递增，表现为指数增长；当诶在0到1之间时，函数单调递减，表现为指数衰减。所有指数函数都过点(0,1)，这是它们的共同特征。`,
+
+            4: `对数函数是指数函数的反函数，形式为外等于以诶为底艾克斯的对数。对数函数的定义域是正实数，值域是全体实数。它把乘法运算转化为加法运算，在科学计算中起着重要作用。对数函数都过点(1,0)，当底数大于1时单调递增，当底数在0到1之间时单调递减。对数增长是一种缓慢的增长方式。`,
+
+            5: `指数函数和对数函数互为反函数，这是一个重要的数学关系。它们的图像关于直线外等于艾克斯对称，就像镜子的两面。如果外等于诶的艾克斯次方，那么艾克斯等于以诶为底外的对数。这种反函数关系在解方程和数据分析中非常有用。请观察右侧动画，看看这两个函数是如何对称的。`,
+
+            6: `三角函数描述了周期性现象，是研究振动、波动的基础。正弦函数和余弦函数的周期都是二派，它们的图像是优美的波形曲线。正切函数的周期是派，在某些点处有垂直渐近线。三角函数在物理学、工程学、信号处理等领域有广泛应用。右侧展示了三个基本三角函数的图像。`,
+
+            7: `反三角函数是三角函数在特定区间的反函数。反正弦和反余弦的定义域是负一到一，反正切的定义域是全体实数。这些函数用于求解三角方程，在几何和物理问题中经常出现。反三角函数的图像展现了从角度值到三角比值的逆映射关系。`,
+
+            8: `最后学习复合函数。复合函数是由两个或多个函数组合而成的，形式为f(g(x))。计算复合函数要由内向外，先算内层函数g(x)，再将结果代入外层函数f。复合函数的概念帮助我们理解复杂的函数关系，是微积分链式法则的基础。通过今天的学习，相信大家对基本初等函数有了全面的认识。`
+        };
+
+        // 字幕脚本配置（保持数学符号，供屏幕显示）
+        const displaySubtitleScript = {
+            1: `现在我们进入基本初等函数的学习。基本初等函数是数学中最重要的函数家族，包括常数函数、幂函数、指数函数、对数函数、三角函数和反三角函数六大类。这些函数就像星系中的恒星，每一类都有其独特的性质和应用。今天我们将系统地学习这些函数，理解它们的定义、性质和相互关系。请观察右侧的函数星系动画，它形象地展示了这六大函数家族的关系。`,
+
+            2: `首先学习常数函数和幂函数。常数函数<span class="math-inline">$y = c$</span>是最简单的函数，它的图像是一条水平直线，无论<span class="math-inline">$x$</span>取什么值，<span class="math-inline">$y$</span>始终保持不变。幂函数<span class="math-inline">$y = x^a$</span>则更加丰富多彩，当<span class="math-inline">$a > 1$</span>时，函数增长越来越快；当<span class="math-inline">$0 < a < 1$</span>时，函数增长越来越慢；当<span class="math-inline">$a < 0$</span>时，函数呈现反比例关系。右侧的动画展示了不同<span class="math-inline">$a$</span>值下幂函数形态的变化，请仔细观察。`,
+
+            3: `接下来是指数函数，形式为<span class="math-inline">$y = a^x$</span>。这是一类非常重要的函数，在自然界和经济学中广泛存在。指数函数的定义域是全体实数，值域是正实数。当底数<span class="math-inline">$a > 1$</span>时，函数单调递增，表现为指数增长；当<span class="math-inline">$0 < a < 1$</span>时，函数单调递减，表现为指数衰减。所有指数函数都过点<span class="math-inline">$(0,1)$</span>，这是它们的共同特征。`,
+
+            4: `对数函数是指数函数的反函数，形式为<span class="math-inline">$y = \log_a x$</span>。对数函数的定义域是正实数，值域是全体实数。它把乘法运算转化为加法运算，在科学计算中起着重要作用。对数函数都过点<span class="math-inline">$(1,0)$</span>，当底数大于1时单调递增，当底数在0到1之间时单调递减。对数增长是一种缓慢的增长方式。`,
+
+            5: `指数函数和对数函数互为反函数，这是一个重要的数学关系。它们的图像关于直线<span class="math-inline">$y = x$</span>对称，就像镜子的两面。如果<span class="math-inline">$y = a^x$</span>，那么<span class="math-inline">$x = \log_a y$</span>。这种反函数关系在解方程和数据分析中非常有用。请观察右侧动画，看看这两个函数是如何对称的。`,
+
+            6: `三角函数描述了周期性现象，是研究振动、波动的基础。正弦函数和余弦函数的周期都是<span class="math-inline">$2\pi$</span>，它们的图像是优美的波形曲线。正切函数的周期是<span class="math-inline">$\pi$</span>，在某些点处有垂直渐近线。三角函数在物理学、工程学、信号处理等领域有广泛应用。右侧展示了三个基本三角函数的图像。`,
+
+            7: `反三角函数是三角函数在特定区间的反函数。反正弦和反余弦的定义域是<span class="math-inline">$[-1,1]$</span>，反正切的定义域是<span class="math-inline">$\mathbb{R}$</span>。这些函数用于求解三角方程，在几何和物理问题中经常出现。反三角函数的图像展现了从角度值到三角比值的逆映射关系。`,
+
+            8: `最后学习复合函数。复合函数是由两个或多个函数组合而成的，形式为<span class="math-inline">$f(g(x))$</span>。计算复合函数要由内向外，先算内层函数<span class="math-inline">$g(x)$</span>，再将结果代入外层函数<span class="math-inline">$f$</span>。复合函数的概念帮助我们理解复杂的函数关系，是微积分链式法则的基础。通过今天的学习，相信大家对基本初等函数有了全面的认识。`
+        };
+
+        // 更新页面信息
+        function updateSlideInfo() {
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('totalSlides').textContent = totalSlides;
+        }
+
+        // 显示指定的幻灯片
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            // 运行对应的可视化
+            runVisualization(index);
+            
+            // 渲染数学公式
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                setTimeout(() => {
+                    window.MathJax.typesetPromise([slides[index]]).catch((err) => console.log(err.message));
+                }, 50);
+            }
+        }
+
+        // 下一页
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying && isTeaching) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 上一页
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+                updateSlideInfo();
+                if (!isAutoPlaying && isTeaching) {
+                    speakContent(currentSlide + 1);
+                }
+            }
+        }
+
+        // 重新开始
+        function restart() {
+            currentSlide = 0;
+            showSlide(0);
+            updateSlideInfo();
+            if (!isAutoPlaying && isTeaching) {
+                speakContent(1);
+            }
+        }
+
+        // 更新状态
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                }
+            }
+        }
+
+        // 更新字幕
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.innerHTML = text;
+                // 重新渲染数学公式
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    // 增加延迟时间，确保DOM已更新
+                    setTimeout(() => {
+                        window.MathJax.typesetPromise([subtitleArea])
+                            .then(() => {
+                                console.log('字幕数学公式渲染完成');
+                                // 确保所有公式容器无间隙显示
+                                subtitleArea.querySelectorAll('mjx-container').forEach(container => {
+                                    container.style.display = 'inline !important';
+                                    container.style.visibility = 'visible !important';
+                                    container.style.margin = '0 !important';
+                                    container.style.padding = '0 !important';
+                                    container.style.verticalAlign = 'baseline !important';
+                                    container.style.fontSize = 'inherit !important';
+                                    container.style.opacity = '1 !important';
+                                    container.style.lineHeight = 'inherit !important';
+                                    container.style.whiteSpace = 'nowrap !important';
+                                    container.style.border = 'none !important';
+                                    container.style.background = 'transparent !important';
+                                    
+                                    // 处理内部元素
+                                    container.querySelectorAll('mjx-math, mjx-semantics').forEach(el => {
+                                        el.style.display = 'inline !important';
+                                        el.style.margin = '0 !important';
+                                        el.style.padding = '0 !important';
+                                        el.style.lineHeight = 'inherit !important';
+                                    });
+                                });
+                                
+                                // 强制重新计算布局
+                                void subtitleArea.offsetHeight;
+                                
+                                // 检查是否有空白区域，如果有则重新渲染
+                                if (subtitleArea.innerHTML.includes('$$') ||
+                                    subtitleArea.innerHTML.includes('$') ||
+                                    subtitleArea.querySelectorAll('mjx-container').length === 0) {
+                                    console.log('检测到可能的渲染问题，尝试二次渲染');
+                                    setTimeout(() => {
+                                        MathJax.typesetPromise([subtitleArea]).catch(err =>
+                                            console.log('二次渲染错误:', err.message));
+                                    }, 200);
+                                }
+                            })
+                            .catch((err) => console.log('字幕公式渲染错误:', err.message));
+                    }, 200); // 减少延迟时间
+                }
+            }
+        }
+
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        
+                        setTimeout(() => {
+                            speakContent(currentSlide + 1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        updateStatus('连接断开', 'error');
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                    });
+
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',                                    
+                    apiKey: '133adcc14bda6e315040f78700b38267',             
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',       
+                    sceneId: '216155854796361728',                       
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',    
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',         
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+            }
+        }
+
+        // 虚拟人动作配置
+        function getActionsForPage(slideNum) {
+            const actionMap = {
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 8 }],      // 欢迎动作
+                2: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],    // 强调动作
+                3: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 6 }],        // 引导动作
+                4: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],    // 介绍动作
+                5: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],    // 强调对称
+                6: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 8 }],        // 展示周期
+                7: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],    // 介绍反函数
+                8: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }]     // 总结动作
+            };
+            return actionMap[slideNum] || [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }];
+        }
+
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        async function speakContent(slideNum) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const speakContent = subtitleScript[slideNum]; // 纯文字讲稿，供数字人朗读
+            const displayContent = displaySubtitleScript[slideNum]; // 带数学符号的字幕，供屏幕显示
+            
+            if (!speakContent || !displayContent) {
+                console.log(`⚠️ 第${slideNum}页讲稿内容缺失 - speakContent: ${!!speakContent}, displayContent: ${!!displayContent}`);
+                return;
+            }
+
+            try {
+                const actions = getActionsForPage(slideNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                // 使用纯文字讲稿进行朗读
+                await avatarPlatform.writeText(speakContent, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 汤汤讲解第${slideNum}页`);
+
+                if (isAutoPlaying) {
+                    updateAutoPlaySubtitle(slideNum, displayContent);
+                } else {
+                    updateSubtitle(displayContent);
+                }
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        function updateAutoPlaySubtitle(slideNum, text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (!subtitleArea) return;
+            
+            if (isAutoPlaying) {
+                const prefix = `【第${slideNum}页/${totalSlides}页】`;
+                subtitleArea.innerHTML = prefix + text;
+            } else {
+                subtitleArea.innerHTML = text;
+            }
+            
+            // 重新渲染数学公式，使用增强的渲染方法
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                // 增加延迟时间，确保DOM已更新
+                setTimeout(() => {
+                    window.MathJax.typesetPromise([subtitleArea])
+                        .then(() => {
+                            console.log(`第${slideNum}页字幕数学公式渲染完成`);
+                            // 确保所有公式容器无间隙显示
+                            subtitleArea.querySelectorAll('mjx-container').forEach(container => {
+                                container.style.display = 'inline !important';
+                                container.style.visibility = 'visible !important';
+                                container.style.margin = '0 !important';
+                                container.style.padding = '0 !important';
+                                container.style.verticalAlign = 'baseline !important';
+                                container.style.fontSize = 'inherit !important';
+                                container.style.opacity = '1 !important';
+                                container.style.lineHeight = 'inherit !important';
+                                container.style.whiteSpace = 'nowrap !important';
+                                container.style.border = 'none !important';
+                                container.style.background = 'transparent !important';
+                                
+                                // 处理内部元素
+                                container.querySelectorAll('mjx-math, mjx-semantics').forEach(el => {
+                                    el.style.display = 'inline !important';
+                                    el.style.margin = '0 !important';
+                                    el.style.padding = '0 !important';
+                                    el.style.lineHeight = 'inherit !important';
+                                });
+                            });
+                            
+                            // 强制重新计算布局
+                            void subtitleArea.offsetHeight;
+                            
+                            // 检查是否有空白区域，如果有则重新渲染
+                            if (subtitleArea.innerHTML.includes('$$') ||
+                                subtitleArea.innerHTML.includes('$') ||
+                                subtitleArea.querySelectorAll('mjx-container').length === 0) {
+                                console.log(`检测到第${slideNum}页可能的渲染问题，尝试二次渲染`);
+                                setTimeout(() => {
+                                    MathJax.typesetPromise([subtitleArea]).catch(err =>
+                                        console.log(`第${slideNum}页二次渲染错误:`, err.message));
+                                }, 200);
+                            }
+                        })
+                        .catch((err) => console.log(`第${slideNum}页字幕公式渲染错误:`, err.message));
+                }, 200); // 减少延迟时间
+            }
+        }
+
+        function getSlideTitle(slideNum) {
+            const titles = {
+                1: "基本初等函数星系",
+                2: "常数函数与幂函数",
+                3: "指数函数",
+                4: "对数函数",
+                5: "指对数关系",
+                6: "三角函数",
+                7: "反三角函数",
+                8: "复合函数"
+            };
+            return titles[slideNum] || `第${slideNum}页`;
+        }
+
+        function switchToSlideSilent(slideNum) {
+            if (slideNum < 1 || slideNum > totalSlides) {
+                console.log(`❌ 页面切换失败：页码${slideNum}超出范围(1-${totalSlides})`);
+                return;
+            }
+            showSlide(slideNum - 1);
+            updateSlideInfo();
+            console.log(`✅ 成功切换到第${slideNum}页`);
+        }
+
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'recording');
+                document.body.classList.add('recording-mode');
+
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                for (let slide = 1; slide <= totalSlides; slide++) {
+                    try {
+                        if (!isAutoPlaying) {
+                            console.log('🛑 自动播放被停止');
+                            break;
+                        }
+
+                        console.log(`\n🎬 === 开始播放第${slide}页/${totalSlides}页 ===`);
+                        switchToSlideSilent(slide);
+                        updateStatus(`📖 第${slide}页/${totalSlides}页 - ${getSlideTitle(slide)}`, 'recording');
+
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            try {
+                                console.log(`🎤 开始播放第${slide}页语音内容...`);
+                                await speakContent(slide);
+                                const slideTime = getSlideDuration(slide);
+                                console.log(`⏱️ 第${slide}页播放时长: ${slideTime}ms`);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                                console.log(`✅ 第${slide}页播放完成`);
+                            } catch (error) {
+                                console.error(`❌ 第${slide}页语音播放失败:`, error);
+                                const slideTime = getSlideDuration(slide);
+                                console.log(`⏱️ 第${slide}页静默播放时长: ${slideTime}ms`);
+                                await new Promise(resolve => setTimeout(resolve, slideTime));
+                            }
+                        } else {
+                            const slideTime = getSlideDuration(slide);
+                            console.log(`📄 第${slide}页仅页面展示，时长: ${slideTime}ms`);
+                            await new Promise(resolve => setTimeout(resolve, slideTime));
+                        }
+
+                        const waitTime = slide === totalSlides ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${slide}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousSlide();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    handleEnterKey();
+                    break;
+            }
+        });
+
+        function handleEnterKey() {
+            if (!isTeaching) {
+                startTeaching();
+            } else if (isConnected) {
+                speakContent(currentSlide + 1);
+                console.log('🎵 Enter键触发：重新播放当前页内容');
+            } else {
+                console.log('⚠️ 虚拟人未连接，无法播放');
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+
+        // 运行可视化函数
+        function runVisualization(slideIndex) {
+            switch (slideIndex) {
+                case 0: visualizeElementaryIntro('vis-elementary-intro'); break;
+                case 1: visualizePowerFunctions('vis-power-functions'); break;
+                case 2: visualizeExponential('vis-exponential'); break;
+                case 3: visualizeLogarithmic('vis-logarithmic'); break;
+                case 4: visualizeExpLogInverse('vis-exp-log-inverse'); break;
+                case 5: visualizeTrigonometric('vis-trigonometric'); break;
+                case 6: visualizeInverseTrig('vis-inverse-trig'); break;
+                case 7: visualizeComposite('vis-composite'); break;
+            }
+        }
+
+        // ======= 可视化函数实现 =======
+
+        // 第1页：基本初等函数星系可视化
+        function visualizeElementaryIntro(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // 背景渐变
+            const defs = svg.append('defs');
+            const gradient = defs.append('radialGradient')
+                .attr('id', 'space-gradient');
+            
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', '#1a1a2e')
+                .attr('stop-opacity', 1);
+            
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', '#16213e')
+                .attr('stop-opacity', 1);
+            
+            svg.append('rect')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('fill', 'url(#space-gradient)');
+            
+            // 标题
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', 60)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .style('font-size', '48px')
+                .style('font-weight', 'bold')
+                .text('基本初等函数星系');
+            
+            // 函数星球数据
+            const functions = [
+                { name: '常数函数', x: width * 0.2, y: height * 0.3, color: '#bdc3c7', radius: 30 },
+                { name: '幂函数', x: width * 0.4, y: height * 0.2, color: '#e74c3c', radius: 40 },
+                { name: '指数函数', x: width * 0.6, y: height * 0.3, color: '#3498db', radius: 45 },
+                { name: '对数函数', x: width * 0.8, y: height * 0.4, color: '#2ecc71', radius: 45 },
+                { name: '三角函数', x: width * 0.5, y: height * 0.6, color: '#f1c40f', radius: 50 },
+                { name: '反三角函数', x: width * 0.3, y: height * 0.7, color: '#9b59b6', radius: 35 }
+            ];
+            
+            // 绘制函数星球
+            const planets = svg.selectAll('.planet')
+                .data(functions)
+                .enter().append('g')
+                .attr('class', 'planet')
+                .attr('transform', d => `translate(${d.x}, ${d.y})`);
+            
+            // 星球主体
+            planets.append('circle')
+                .attr('r', 0)
+                .attr('fill', d => d.color)
+                .attr('opacity', 0.8)
+                .transition()
+                .duration(1000)
+                .delay((d, i) => i * 200)
+                .attr('r', d => d.radius);
+            
+            // 星球光晕
+            planets.append('circle')
+                .attr('r', d => d.radius + 10)
+                .attr('fill', 'none')
+                .attr('stroke', d => d.color)
+                .attr('stroke-width', 2)
+                .attr('opacity', 0)
+                .transition()
+                .duration(1000)
+                .delay((d, i) => i * 200 + 500)
+                .attr('opacity', 0.5);
+            
+            // 星球标签
+            planets.append('text')
+                .attr('y', d => d.radius + 25)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .style('font-size', '14px')
+                .style('opacity', 0)
+                .text(d => d.name)
+                .transition()
+                .duration(500)
+                .delay((d, i) => i * 200 + 1000)
+                .style('opacity', 1);
+            
+            // 连接线（表示函数关系）
+            const connections = [
+                { source: functions[1], target: functions[2] },
+                { source: functions[2], target: functions[3] },
+                { source: functions[4], target: functions[5] }
+            ];
+            
+            svg.selectAll('.connection')
+                .data(connections)
+                .enter().append('line')
+                .attr('class', 'connection')
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.source.x)
+                .attr('y2', d => d.source.y)
+                .attr('stroke', 'rgba(255, 255, 255, 0.3)')
+                .attr('stroke-width', 1)
+                .transition()
+                .duration(1000)
+                .delay(2000)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+        }
+
+        // 第2页：幂函数可视化
+        function visualizePowerFunctions(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 坐标轴
+            const xScale = d3.scaleLinear()
+                .domain([-2, 2])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([-2, 8])
+                .range([innerHeight, 0]);
+            
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale));
+            
+            g.append('g')
+                .call(d3.axisLeft(yScale));
+            
+            // 绘制不同的幂函数
+            const powers = [0.5, 1, 2, 3];
+            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+            
+            powers.forEach((a, i) => {
+                const data = [];
+                for (let x = (a < 1 ? 0 : -2); x <= 2; x += 0.01) {
+                    if (x >= 0 || a === Math.floor(a)) {
+                        data.push({x: x, y: Math.pow(x, a)});
+                    }
+                }
+                
+                const line = d3.line()
+                    .x(d => xScale(d.x))
+                    .y(d => yScale(d.y))
+                    .defined(d => d.y <= 8 && d.y >= -2);
+                
+                const path = g.append('path')
+                    .datum(data)
+                    .attr('fill', 'none')
+                    .attr('stroke', colors[i])
+                    .attr('stroke-width', 2)
+                    .attr('d', line);
+                
+                // 动画
+                const totalLength = path.node().getTotalLength();
+                path.attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                    .attr('stroke-dashoffset', totalLength)
+                    .transition()
+                    .duration(2000)
+                    .delay(i * 500)
+                    .attr('stroke-dashoffset', 0);
+                
+                // 标签
+                g.append('text')
+                    .attr('x', innerWidth - 50)
+                    .attr('y', 30 + i * 25)
+                    .attr('fill', colors[i])
+                    .style('font-size', '14px')
+                    .text(`y = x^${a}`);
+            });
+        }
+
+        // 第3页：指数函数可视化
+        function visualizeExponential(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 坐标轴
+            const xScale = d3.scaleLinear()
+                .domain([-3, 3])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, 10])
+                .range([innerHeight, 0]);
+            
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale));
+            
+            g.append('g')
+                .call(d3.axisLeft(yScale));
+            
+            // 绘制指数函数 y = 2^x 和 y = (1/2)^x
+            const bases = [2, 0.5];
+            const colors = ['#3498db', '#e74c3c'];
+            const labels = ['y = 2^x', 'y = (1/2)^x'];
+            
+            bases.forEach((base, i) => {
+                const data = [];
+                for (let x = -3; x <= 3; x += 0.05) {
+                    data.push({x: x, y: Math.pow(base, x)});
+                }
+                
+                const line = d3.line()
+                    .x(d => xScale(d.x))
+                    .y(d => yScale(d.y))
+                    .defined(d => d.y <= 10);
+                
+                const path = g.append('path')
+                    .datum(data)
+                    .attr('fill', 'none')
+                    .attr('stroke', colors[i])
+                    .attr('stroke-width', 2.5)
+                    .attr('d', line);
+                
+                // 动画
+                const totalLength = path.node().getTotalLength();
+                path.attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                    .attr('stroke-dashoffset', totalLength)
+                    .transition()
+                    .duration(2000)
+                    .delay(i * 1000)
+                    .attr('stroke-dashoffset', 0);
+                
+                // 标记关键点 (0, 1)
+                g.append('circle')
+                    .attr('cx', xScale(0))
+                    .attr('cy', yScale(1))
+                    .attr('r', 0)
+                    .attr('fill', colors[i])
+                    .transition()
+                    .duration(500)
+                    .delay(2000 + i * 1000)
+                    .attr('r', 5);
+                
+                // 标签
+                g.append('text')
+                    .attr('x', innerWidth - 80)
+                    .attr('y', 30 + i * 25)
+                    .attr('fill', colors[i])
+                    .style('font-size', '14px')
+                    .text(labels[i]);
+            });
+        }
+
+        // 第4页：对数函数可视化
+        function visualizeLogarithmic(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 坐标轴
+            const xScale = d3.scaleLinear()
+                .domain([0, 10])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([-3, 3])
+                .range([innerHeight, 0]);
+            
+            g.append('g')
+                .attr('transform', `translate(0,${yScale(0)})`)
+                .call(d3.axisBottom(xScale));
+            
+            g.append('g')
+                .call(d3.axisLeft(yScale));
+            
+            // 绘制对数函数
+            const bases = [2, 10];
+            const colors = ['#2ecc71', '#9b59b6'];
+            const labels = ['y = log₂(x)', 'y = log₁₀(x)'];
+            
+            bases.forEach((base, i) => {
+                const data = [];
+                for (let x = 0.01; x <= 10; x += 0.05) {
+                    data.push({x: x, y: Math.log(x) / Math.log(base)});
+                }
+                
+                const line = d3.line()
+                    .x(d => xScale(d.x))
+                    .y(d => yScale(d.y));
+                
+                const path = g.append('path')
+                    .datum(data)
+                    .attr('fill', 'none')
+                    .attr('stroke', colors[i])
+                    .attr('stroke-width', 2.5)
+                    .attr('d', line);
+                
+                // 动画
+                const totalLength = path.node().getTotalLength();
+                path.attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                    .attr('stroke-dashoffset', totalLength)
+                    .transition()
+                    .duration(2000)
+                    .delay(i * 1000)
+                    .attr('stroke-dashoffset', 0);
+                
+                // 标记关键点 (1, 0)
+                g.append('circle')
+                    .attr('cx', xScale(1))
+                    .attr('cy', yScale(0))
+                    .attr('r', 0)
+                    .attr('fill', colors[i])
+                    .transition()
+                    .duration(500)
+                    .delay(2000 + i * 1000)
+                    .attr('r', 5);
+                
+                // 标签
+                g.append('text')
+                    .attr('x', innerWidth - 100)
+                    .attr('y', 30 + i * 25)
+                    .attr('fill', colors[i])
+                    .style('font-size', '14px')
+                    .text(labels[i]);
+            });
+        }
+
+        // 第5页：指对数互为反函数可视化
+        function visualizeExpLogInverse(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 坐标轴（相同范围）
+            const scale = d3.scaleLinear()
+                .domain([-2, 4])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([-2, 4])
+                .range([innerHeight, 0]);
+            
+            g.append('g')
+                .attr('transform', `translate(0,${yScale(0)})`)
+                .call(d3.axisBottom(scale));
+            
+            g.append('g')
+                .attr('transform', `translate(${scale(0)},0)`)
+                .call(d3.axisLeft(yScale));
+            
+            // 绘制 y = x 对称线
+            g.append('line')
+                .attr('x1', scale(-2))
+                .attr('y1', yScale(-2))
+                .attr('x2', scale(4))
+                .attr('y2', yScale(4))
+                .attr('stroke', '#95a5a6')
+                .attr('stroke-width', 2)
+                .attr('stroke-dasharray', '5,5');
+            
+            g.append('text')
+                .attr('x', scale(3.5))
+                .attr('y', yScale(3.5) - 10)
+                .attr('fill', '#95a5a6')
+                .style('font-size', '14px')
+                .text('y = x');
+            
+            // 绘制指数函数 y = 2^x
+            const expData = [];
+            for (let x = -2; x <= 2.5; x += 0.05) {
+                expData.push({x: x, y: Math.pow(2, x)});
+            }
+            
+            const expLine = d3.line()
+                .x(d => scale(d.x))
+                .y(d => yScale(d.y))
+                .defined(d => d.y <= 4);
+            
+            const expPath = g.append('path')
+                .datum(expData)
+                .attr('fill', 'none')
+                .attr('stroke', '#3498db')
+                .attr('stroke-width', 2.5)
+                .attr('d', expLine);
+            
+            // 绘制对数函数 y = log₂(x)
+            const logData = [];
+            for (let x = 0.1; x <= 4; x += 0.05) {
+                logData.push({x: x, y: Math.log(x) / Math.log(2)});
+            }
+            
+            const logLine = d3.line()
+                .x(d => scale(d.x))
+                .y(d => yScale(d.y));
+            
+            const logPath = g.append('path')
+                .datum(logData)
+                .attr('fill', 'none')
+                .attr('stroke', '#e74c3c')
+                .attr('stroke-width', 2.5)
+                .attr('d', logLine);
+            
+            // 动画
+            [expPath, logPath].forEach((path, i) => {
+                const totalLength = path.node().getTotalLength();
+                path.attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                    .attr('stroke-dashoffset', totalLength)
+                    .transition()
+                    .duration(2000)
+                    .delay(i * 1000)
+                    .attr('stroke-dashoffset', 0);
+            });
+            
+            // 标签
+            g.append('text')
+                .attr('x', scale(2))
+                .attr('y', yScale(3.5))
+                .attr('fill', '#3498db')
+                .style('font-size', '14px')
+                .text('y = 2^x');
+            
+            g.append('text')
+                .attr('x', scale(3))
+                .attr('y', yScale(1.5))
+                .attr('fill', '#e74c3c')
+                .style('font-size', '14px')
+                .text('y = log₂(x)');
+        }
+
+        // 第6页：三角函数可视化
+        function visualizeTrigonometric(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 坐标轴
+            const xScale = d3.scaleLinear()
+                .domain([-2 * Math.PI, 2 * Math.PI])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([-1.5, 1.5])
+                .range([innerHeight, 0]);
+            
+            // X轴（带π标记）
+            const xAxis = g.append('g')
+                .attr('transform', `translate(0,${yScale(0)})`);
+            
+            xAxis.call(d3.axisBottom(xScale)
+                .tickValues([-2*Math.PI, -Math.PI, 0, Math.PI, 2*Math.PI])
+                .tickFormat((d) => {
+                    if (d === 0) return '0';
+                    if (d === Math.PI) return 'π';
+                    if (d === -Math.PI) return '-π';
+                    if (d === 2*Math.PI) return '2π';
+                    if (d === -2*Math.PI) return '-2π';
+                    return '';
+                }));
+            
+            g.append('g')
+                .call(d3.axisLeft(yScale));
+            
+            // 三角函数数据
+            const functions = [
+                { name: 'sin(x)', func: Math.sin, color: '#e74c3c' },
+                { name: 'cos(x)', func: Math.cos, color: '#3498db' },
+                { name: 'tan(x)', func: Math.tan, color: '#2ecc71' }
+            ];
+            
+            functions.forEach((f, i) => {
+                const data = [];
+                for (let x = -2 * Math.PI; x <= 2 * Math.PI; x += 0.05) {
+                    let y = f.func(x);
+                    if (f.name === 'tan(x)' && Math.abs(y) > 3) {
+                        continue; // 避免tan函数的垂直渐近线
+                    }
+                    data.push({x: x, y: y});
+                }
+                
+                const line = d3.line()
+                    .x(d => xScale(d.x))
+                    .y(d => yScale(d.y))
+                    .defined(d => Math.abs(d.y) <= 1.5);
+                
+                const path = g.append('path')
+                    .datum(data)
+                    .attr('fill', 'none')
+                    .attr('stroke', f.color)
+                    .attr('stroke-width', 2)
+                    .attr('d', line);
+                
+                // 动画
+                const totalLength = path.node().getTotalLength();
+                path.attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                    .attr('stroke-dashoffset', totalLength)
+                    .transition()
+                    .duration(2000)
+                    .delay(i * 800)
+                    .attr('stroke-dashoffset', 0);
+                
+                // 标签
+                g.append('text')
+                    .attr('x', innerWidth - 80)
+                    .attr('y', 30 + i * 25)
+                    .attr('fill', f.color)
+                    .style('font-size', '14px')
+                    .text(`y = ${f.name}`);
+            });
+        }
+
+        // 第7页：反三角函数可视化
+        function visualizeInverseTrig(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            const margin = {top: 40, right: 40, bottom: 60, left: 60};
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // 坐标轴
+            const xScale = d3.scaleLinear()
+                .domain([-1.5, 1.5])
+                .range([0, innerWidth]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([-Math.PI, Math.PI])
+                .range([innerHeight, 0]);
+            
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(d3.axisBottom(xScale));
+            
+            g.append('g')
+                .call(d3.axisLeft(yScale)
+                    .tickValues([-Math.PI, -Math.PI/2, 0, Math.PI/2, Math.PI])
+                    .tickFormat((d) => {
+                        if (d === 0) return '0';
+                        if (d === Math.PI/2) return 'π/2';
+                        if (d === -Math.PI/2) return '-π/2';
+                        if (d === Math.PI) return 'π';
+                        if (d === -Math.PI) return '-π';
+                        return '';
+                    }));
+            
+            // 反三角函数
+            const functions = [
+                { name: 'arcsin(x)', func: Math.asin, domain: [-1, 1], color: '#e74c3c' },
+                { name: 'arccos(x)', func: Math.acos, domain: [-1, 1], color: '#3498db' },
+                { name: 'arctan(x)', func: Math.atan, domain: [-1.5, 1.5], color: '#2ecc71' }
+            ];
+            
+            functions.forEach((f, i) => {
+                const data = [];
+                for (let x = f.domain[0]; x <= f.domain[1]; x += 0.01) {
+                    data.push({x: x, y: f.func(x)});
+                }
+                
+                const line = d3.line()
+                    .x(d => xScale(d.x))
+                    .y(d => yScale(d.y));
+                
+                const path = g.append('path')
+                    .datum(data)
+                    .attr('fill', 'none')
+                    .attr('stroke', f.color)
+                    .attr('stroke-width', 2.5)
+                    .attr('d', line);
+                
+                // 动画
+                const totalLength = path.node().getTotalLength();
+                path.attr('stroke-dasharray', totalLength + ' ' + totalLength)
+                    .attr('stroke-dashoffset', totalLength)
+                    .transition()
+                    .duration(2000)
+                    .delay(i * 800)
+                    .attr('stroke-dashoffset', 0);
+                
+                // 标签
+                g.append('text')
+                    .attr('x', innerWidth - 100)
+                    .attr('y', 30 + i * 25)
+                    .attr('fill', f.color)
+                    .style('font-size', '14px')
+                    .text(`y = ${f.name}`);
+            });
+        }
+
+        // 第8页：复合函数可视化
+        function visualizeComposite(containerId) {
+            const container = d3.select(`#${containerId}`);
+            container.html('');
+            
+            const width = container.node().clientWidth;
+            const height = container.node().clientHeight;
+            
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // 复合函数示意图
+            const centerY = height / 2;
+            const boxWidth = 120;
+            const boxHeight = 60;
+            
+            // 输入
+            svg.append('circle')
+                .attr('cx', width * 0.2)
+                .attr('cy', centerY)
+                .attr('r', 30)
+                .attr('fill', '#3498db');
+            
+            svg.append('text')
+                .attr('x', width * 0.2)
+                .attr('y', centerY + 5)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .style('font-size', '20px')
+                .style('font-weight', 'bold')
+                .text('x');
+            
+            // 箭头1
+            svg.append('line')
+                .attr('x1', width * 0.2 + 30)
+                .attr('y1', centerY)
+                .attr('x2', width * 0.4 - boxWidth/2 - 10)
+                .attr('y2', centerY)
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2)
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // g(x) 函数盒子
+            svg.append('rect')
+                .attr('x', width * 0.4 - boxWidth/2)
+                .attr('y', centerY - boxHeight/2)
+                .attr('width', boxWidth)
+                .attr('height', boxHeight)
+                .attr('fill', '#2ecc71')
+                .attr('rx', 10);
+            
+            svg.append('text')
+                .attr('x', width * 0.4)
+                .attr('y', centerY + 5)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .style('font-size', '18px')
+                .style('font-weight', 'bold')
+                .text('g(x)');
+            
+            // 箭头2
+            svg.append('line')
+                .attr('x1', width * 0.4 + boxWidth/2 + 10)
+                .attr('y1', centerY)
+                .attr('x2', width * 0.6 - boxWidth/2 - 10)
+                .attr('y2', centerY)
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2)
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // f(u) 函数盒子
+            svg.append('rect')
+                .attr('x', width * 0.6 - boxWidth/2)
+                .attr('y', centerY - boxHeight/2)
+                .attr('width', boxWidth)
+                .attr('height', boxHeight)
+                .attr('fill', '#e74c3c')
+                .attr('rx', 10);
+            
+            svg.append('text')
+                .attr('x', width * 0.6)
+                .attr('y', centerY + 5)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .style('font-size', '18px')
+                .style('font-weight', 'bold')
+                .text('f(u)');
+            
+            // 箭头3
+            svg.append('line')
+                .attr('x1', width * 0.6 + boxWidth/2 + 10)
+                .attr('y1', centerY)
+                .attr('x2', width * 0.8 - 30)
+                .attr('y2', centerY)
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2)
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // 输出
+            svg.append('circle')
+                .attr('cx', width * 0.8)
+                .attr('cy', centerY)
+                .attr('r', 30)
+                .attr('fill', '#9b59b6');
+            
+            svg.append('text')
+                .attr('x', width * 0.8)
+                .attr('y', centerY + 5)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .style('font-size', '20px')
+                .style('font-weight', 'bold')
+                .text('y');
+            
+            // 箭头标记定义
+            svg.append('defs').append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '0 0 10 10')
+                .attr('refX', 10)
+                .attr('refY', 5)
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .attr('orient', 'auto')
+                .append('path')
+                .attr('d', 'M 0 0 L 10 5 L 0 10 z')
+                .attr('fill', '#333');
+            
+            // 说明文字
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height - 50)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '16px')
+                .text('y = f(g(x))：先通过g处理x，再通过f处理结果');
+            
+            // 动画：数值流动演示
+            let animValue = svg.append('text')
+                .attr('x', width * 0.2)
+                .attr('y', centerY - 50)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .style('font-weight', 'bold')
+                .style('fill', '#333')
+                .text('2');
+            
+            // 动画序列
+            animValue.transition()
+                .duration(1500)
+                .attr('x', width * 0.4)
+                .transition()
+                .duration(500)
+                .text('g(2) = 3')
+                .transition()
+                .duration(1500)
+                .attr('x', width * 0.6)
+                .transition()
+                .duration(500)
+                .text('f(3) = 9')
+                .transition()
+                .duration(1500)
+                .attr('x', width * 0.8);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            showSlide(0);
+            updateSlideInfo();
+            console.log('✨ 基本初等函数教学系统初始化完成');
+        });
+    </script>
+</body>
+</html>

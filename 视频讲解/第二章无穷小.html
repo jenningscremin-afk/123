@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微积分"无穷小"概念动态演示</title>
+    
+    <!-- 本地思源宋体字体文件 -->
+    <link rel="stylesheet" href="./noto-serif-sc.css">
+    
+    <!-- 修复：将D3.js库的引用放在最前面，确保优先加载 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            /* 使用本地思源宋体，提供优雅的中文显示效果 */
+            font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif CN',
+                         'Songti SC', 'SimSun', '宋体', serif;
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+        
+        /* 虚拟人显示区域 - 稍微下移，避免遮挡内容 */
+        .avatar-container {
+            position: fixed;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; height: 850px;
+            overflow: hidden; z-index: 50;
+            pointer-events: none; background: transparent;
+            border: none; box-shadow: none;
+        }
+        .wrapper {
+            width: 100%; height: 100%;
+            background: transparent; pointer-events: auto;
+        }
+        
+        /* 教学内容区域 - 避让虚拟人，左右分布 */
+        .content-area {
+            position: absolute;
+            top: 20px; left: 50px; right: 50px; bottom: 120px;
+            z-index: 10; overflow: hidden;
+        }
+        .page {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0; visibility: hidden;
+            transition: all 0.7s ease-in-out;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 2fr 3fr; /* 调整比例，给图更大空间 */
+            gap: 20px;
+            align-items: center;
+        }
+        .page.active {
+            opacity: 1; visibility: visible;
+        }
+        .chalk-text {
+            color: #ffffff;
+            font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif CN',
+                         'Songti SC', 'SimSun', '宋体', serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page-title {
+            font-size: 2rem; font-weight: bold;
+            color: #e1bee7; margin-bottom: 1.5rem;
+        }
+        .text-medium {
+            font-size: 1rem; margin-bottom: 0.8rem;
+            line-height: 1.7; color: #f3e5f5; font-weight: 500;
+        }
+        .text-medium p {
+            margin-bottom: 1rem;
+        }
+        .text-medium strong {
+            color: #81c784;
+            font-weight: 600;
+        }
+        .graph-container {
+            background: transparent;
+            border: none;
+            padding: 0;
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+        }
+        
+        /* 字幕区域 - 全宽显示，虚拟人不影响布局 */
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; left: 50px; right: 50px;
+            height: 50px; background: rgba(0,0,0,0.8);
+            border-radius: 8px; display: flex;
+            align-items: center; justify-content: center;
+            z-index: 60; color: white;
+            font-size: 0.9rem; text-align: center;
+            padding: 0 20px; line-height: 1.4;
+        }
+        
+        /* 左侧控制栏 */
+        .control-bar {
+            position: fixed; left: -220px; top: 50%;
+            transform: translateY(-50%); width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; transition: left 0.3s ease;
+        }
+        .control-bar:hover { left: 0; }
+        .control-bar::before {
+            content: '▶️'; position: absolute;
+            top: 50%; right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; border-radius: 0 10px 10px 0;
+            font-size: 0.8rem; writing-mode: vertical-lr;
+        }
+        .btn {
+            padding: 12px 20px; background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: bold;
+            transition: all 0.3s ease; width: 100%; text-align: center;
+        }
+        .btn:hover { background: linear-gradient(135deg, #555, #777); transform: translateY(-2px); }
+        .btn.primary { background: linear-gradient(135deg, #FF69B4, #FF1493); }
+        
+        /* D3 SVG Styles */
+        .viz-panel .axis path,
+        .viz-panel .axis line {
+            stroke: #ffffff;
+            stroke-width: 1.5;
+        }
+        .viz-panel .axis text {
+            fill: #ffffff;
+            font-size: 18px; /* 增大坐标轴字体 */
+        }
+        .viz-panel .label {
+            fill: #ffffff;
+            font-size: 24px; /* 增大标签字体 */
+            font-weight: 500;
+        }
+
+        /* 统一将图中元素改为白色（仅作用于图形区域） */
+        .graph-container svg .axis path,
+        .graph-container svg .axis line {
+            stroke: #ffffff !important;
+        }
+        .graph-container svg .axis text,
+        .graph-container svg .label,
+        .graph-container svg text {
+            fill: #ffffff !important;
+        }
+        .graph-container svg path,
+        .graph-container svg line {
+            stroke: #ffffff !important;
+        }
+        .graph-container svg circle {
+            stroke: #ffffff !important;
+            stroke-width: 1.5px;
+        }
+        .graph-container svg rect {
+            stroke: #ffffff !important;
+            fill: none !important;
+        }
+        
+        /* 连接状态指示器 - 默认隐藏 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; border-radius: 5px;
+            font-size: 12px; z-index: 100;
+            transition: opacity 0.3s ease;
+            display: none; /* 默认隐藏红色提示 */
+        }
+        .status-indicator.connected { background: rgba(76, 175, 80, 0.8); }
+        .status-indicator.recording {
+            background: rgba(244, 67, 54, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-indicator.error { background: rgba(244, 67, 54, 0.8); }
+        .status-indicator.connecting { background: rgba(255, 152, 0, 0.8); }
+
+        /* 录制模式下隐藏状态指示器 */
+        .recording-mode .status-indicator {
+            opacity: 0; pointer-events: none;
+        }
+        /* 录制模式下隐藏控制栏 */
+        .recording-mode .control-bar {
+            left: -300px; transition: left 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="blackboard">
+        <div id="statusIndicator" class="status-indicator">等待连接</div>
+        
+        <!-- 虚拟人显示区域 - 按照官方SDK要求 -->
+        <div class="avatar-container">
+            <div class="wrapper" id="avatarWrapper"></div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <!-- Pages will be dynamically generated here -->
+        </div>
+
+        <div class="subtitle-area" id="subtitleArea">
+            欢迎学习"无穷小"概念！点击"开始讲课"启动虚拟人讲师。
+        </div>
+
+        <div class="control-bar">
+            <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 12px;">
+                第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">6</span> 页
+                <br>
+                <span style="color: #81c784; font-size: 11px;">⏱️ 本页时长: <span id="currentPageDuration">18</span>秒</span>
+            </div>
+            <button class="btn" onclick="previousPage()">⬅️ 上一页</button>
+            <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+            <button class="btn" onclick="nextPage()">下一页 ➡️</button>
+            <button class="btn" onclick="restart()">🔄 重新开始</button>
+            <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+            <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 10px; line-height: 1.2;">
+                💡 录制提示：<br>
+                点击自动播放后立即开始录屏<br>
+                系统会自动完成全部演示
+            </div>
+            <div style="color: #ccc; margin-top: 1rem; text-align: center; font-size: 11px;">
+                💡 快捷键：Enter播放
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script src="./polyfill.min.js"></script>
+    <script id="MathJax-script" src="./mathjax-tex-mml-chtml.js"></script>
+    
+    <!-- JavaScript代码 -->
+    <script type="module">
+        try {
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+            console.log('✅ 讯飞本地SDK已加载');
+
+            // 触发自定义事件，通知SDK已准备就绪
+            window.dispatchEvent(new CustomEvent('sdkReady'));
+        } catch (error) {
+            console.error('❌ 本地SDK加载失败:', error);
+        }
+    </script>
+
+    <script>
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentPage = 1;
+        const totalPages = 6;
+        let animationFrameId; // To control animation loops
+
+        // 保持原有的无穷小教学内容
+        const boardContent = [
+            { title: "什么是无穷小？", text: "<p>它不是一个数，而是一种<strong>动态的『趋势』</strong>。</p><p>为了理解它，我们来做一个思想实验。</p>" },
+            { title: "过程相同，结果不同", text: "<p>设定一个相同的<strong>『过程』</strong>：$x \\to 0$</p><p>函数 $f(x)=x+5$ 的<strong>『结果』</strong>是 $\\to 5$</p><p>函数 $g(x)=x^2$ 的<strong>『结果』</strong>是 $\\to 0$</p><p><strong>过程相同，不同的函数，结果不同。</strong></p>" },
+            { title: "无穷小的\"资格认证\"", text: "<p>只有像 $g(x)=x^2$ 这样，其最终<strong>『结果』为 0</strong> 的函数，才有资格在当前这个<strong>『过程』</strong>中，被称为<strong>『无穷小』</strong>。</p>" },
+            { title: "过程不同，结果也不同", text: "<p>对于同一个函数 $y = 1/x$：</p><p>当<strong>『过程』</strong>是 $x \\to \\infty$ 时，<strong>『结果』</strong>是 0 (是无穷小)。</p><p>当<strong>『过程』</strong>是 $x \\to 0$ 时，<strong>『结果』</strong>是 $\\infty$ (不是无穷小)。</p>" },
+            { title: "一个关键的启示", text: "<p>同一个函数，在不同的过程中，可以产生截然不同的结果，从而拥有不同的身份。</p><p>因此，我们不能笼统地问：\"一个函数是不是无穷小？\"</p><p><strong>这个问题本身问得不完整。</strong></p>" },
+            { title: "最终结论", text: "<p>理解无穷小，就要牢牢抓住<strong>『过程』</strong>和<strong>『结果』</strong>。</p><p>必须先有一个明确的<strong>『过程』</strong>，函数才会有对应的<strong>『结果』</strong>。</p><p>当且仅当这个<strong>『结果』是 0</strong> 时，我们才称该函数在这个过程中是<strong>『无穷小』</strong>。</p>" }
+        ];
+
+        // 保持原有的字幕脚本
+        const subtitleScript = {
+            1: "大家好，今天我们来彻底搞懂微积分里的一个核心概念——无穷小。首先，忘掉你脑中可能的第一印象。它不是一个数，而是一种『行为』，一种动态的『趋势』。为了理解这种行为，我们来做一个非常简单的思想实验。",
+            2: "我们设定一个完全相同的『过程』：让 x 无限地靠近 0。在这个过程中，我们观察两个函数截然不同的『结果』：函数 f(x) = x+5 的结果是无限地靠近 5；而函数 g(x) = x² 的结果是无限地靠近 0。这个对比告诉我们一个基本事实：过程虽然相同，但不同的函数，会产生不同的结果。",
+            3: "基于这个事实，数学家们做了一个定义：只有像 g(x) = x² 这样，其最终『结果』为 0 的函数，才有资格在当前这个『过程』中，被称为『无穷小』。所以，是不是无穷小，关键就看它的结果是不是 0。",
+            4: "那么，如果我们改变『过程』，又会怎样呢？我们来看同一个函数 y = 1比x。当『过程』是 x 趋向无穷大时，它的『结果』是 0，因此它获得了无穷小的资格。但是，当我们把『过程』换成 x 趋向 0 时，它的『结果』却变成了无穷大，它就失去了这个资格。",
+            5: "这个例子揭示了最深刻的一点：同一个函数，在不同的过程中，可以产生截然不同的结果，从而拥有不同的身份。这就解释了为什么我们不能笼统地问'一个函数是不是无穷小'，因为这个问题本身问得不完整。",
+            6: "所以，我们最终的结论非常直接：理解无穷小，就要牢牢抓住『过程』和『结果』这两个词。必须先有一个明确的『过程』，函数才会有对应的『结果』。当且仅当这个『结果』是0时，我们才称该函数在这个过程中是『无穷小』。"
+        };
+        
+
+
+        // 状态更新函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                } else if (type === 'recording') {
+                    indicator.classList.add('recording');
+                } else if (type === 'success') {
+                    indicator.classList.add('connected');
+                }
+            }
+        }
+
+        // 检测SDK加载状态
+        function checkSDKStatus() {
+            if (typeof window.AvatarPlatform !== 'undefined') {
+                console.log('✅ 讯飞官方SDK已加载 - 版本:', window.AvatarPlatform.getVersion ? window.AvatarPlatform.getVersion() : '未知');
+                updateStatus('SDK已加载', 'connected');
+                return true;
+            } else {
+                console.log('⏳ 讯飞SDK模块正在加载中...');
+                updateStatus('SDK加载中...', 'connecting');
+                return false;
+            }
+        }
+
+        // 监听SDK准备就绪事件
+        window.addEventListener('sdkReady', function() {
+            console.log('🎉 SDK模块加载完成，准备就绪！');
+            checkSDKStatus();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentArea = document.getElementById('contentArea');
+            boardContent.forEach((content, i) => {
+                const page = document.createElement('div');
+                page.className = 'page';
+                page.dataset.page = i + 1;
+                page.innerHTML = `
+                    <div class="chalk-text">
+                        <div class="page-title">${content.title}</div>
+                        <div class="text-medium">${content.text}</div>
+                    </div>
+                    <div class="graph-container">
+                        <svg id="viz-${i+1}" width="100%" height="100%"></svg>
+                    </div>
+                `;
+                contentArea.appendChild(page);
+            });
+            switchToPage(1, false);
+            console.log('✨ 无穷小概念教学系统初始化完成');
+            checkSDKStatus();
+        });
+
+        function switchToPage(pageNum, shouldSpeak = true) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            currentPage = pageNum;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-page="${pageNum}"]`).classList.add('active');
+            updatePageInfo();
+            
+            setTimeout(() => {
+                drawPageGraph(pageNum);
+                if(window.MathJax && window.MathJax.typeset) {
+                    window.MathJax.typeset();
+                }
+            }, 50);
+
+            if (shouldSpeak && !isAutoPlaying) {
+                speakContent(pageNum);
+            }
+        }
+
+        // 静默页面切换 - 不播放语音，专用于自动播放
+        function switchToPageSilent(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) {
+                console.log(`❌ 页面切换失败：页码${pageNum}超出范围(1-${totalPages})`);
+                return;
+            }
+
+            console.log(`🔄 开始切换到第${pageNum}页...`);
+
+            // 移除所有页面的active类
+            const allPages = document.querySelectorAll('.page');
+            console.log(`📄 找到${allPages.length}个页面元素`);
+            allPages.forEach((page, index) => {
+                page.classList.remove('active');
+                console.log(`   - 移除第${index + 1}个页面的active类`);
+            });
+
+            // 添加目标页面的active类
+            const targetPage = document.querySelector(`[data-page="${pageNum}"]`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageNum;
+                updatePageInfo();
+                console.log(`✅ 成功切换到第${pageNum}页`);
+
+                // 强制重绘
+                targetPage.offsetHeight; // 触发重绘
+
+                // 绘制图像
+                setTimeout(() => {
+                    drawPageGraph(pageNum);
+                    console.log(`🎨 第${pageNum}页图像绘制完成`);
+                }, 300);
+            } else {
+                console.log(`❌ 未找到第${pageNum}页的DOM元素`);
+            }
+        }
+        
+        function drawPageGraph(pageNum) {
+            const svg = d3.select(`#viz-${pageNum}`);
+            svg.selectAll("*").remove(); // Clear previous content
+
+            const container = svg.node().parentNode;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+            switch(pageNum) {
+                case 1: drawIntroGraph(svg, width, height); break;
+                case 2: drawComparisonGraph(svg, width, height); break;
+                case 3: drawQualificationGraph(svg, width, height); break;
+                case 4: drawProcessChangeGraph(svg, width, height); break;
+                case 5: drawRevelationGraph(svg, width, height); break;
+                case 6: drawConclusionGraph(svg, width, height); break;
+            }
+        }
+        
+        // --- D3 Graph Drawing Functions (保持原有动画) ---
+        function drawIntroGraph(svg, width, height) {
+            // 根据容器大小动态调整字体大小，确保标题不会溢出
+            const fontSize = Math.min(width * 0.15, height * 0.2, 80);
+            const text = svg.append("text").attr("x", width / 2).attr("y", height / 2).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("font-size", fontSize + "px").attr("font-weight", "bold").attr("fill", "url(#grad0)");
+            const gradient = svg.append("defs").append("linearGradient").attr("id", "grad0").attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "0%");
+            gradient.append("stop").attr("offset", "0%").style("stop-color", "#e1bee7");
+            gradient.append("stop").attr("offset", "100%").style("stop-color", "#81c784");
+            text.selectAll("tspan").data("无穷小".split("")).enter().append("tspan").text(d => d).attr("opacity", 0).attr("dy", "-30px").transition().duration(500).delay((d, i) => i * 150).attr("opacity", 1).attr("dy", "0px");
+        }
+
+        function drawComparisonGraph(svg, width, height) {
+            const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+            const w = width - margin.left - margin.right;
+            const h = height - margin.top - margin.bottom;
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const x = d3.scaleLinear().domain([-1.5, 3.5]).range([0, w]);
+            const y = d3.scaleLinear().domain([-2, 7]).range([h, 0]);
+            
+            g.append("g").attr("transform", `translate(0,${y(0)})`).call(d3.axisBottom(x).ticks(5)).attr("class", "axis");
+            g.append("g").attr("transform", `translate(${x(0)},0)`).call(d3.axisLeft(y).ticks(5)).attr("class", "axis");
+            
+            const funcG = d => d * d;
+            const funcF = d => d + 5;
+            
+            const lineG = d3.line().x(d => x(d)).y(d => y(funcG(d))).curve(d3.curveCatmullRom);
+            g.append("path").datum(d3.range(-1.5, 2.7, 0.1)).attr("fill", "none").attr("stroke", "#f87171").attr("stroke-width", 3).attr("d", lineG);
+            const lineF = d3.line().x(d => x(d)).y(d => y(funcF(d)));
+            g.append("path").datum(d3.range(-1.5, 2, 0.1)).attr("fill", "none").attr("stroke", "#38bdf8").attr("stroke-width", 3).attr("d", lineF);
+
+            g.append("text").attr("x", x(2.5)).attr("y", y(funcG(2.5) + 0.5)).text("y = x²").attr("class", "label").attr("fill", "#f87171");
+            g.append("text").attr("x", x(1)).attr("y", y(funcF(1) + 0.5)).text("y = x+5").attr("class", "label").attr("fill", "#38bdf8");
+
+            const gDot = g.append("circle").attr("r", 10).attr("fill", "#f87171");
+            const fDot = g.append("circle").attr("r", 10).attr("fill", "#38bdf8");
+
+            function animate() {
+                const duration = 4000;
+                const ease = d3.easeCubicInOut;
+                const startX = 3, endX = 0.01;
+                const xInterpolator = d3.interpolate(startX, endX);
+
+                gDot.transition().duration(duration).ease(ease)
+                    .attrTween("cx", () => t => x(xInterpolator(t)))
+                    .attrTween("cy", () => t => y(funcG(xInterpolator(t))));
+                fDot.transition().duration(duration).ease(ease)
+                    .attrTween("cx", () => t => x(xInterpolator(t)))
+                    .attrTween("cy", () => t => y(funcF(xInterpolator(t))))
+                    .on("end", animate);
+            }
+            animate();
+        }
+
+        function drawQualificationGraph(svg, width, height) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // 根据容器宽度动态调整文本位置和字体大小，防止溢出
+            const textOffset = Math.min(width * 0.3, 200); // 最大偏移200px，或容器宽度的30%
+            const fontSize = Math.min(width * 0.08, 36); // 根据容器宽度调整字体大小
+
+            const g_result = svg.append("text").text("结果: 0").attr("x", centerX - textOffset).attr("y", centerY).attr("font-size", fontSize + "px").attr("text-anchor", "middle").attr("fill", "#6ee7b7");
+            const f_result = svg.append("text").text("结果: 5").attr("x", centerX + textOffset).attr("y", centerY).attr("font-size", fontSize + "px").attr("text-anchor", "middle").attr("fill", "#f87171");
+
+            const gate = svg.append("rect").attr("x", centerX - 100).attr("y", centerY - 150).attr("width", 200).attr("height", 300).attr("fill", "none").attr("stroke", "#38bdf8").attr("stroke-width", 3).attr("stroke-dasharray", "10,5");
+            svg.append("text").text("资格认证").attr("x", centerX).attr("y", centerY - 170).attr("text-anchor", "middle").attr("class", "label").attr("fill", "#38bdf8");
+            svg.append("text").text("结果 = 0 ?").attr("x", centerX).attr("y", centerY + 180).attr("text-anchor", "middle").attr("class", "label").attr("fill", "#38bdf8");
+            
+            const checkmark = svg.append("text").text("✔").attr("x", centerX).attr("y", centerY + 50).attr("font-size", "80px").attr("fill", "#6ee7b7").attr("text-anchor", "middle").attr("opacity", 0);
+            const cross = svg.append("text").text("✖").attr("x", centerX).attr("y", centerY + 50).attr("font-size", "80px").attr("fill", "#f87171").attr("text-anchor", "middle").attr("opacity", 0);
+
+            g_result.transition().duration(1500).ease(d3.easeCubicInOut).attr("x", centerX).on("end", () => checkmark.transition().duration(500).attr("opacity", 1));
+            f_result.transition().duration(1500).ease(d3.easeCubicInOut).attr("x", centerX).on("end", () => {
+                cross.transition().duration(500).attr("opacity", 1);
+                gate.transition().duration(500).attr("stroke", "#f87171");
+            });
+        }
+
+        function drawProcessChangeGraph(svg, width, height) {
+            const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+            const w = width - margin.left - margin.right;
+            const h = height - margin.top - margin.bottom;
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleLinear().domain([-6, 6]).range([0, w]);
+            const y = d3.scaleLinear().domain([-5, 12]).range([h, 0]);
+            const func = d => 1 / d;
+            
+            g.append("g").attr("transform", `translate(0,${y(0)})`).call(d3.axisBottom(x)).attr("class", "axis");
+            g.append("g").attr("transform", `translate(${x(0)},0)`).call(d3.axisLeft(y)).attr("class", "axis");
+
+            const line = d3.line().x(d => x(d)).y(d => y(func(d)));
+            g.append("path").datum(d3.range(0.08, 6, 0.05)).attr("fill", "none").attr("stroke", "#a78bfa").attr("stroke-width", 3).attr("d", line);
+            g.append("path").datum(d3.range(-6, -0.2, 0.05)).attr("fill", "none").attr("stroke", "#a78bfa").attr("stroke-width", 3).attr("d", line);
+            g.append("text").attr("x", x(4)).attr("y", y(func(4) + 1)).text("y = 1/x").attr("class", "label").attr("fill", "#a78bfa");
+
+            const dot = g.append("circle").attr("r", 10).attr("fill", "#a78bfa");
+            const textLabel = g.append("text").attr("x", w/2).attr("y", -10).attr("text-anchor", "middle").attr("class", "label").attr("font-size", "28px");
+
+            function animateToInfinity() {
+                textLabel.text("过程: x → ∞  结果: y → 0").attr("opacity", 0).transition().duration(500).attr("opacity", 1);
+                const startX = 0.5, endX = 6;
+                const interpolator = d3.interpolate(startX, endX);
+                dot.transition().duration(4000).ease(d3.easeQuadIn)
+                   .attrTween("cx", () => t => x(interpolator(t)))
+                   .attrTween("cy", () => t => y(func(interpolator(t))))
+                   .on("end", () => textLabel.transition().duration(500).attr("opacity", 0).on("end", animateToZero));
+            }
+            function animateToZero() {
+                textLabel.text("过程: x → 0  结果: y → ∞").attr("opacity", 0).transition().duration(500).attr("opacity", 1);
+                const startX = 2, endX = 0.08;
+                const interpolator = d3.interpolate(startX, endX);
+                dot.transition().duration(4000).ease(d3.easeQuadOut)
+                   .attrTween("cx", () => t => x(interpolator(t)))
+                   .attrTween("cy", () => t => y(func(interpolator(t))))
+                   .on("end", () => textLabel.transition().duration(500).attr("opacity", 0).on("end", animateToInfinity));
+            }
+            animateToInfinity();
+        }
+        
+        function drawRevelationGraph(svg, width, height) {
+             const centerX = width / 2;
+             const centerY = height / 2;
+
+             // 根据容器大小动态调整元素位置和大小
+             const titleFontSize = Math.min(width * 0.06, 28);
+             const circleOffset = Math.min(width * 0.25, 160); // 圆圈偏移距离
+             const circleRadius = Math.min(width * 0.15, height * 0.2, 100); // 圆圈半径
+             const textFontSize = Math.min(width * 0.06, 32);
+
+             svg.append("text").text("y = 1/x").attr("x", centerX).attr("y", centerY - height * 0.35).attr("font-size", titleFontSize + "px").attr("text-anchor", "middle").attr("fill", "#a78bfa");
+
+             const lens1 = svg.append("g").attr("transform", `translate(${centerX - circleOffset}, ${centerY})`);
+             lens1.append("circle").attr("r", circleRadius).attr("fill", "#1e293b").attr("stroke", "#38bdf8").attr("stroke-width", 2);
+             lens1.append("text").text("过程: x → ∞").attr("y", -circleRadius - 20).attr("text-anchor", "middle").attr("class", "label");
+             lens1.append("text").text("结果: 0").attr("y", 10).attr("font-size", textFontSize + "px").attr("text-anchor", "middle").attr("fill", "#6ee7b7");
+
+             const lens2 = svg.append("g").attr("transform", `translate(${centerX + circleOffset}, ${centerY})`);
+             lens2.append("circle").attr("r", circleRadius).attr("fill", "#1e293b").attr("stroke", "#38bdf8").attr("stroke-width", 2);
+             lens2.append("text").text("过程: x → 0").attr("y", -circleRadius - 20).attr("text-anchor", "middle").attr("class", "label");
+             lens2.append("text").text("结果: ∞").attr("y", 10).attr("font-size", textFontSize + "px").attr("text-anchor", "middle").attr("fill", "#f87171");
+
+             const questionMark = svg.append("text").text("?").attr("x", centerX).attr("y", centerY + 220).attr("font-size", "90px").attr("text-anchor", "middle").attr("fill", "white");
+
+             lens1.attr("opacity", 0).transition().duration(1000).delay(500).attr("opacity", 1);
+             lens2.attr("opacity", 0).transition().duration(1000).delay(1000).attr("opacity", 1);
+             questionMark.attr("opacity", 0).transition().duration(1000).delay(1500).attr("opacity", 1);
+        }
+
+        function drawConclusionGraph(svg, width, height) {
+            const textGroup = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+
+            // 根据容器大小动态调整字体大小
+            const mainFontSize = Math.min(width * 0.12, 60); // 主要文字字体大小
+            const titleFontSize = Math.min(width * 0.15, 70); // 标题字体大小
+
+            const processText = textGroup.append("text").text("过程").attr("font-size", mainFontSize + "px").attr("fill", "#38bdf8").attr("text-anchor", "middle");
+            const resultText = textGroup.append("text").text("结果").attr("font-size", mainFontSize + "px").attr("fill", "#6ee7b7").attr("text-anchor", "middle");
+            const finalText = textGroup.append("text").text("无穷小").attr("font-size", titleFontSize + "px").attr("font-weight", "bold").attr("fill", "white").attr("text-anchor", "middle");
+
+            processText.attr("x", -width/2).attr("opacity", 0).transition().duration(1200).ease(d3.easeBounceOut).attr("x", -width/4).attr("opacity", 1);
+            resultText.attr("x", width/2).attr("opacity", 0).transition().duration(1200).ease(d3.easeBounceOut).attr("x", width/4).attr("opacity", 1);
+            
+            const arrow = textGroup.append("path").attr("d", "M -120 0 L 120 0").attr("stroke", "white").attr("stroke-width", 4).attr("marker-end", "url(#arrow)").attr("opacity", 0);
+            svg.append("defs").append("marker").attr("id", "arrow").attr("viewBox", "0 -5 10 10").attr("refX", 5).attr("refY", 0).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "white");
+
+            setTimeout(() => {
+               processText.transition().duration(1000).attr("x", -180);
+               resultText.transition().duration(1000).attr("x", 180);
+               arrow.transition().delay(500).duration(500).attr("opacity", 1);
+               setTimeout(() => {
+                   processText.transition().duration(800).attr("opacity", 0);
+                   resultText.transition().duration(800).attr("opacity", 0);
+                   arrow.transition().duration(800).attr("opacity", 0);
+                   finalText.attr("opacity", 0).transition().delay(800).duration(1000).attr("opacity", 1).attr("transform", "scale(1.2)").transition().attr("transform", "scale(1)");
+               }, 2000);
+            }, 2000);
+        }
+
+        // 等待SDK加载完成
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof window.AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+
+                // 监听SDK准备就绪事件
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 15000); // 15秒超时，给网络加载更多时间
+
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        // --- Control & Avatar Functions ---
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                // 等待SDK加载完成
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+
+                // 如果已有实例，先销毁
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                // 创建虚拟人实例 - 使用官方SDK
+                avatarPlatform = new window.AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                // 设置事件监听 - 使用官方SDK事件
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        
+                        // 连接成功后开始讲解第一页
+                        setTimeout(() => {
+                            speakContent(1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        updateStatus('连接断开', 'error');
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                    })
+                    .on('frame_start', (frameData) => {
+                        console.log('🎬 开始播放帧:', frameData);
+                    })
+                    .on('frame_stop', (frameData) => {
+                        console.log('⏹️ 播放帧结束:', frameData);
+                    });
+
+                // 设置API配置 - 使用您的真实配置参数
+                console.log('🔧 正在设置虚拟人API配置...');
+avatarPlatform.setApiInfo({
+    appId: '98c558c1',                    // 您的新APPID
+    apiKey: '133adcc14bda6e315040f78700b38267',      // 您的新APIKey
+    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy', // 您的新APISecret
+    sceneId: '216155854796361728',        // 您的新接口服务ID
+    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact' // 官方接口地址
+});
+console.log('✅ API配置设置完成');
+
+                // 设置全局参数 - 使用您的实际授权资源
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',     // 实时视频协议，支持webrtc/xrtc
+                        alpha: 1,             // 透明背景
+                        bitrate: 1000000,     // 视频码率  
+                        fps: 25               // 视频刷新率
+                    },
+                    avatar: {
+                        avatar_id: '110332017', // 沐沐 - 已授权的形象资源
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,  // scale必须<=1，通过容器尺寸来放大
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',      // 小娟-温情4.0 - 已授权的声音资源
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,   // 0追加模式，1打断模式
+                        content_analysis: 0    // 情感分析
+                    }
+                });
+
+                // 启动虚拟人 - 按照官方文档
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                
+                // 根据错误类型提供不同的解决方案
+                if (error.message.includes('authentication failed')) {
+                    // 虚拟人认证失败的详细提示
+                    const authErrorMsg = `🚫 虚拟人认证失败！
+
+🔍 错误详情：${error.message}
+
+🛠️ 解决方案：
+
+1. 📋 检查API配置信息：
+   - APPID: b4889d02
+   - 接口服务ID: 213607046975721472
+   - APIKey和APISecret是否正确
+
+2. 🌐 登录虚拟人平台检查服务状态：
+   https://virtual-man.xfyun.cn/console/projects
+
+3. ⏰ 确认服务是否过期：
+   - 当前到期时间：2025-11-10 18:36:55
+   - 检查是否还有剩余授权
+
+4. 🚦 检查使用限制：
+   - 当前授权：2路虚拟人
+   - 确认是否超过使用限制
+
+5. 🔄 尝试解决方案：
+   - 刷新页面重新连接
+   - 检查网络连接
+   - 确认防火墙设置`;
+
+                    setTimeout(() => {
+                        if (confirm(authErrorMsg + '\n\n是否立即刷新页面重试？')) {
+                            location.reload();
+                        }
+                    }, 100);
+                } else if (error.message.includes('SDK未加载') || error.message.includes('所有SDK源')) {
+                    // SDK加载失败的详细提示
+                    const suggestion = `SDK加载失败！\n\n💡 建议解决方案：\n\n` +
+                        `1. 🌐 检查网络连接是否正常\n` +
+                        `2. 🔧 如果使用Clash等代理，请尝试：\n   - 暂时关闭代理\n   - 或配置规则允许讯飞域名\n` +
+                        `3. 🔄 刷新页面重新尝试\n` +
+                        `4. 📞 如问题持续，请联系技术支持\n\n` +
+                        `当前尝试的SDK源都无法访问，这通常是网络环境问题。`;
+                    
+                    setTimeout(() => {
+                        if (confirm(suggestion + '\n\n是否立即刷新页面重试？')) {
+                            location.reload();
+                        }
+                    }, 100);
+                } else if (error.message.includes('YOUR_')) {
+                    alert('请先配置正确的讯飞虚拟人参数！\n\n1. 访问 https://virtual-man.xfyun.cn/console/projects\n2. 申请AppID和API密钥\n3. 在代码中替换 YOUR_APP_ID 等参数');
+                } else {
+                    // 其他错误的通用处理
+                    alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+                }
+            }
+        }
+        
+        function setupAvatarListeners() {
+            avatarPlatform.on('connected', () => {
+                isConnected = true; isTeaching = true;
+                document.getElementById('startBtn').textContent = '💖 讲师已就绪';
+                speakContent(currentPage);
+            }).on('disconnected', () => {
+                isConnected = false; isTeaching = false;
+            }).on('error', (err) => {
+                console.error("Avatar error:", err);
+                isConnected = false; isTeaching = false;
+            });
+        }
+
+        // 动作控制函数 - 根据动作ID执行虚拟人动作
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                // 使用官方writeCmd方法驱动动作
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        // 根据页面内容选择合适的动作 - 手势指向图形位置
+        function getActionsForPage(pageNum) {
+            const actionMap = {
+                1: [{ type: 'action', value: 'A_RLH_welcome_O', wb: 2, we: 8 }],     // 双手打开欢迎 - 欢迎学习
+                2: [{ type: 'action', value: 'A_LH_please_O', wb: 2, we: 6 }],       // 左手向左有请 - 指向右侧图形（虚拟人视角）
+                3: [{ type: 'action', value: 'A_LH_introduced_O', wb: 2, we: 8 }],   // 左手向左上介绍 - 指向右侧图像特征
+                4: [{ type: 'action', value: 'A_RLH_emphasize_O', wb: 2, we: 8 }],   // 双手强调 - 强调极限行为
+                5: [{ type: 'action', value: 'A_RH_please1_O', wb: 2, we: 6 }],      // 右手向前有请 - 指向中央数值验证
+                6: [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }]    // 非指向动作 - 不要挥手
+            };
+            return actionMap[pageNum] || [{ type: 'action', value: 'A_U_No_pointing_O', wb: 2, we: 5 }]; // 默认非指向动作
+        }
+
+        async function speakContent(pageNum) {
+            console.log(`🔍 检查播放条件: isTeaching=${isTeaching}, isConnected=${isConnected}, avatarPlatform=${!!avatarPlatform}`);
+            
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[pageNum];
+            if (!content) return;
+
+            try {
+                // 先执行动作
+                const actions = getActionsForPage(pageNum);
+                if (actions && actions[0]) {
+                    await performVirtualAction(actions[0].value);
+                }
+
+                // 然后播放语音内容
+                await avatarPlatform.writeText(content, {
+                    nlp: false  // 纯文本播报，不进行语义理解
+                });
+                
+                console.log(`✅ 沐沐讲解第${pageNum}页，动作: ${actions[0]?.value}`);
+
+                // 更新字幕显示 - 自动播放时显示页码信息
+                if (isAutoPlaying) {
+                    updateAutoPlaySubtitle(pageNum, content);
+                } else {
+                    updateSubtitle(content);
+                }
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        // 更新字幕显示
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        // 自动播放时的字幕更新
+        function updateAutoPlaySubtitle(pageNum, text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea && isAutoPlaying) {
+                const prefix = `【第${pageNum}页/${totalPages}页】`;
+                subtitleArea.textContent = prefix + text;
+            } else if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        function nextPage() { 
+            if (currentPage < totalPages) {
+                switchToPage(currentPage + 1); 
+            }
+        }
+        function previousPage() { 
+            if (currentPage > 1) {
+                switchToPage(currentPage - 1); 
+            }
+        }
+        function restart() { switchToPage(1); }
+        function updatePageInfo() { 
+            document.getElementById('currentPage').textContent = currentPage; 
+            document.getElementById('totalPages').textContent = totalPages;
+        }
+
+        // 获取页面标题
+        function getPageTitle(pageNum) {
+            const titles = {
+                1: "什么是无穷小？",
+                2: "过程相同，结果不同", 
+                3: "无穷小的资格认证",
+                4: "过程不同，结果也不同",
+                5: "一个关键的启示",
+                6: "最终结论"
+            };
+            return titles[pageNum] || `第${pageNum}页`;
+        }
+
+        // 获取每页的固定播放时长
+        function getPageDuration(pageNum) {
+            /*
+            📊 无穷小概念教学 - 时长分析
+            🎯 总播放时长: 110秒 (1分50秒)
+            */
+            const durations = {
+                1: 18000,  // 103字，概念介绍 - 18秒
+                2: 27000,  // 134字，过程相同结果不同 - 23秒
+                3: 20000,  // 85字，资格认证 - 17秒
+                4: 22000,  // 118字，过程不同结果不同 - 20秒
+                5: 17000,  // 98字，关键启示 - 16秒
+                6: 16000   // 95字，最终结论 - 16秒
+            };
+            return durations[pageNum] || 15000;
+        }
+
+        let isAutoPlaying = false;
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                // 更新按钮状态
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                // 简短倒计时提示用户准备录屏
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'recording');
+                console.log(`⏰ 倒计时: 1秒`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'recording');
+                console.log('🚀 自动播放正式开始！');
+
+                // 进入录制模式 - 隐藏状态指示器和控制栏
+                document.body.classList.add('recording-mode');
+                console.log('📹 进入录制模式，隐藏UI元素');
+
+                // 如果虚拟人未连接，在后台尝试连接（不阻塞播放）
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                // 逐页播放
+                console.log(`🚀 开始逐页播放，总共${totalPages}页`);
+                for (let page = 1; page <= totalPages; page++) {
+                    try {
+                        if (!isAutoPlaying) {
+                            console.log('🛑 自动播放被停止');
+                            break;
+                        }
+
+                        console.log(`\n🎬 === 开始播放第${page}页/${totalPages}页 ===`);
+
+                        // 切换到指定页面 - 使用静默切换避免重复播放
+                        switchToPageSilent(page);
+                        updateStatus(`📖 第${page}页/${totalPages}页 - ${getPageTitle(page)}`, 'recording');
+                        console.log(`📄 已切换到第${page}页: ${getPageTitle(page)}`);
+
+                        // 等待页面渲染和动画完成
+                        console.log(`⏳ 等待页面渲染 0.8秒...`);
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        // 播放语音（如果虚拟人可用）
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            console.log(`🎵 播放第${page}页语音...`);
+                            try {
+                                await speakContent(page);
+                                console.log(`✅ 第${page}页语音播放开始`);
+
+                                // 使用固定时间
+                                const pageTime = getPageDuration(page);
+                                console.log(`⏰ 等待第${page}页播放完成，固定时长: ${pageTime/1000}秒`);
+                                await new Promise(resolve => setTimeout(resolve, pageTime));
+                                console.log(`✅ 第${page}页播放完成`);
+
+                            } catch (error) {
+                                console.error(`❌ 第${page}页语音播放失败:`, error);
+                                // 语音失败时等待固定时间
+                                const pageTime = getPageDuration(page);
+                                await new Promise(resolve => setTimeout(resolve, pageTime));
+                            }
+                        } else {
+                            console.log(`⚠️ 虚拟人不可用，跳过语音播放`);
+                            // 没有语音时等待固定时间
+                            const pageTime = getPageDuration(page);
+                            console.log(`⏰ 等待阅读时间 ${pageTime/1000}秒...`);
+                            await new Promise(resolve => setTimeout(resolve, pageTime));
+                        }
+
+                        // 页面间隔
+                        const waitTime = page === totalPages ? 2000 : 1000;
+                        console.log(`⏳ 页面间隔等待 ${waitTime/1000}秒...`);
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                        console.log(`✅ 第${page}页播放完成\n`);
+
+                    } catch (error) {
+                        console.error(`❌ 第${page}页播放过程出错:`, error);
+                        // 出错也要继续播放下一页
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                console.log('🎉 所有页面播放完成！');
+
+                // 播放完成，等待3秒后退出录制模式
+                if (isAutoPlaying) {
+                    console.log('⏰ 等待3秒后结束录制...');
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+
+                // 退出录制模式 - 恢复UI元素显示
+                document.body.classList.remove('recording-mode');
+                console.log('📹 退出录制模式，恢复UI元素');
+
+                // 恢复按钮状态
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextPage();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousPage();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    handleEnterKey();
+                    break;
+            }
+        });
+
+        // Enter键控制虚拟人播放
+        function handleEnterKey() {
+            if (!isTeaching) {
+                // 如果还未开始教学，则启动虚拟人
+                startTeaching();
+            } else if (isConnected) {
+                // 如果已连接，则重新播放当前页内容
+                speakContent(currentPage);
+                console.log('🎵 Enter键触发：重新播放当前页内容');
+            } else {
+                console.log('⚠️ 虚拟人未连接，无法播放');
+            }
+        }
+
+        // 页面关闭清理 - 按照官方文档
+        window.addEventListener('beforeunload', function() {
+            // 停止自动播放
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            // 停止虚拟人
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop(); // 重要：释放路数
+            }
+        });
+    </script>
+</body>
+</html>

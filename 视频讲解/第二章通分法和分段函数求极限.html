@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极限求解：通分法与分段函数</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+        .avatar-container {
+            position: fixed;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; height: 850px;
+            overflow: hidden; z-index: 50;
+            pointer-events: none; background: transparent;
+            border: none; box-shadow: none;
+        }
+        .wrapper {
+            width: 100%; height: 100%;
+            background: transparent; pointer-events: auto;
+        }
+        .content-area {
+            position: absolute;
+            top: 20px; left: 50px; right: 50px; bottom: 120px;
+            z-index: 10; overflow: hidden;
+        }
+        .page {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0; visibility: hidden;
+            transition: all 0.7s ease-in-out;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 60px;
+            align-items: center;
+        }
+        
+        .page[data-page="6"] {
+            grid-template-columns: 1.2fr 1fr;
+            gap: 30px;
+            padding: 20px;
+        }
+        .page.active {
+            opacity: 1; visibility: visible;
+        }
+        .chalk-text {
+            color: #ffffff;
+            font-family: 'Noto Serif SC', serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page-title {
+            font-size: 1.4rem; 
+            font-weight: bold;
+            color: #e1bee7; 
+            margin-bottom: 0.8rem;
+        }
+        .text-medium {
+            font-size: 0.95rem; 
+            margin-bottom: 0.3rem;
+            line-height: 1.4; 
+            color: #f3e5f5; 
+            font-weight: 500;
+        }
+        .text-medium p {
+            margin-bottom: 0.6rem;
+        }
+        .text-medium .highlight {
+            color: #81c784;
+            font-weight: 600;
+        }
+        .graph-container {
+            background: transparent;
+            border: none;
+            padding: 10px;
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            overflow: hidden;
+        }
+        .graph-container svg {
+            overflow: visible !important;
+        }
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; left: 50px; right: 50px;
+            height: 50px; background: rgba(0,0,0,0.8);
+            border-radius: 8px; display: flex;
+            align-items: center; justify-content: center;
+            z-index: 60; color: white;
+            font-size: 0.9rem; text-align: center;
+            padding: 0 20px; line-height: 1.4;
+        }
+        .control-bar {
+            position: fixed; left: -220px; top: 50%;
+            transform: translateY(-50%); width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; transition: left 0.3s ease;
+        }
+        .control-bar:hover { left: 0; }
+        .control-bar::before {
+            content: '▶️'; position: absolute;
+            top: 50%; right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; border-radius: 0 10px 10px 0;
+            font-size: 0.8rem; writing-mode: vertical-lr;
+        }
+        .btn {
+            padding: 12px 20px; background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: bold;
+            transition: all 0.3s ease; width: 100%; text-align: center;
+        }
+        .btn:hover { background: linear-gradient(135deg, #555, #777); transform: translateY(-2px); }
+        .btn.primary { background: linear-gradient(135deg, #FF69B4, #FF1493); }
+        
+        .viz-panel .axis path,
+        .viz-panel .axis line {
+            stroke: #d1d5db;
+            stroke-width: 1.5;
+        }
+        .viz-panel .axis text {
+            fill: #d1d5db;
+            font-size: 18px;
+        }
+        .viz-panel .label {
+            fill: #e5e7eb;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        /* 连接状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; border-radius: 5px;
+            font-size: 12px; z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+        .status-indicator.connected { background: rgba(76, 175, 80, 0.8); }
+        .status-indicator.error { background: rgba(244, 67, 54, 0.8); }
+        .status-indicator.connecting { background: rgba(255, 152, 0, 0.8); }
+
+        /* 录制模式下隐藏状态指示器和控制栏 */
+        .recording-mode .status-indicator {
+            opacity: 0; pointer-events: none;
+        }
+        .recording-mode .control-bar {
+            left: -300px; transition: left 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="blackboard">
+        <div id="statusIndicator" class="status-indicator">等待连接</div>
+        
+        <div class="avatar-container">
+            <div class="wrapper" id="avatarWrapper"></div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <!-- Pages will be dynamically generated here -->
+        </div>
+
+        <div class="subtitle-area" id="subtitleArea">
+            欢迎学习极限求解！点击"开始讲课"启动虚拟人讲师。
+        </div>
+
+        <div class="control-bar">
+            <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 12px;">
+                第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">6</span> 页
+            </div>
+            <div id="connectionStatus" style="color: #ffab40; margin-bottom: 1rem; text-align: center; font-size: 11px;">
+                虚拟人未连接
+            </div>
+            <button class="btn" onclick="previousPage()">⬅️ 上一页</button>
+            <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+            <button class="btn" onclick="nextPage()">下一页 ➡️</button>
+            <button class="btn" onclick="restart()">🔄 重新开始</button>
+            <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+            <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 10px; line-height: 1.2;">
+                💡 录制提示：<br>
+                点击自动播放后立即开始录屏<br>
+                系统会自动完成全部演示
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                packages: ['base', 'ams']
+            },
+            startup: { 
+                pageReady: () => { 
+                    console.log('MathJax is ready.'); 
+                    return MathJax.startup.defaultPageReady(); 
+                } 
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- 讯飞官方SDK - 按照成功案例的加载方式 -->
+    <script type="module">
+        try {
+            // 根据成功案例，导入讯飞官方SDK
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            // 挂载到全局对象
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+            console.log('可用事件:', { SDKEvents, PlayerEvents, RecorderEvents });
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+            // 降级处理：创建模拟的AvatarPlatform
+            window.AvatarPlatform = class {
+                constructor(options) {
+                    this.events = {};
+                    this.options = options;
+                    console.log("模拟SDK已初始化");
+                }
+                on(event, callback) {
+                    this.events[event] = callback;
+                    return this;
+                }
+                setApiInfo(info) {
+                    this.apiInfo = info;
+                    console.log("API Info set:", info);
+                }
+                setGlobalParams(params) {
+                    this.globalParams = params;
+                    console.log("Global Params set:", params);
+                }
+                async start(config) {
+                    console.log("模拟启动虚拟人");
+                    setTimeout(() => {
+                        this.events.connected?.({ message: "模拟连接成功" });
+                    }, 1000);
+                }
+                async writeText(text, options) {
+                    console.log("模拟播放文本:", text);
+                    return Promise.resolve();
+                }
+                async writeCmd(type, actionId) {
+                    console.log(`模拟执行动作: ${type} - ${actionId}`);
+                    return Promise.resolve();
+                }
+                stop() {
+                    console.log("模拟停止虚拟人");
+                }
+                destroy() {
+                    console.log("模拟销毁虚拟人");
+                }
+                static getVersion() {
+                    return "模拟版本 1.0.0";
+                }
+            };
+        }
+
+        // 触发自定义事件，通知SDK已准备就绪
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentPage = 1;
+        const totalPages = 6;
+
+        // 修正的教学内容 - 处理Markdown格式
+        const boardContent = [
+            { 
+                title: "求解极限：通分法", 
+                text: "<p>当遇到 $\\infty - \\infty$ 型未定式时，<span class='highlight'>通分</span>是关键的第一步。</p><p><strong>什么是 $\\infty - \\infty$ 型？</strong><br>当 $x \\to \\infty$ 时，两个分式都趋向于0，但它们的差值形式为 $0 - 0$，这是未定式。</p><p><strong>解决策略：</strong>通过通分将两个分式合并为一个分式，再进行化简。</p><p>我们来看第一个例子：</p><p>$\\lim\\limits_{x \\to \\infty} \\left(\\frac{1}{x - 1} - \\frac{1}{x + 1}\\right)$</p>" 
+            },
+            { 
+                title: "第一步：通分与合并", 
+                text: "<p><strong>通分的核心思想：</strong>寻找最小公分母，将不同分母的分式统一。</p><p>我们将两个分式通分，得到相同的分母 $(x-1)(x+1)$：</p><p>$\\lim\\limits_{x \\to \\infty} \\frac{(x + 1) - (x - 1)}{(x - 1)(x + 1)}$</p><p><strong>分子化简过程：</strong><br>$(x + 1) - (x - 1) = x + 1 - x + 1 = 2$</p><p>合并后得到：</p><p>$\\lim\\limits_{x \\to \\infty} \\frac{2}{x^2 - 1}$</p><p>现在未定式消除了！</p>" 
+            },
+            { 
+                title: "第二步：求解极限", 
+                text: "<p>化简后，我们得到了标准的 $\\frac{常数}{\\infty}$ 型极限。</p><p><strong>极限法则：</strong>当分子为常数，分母趋向无穷大时，整个分式趋向于0。</p><p>$\\frac{2}{\\infty^2 - 1} = \\frac{2}{\\infty} = 0$</p><p><span class='highlight'>最终答案：</span></p><p>$\\lim\\limits_{x \\to \\infty} \\left(\\frac{1}{x - 1} - \\frac{1}{x + 1}\\right) = 0$</p><p><strong>验证：</strong>我们可以通过代入大数值验证这个结果的正确性。</p>" 
+            },
+            { 
+                title: "复杂情况：通分+因式分解", 
+                text: "<p><strong>更复杂的情况：</strong>当分母包含高次多项式时，需要先进行因式分解。</p><p>我们来看一个更复杂的例子：</p><p>$\\lim\\limits_{x \\to 1} \\left(\\frac{1}{x - 1} - \\frac{3}{x^3 - 1}\\right)$</p><p><strong>难点分析：</strong><br>• 当 $x \\to 1$ 时，两个分式都趋向 $\\pm\\infty$<br>• 分母 $x^3-1$ 需要因式分解<br>• 这是 $\\infty - \\infty$ 型未定式</p><p><strong>关键：</strong>$x^3-1$ 的因式分解是解题的突破口。</p>" 
+            },
+            { 
+                title: "求解步骤", 
+                text: "<p><strong>系统化解题流程：</strong></p><p><strong>1. 分解分母：</strong>$x^3-1 = (x-1)(x^2+x+1)$<br><em>利用立方差公式：$a^3-b^3=(a-b)(a^2+ab+b^2)$</em></p><p><strong>2. 通分合并：</strong>$\\lim\\limits_{x \\to 1} \\frac{(x^2+x+1)-3}{(x-1)(x^2+x+1)}$</p><p><strong>3. 化简分子：</strong>$\\lim\\limits_{x \\to 1} \\frac{x^2+x-2}{(x-1)(x^2+x+1)}$</p><p><strong>4. 再次分解并约分：</strong><br>$x^2+x-2 = (x-1)(x+2)$，因此：$\\lim\\limits_{x \\to 1} \\frac{(x-1)(x+2)}{(x-1)(x^2+x+1)} = \\lim\\limits_{x \\to 1} \\frac{x+2}{x^2+x+1}$</p><p><strong>5. 代入求解：</strong>$\\frac{1+2}{1^2+1+1} = \\frac{3}{3} = 1$</p>" 
+            },
+            { 
+                title: "分段函数求极限", 
+                text: "<p><strong>分段函数极限的理论基础：</strong><br>函数在某点的极限存在，当且仅当左极限和右极限都存在且相等。</p><p><strong>定义：</strong><br>• <span class='highlight'>左极限</span>：$\\lim\\limits_{x \\to a^-} f(x)$ 表示从左侧逼近<br>• <span class='highlight'>右极限</span>：$\\lim\\limits_{x \\to a^+} f(x)$ 表示从右侧逼近</p><p><strong>例题分析：</strong>$f(x) = \\begin{cases} x^2 & x < 1 \\\\ 2x - 1 & x \\geq 1 \\end{cases}$</p><p><strong>计算过程：</strong><br>左极限：$\\lim\\limits_{x \\to 1^-} x^2 = 1^2 = 1$<br>右极限：$\\lim\\limits_{x \\to 1^+} (2x-1) = 2(1)-1 = 1$</p><p><span class='highlight'>结论：因为左极限 = 右极限 = 1，所以 $\\lim\\limits_{x \\to 1} f(x) = 1$ 存在。</span></p><p><strong>注意：</strong>$f(1) = 2(1)-1 = 1$，所以函数在 $x=1$ 处连续。</p>" 
+            }
+        ];
+
+        // 讲稿脚本
+        const subtitleScript = {
+            1: "同学们好，今天我们来学习处理一种新的未定式，无穷减无穷型。解决这类问题的关键技巧就是通分。我们通过这个例子来看具体如何操作。",
+            2: "首先，我们找到两个分式的最小公分母，也就是x减1乘以x加1。然后我们将两个分式通分并合并分子，得到x加1减去x减1。",
+            3: "化简分子后，我们得到一个非常简单的分式：x的平方减1分之2。现在，我们再次尝试将x趋向于无穷大代入，分母会变得无限大，因此整个分式的结果趋向于0。问题就解决了。",
+            4: "我们再来看一个更复杂的情况。当x趋向于1时，这个表达式也是无穷减无穷型。这里的关键是，我们需要先对更复杂的分母，也就是x的三次方减1，进行因式分解。",
+            5: "分解后，我们按照同样的步骤进行通分、合并、化简，并再次对分子进行因式分解。约去公因式x减1后，我们得到了一个可以直接代入求解的简单分式，最终结果为1。",
+            6: "最后，我们来了解如何求解分段函数的极限。关键在于，我们需要分别从分段点的左侧和右侧去逼近。如此例，我们分别计算x趋向于1的左极限和右极限，发现它们都等于1。因为左右极限存在且相等，所以这个函数在x等于1处的极限就存在，且等于1。"
+        };
+        
+        // 自动播放时长
+        const autoPlayDurations = { 1: 12000, 2: 12000, 3: 12000, 4: 15000, 5: 20000, 6: 22000 };
+
+        // 状态更新函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                }
+            }
+            
+            if (connectionStatus) {
+                connectionStatus.textContent = message;
+                connectionStatus.style.color = type === 'connected' ? '#81c784' : 
+                                              type === 'error' ? '#f44336' : '#ffab40';
+            }
+        }
+
+        // 等待SDK加载完成
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentArea = document.getElementById('contentArea');
+            boardContent.forEach((content, i) => {
+                const page = document.createElement('div');
+                page.className = 'page';
+                page.dataset.page = i + 1;
+                page.innerHTML = `
+                    <div class="chalk-text">
+                        <div class="page-title">${content.title}</div>
+                        <div class="text-medium">${content.text}</div>
+                    </div>
+                    <div class="graph-container">
+                        <svg id="viz-${i+1}" width="100%" height="100%"></svg>
+                    </div>
+                `;
+                contentArea.appendChild(page);
+            });
+            
+            // 设置总页数
+            document.getElementById('totalPages').textContent = totalPages;
+            switchToPage(1, false);
+            console.log('✨ 极限教学系统初始化完成');
+        });
+
+        function switchToPage(pageNum, shouldSpeak = true) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            currentPage = pageNum;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-page="${pageNum}"]`).classList.add('active');
+            updatePageInfo();
+            
+            setTimeout(() => {
+                drawPageGraph(pageNum);
+                if(window.MathJax && window.MathJax.typeset) {
+                    window.MathJax.typeset();
+                }
+            }, 50);
+
+            if (shouldSpeak && !isAutoPlaying) {
+                speakContent(pageNum);
+            }
+        }
+
+        // 静默页面切换 - 不播放语音，专用于自动播放
+        function switchToPageSilent(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) {
+                console.log(`❌ 页面切换失败：页码${pageNum}超出范围(1-${totalPages})`);
+                return;
+            }
+
+            console.log(`🔄 开始切换到第${pageNum}页...`);
+
+            const allPages = document.querySelectorAll('.page');
+            allPages.forEach(page => page.classList.remove('active'));
+
+            const targetPage = document.querySelector(`[data-page="${pageNum}"]`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageNum;
+                updatePageInfo();
+                console.log(`✅ 成功切换到第${pageNum}页`);
+
+                targetPage.offsetHeight; // 触发重绘
+
+                setTimeout(() => {
+                    drawPageGraph(pageNum);
+                    console.log(`🎨 第${pageNum}页图像绘制完成`);
+                }, 300);
+            } else {
+                console.log(`❌ 未找到第${pageNum}页的DOM元素`);
+            }
+        }
+        
+        // 优化的图形绘制函数 - 修复布局错位问题
+        function drawPageGraph(pageNum) {
+            const svg = d3.select(`#viz-${pageNum}`);
+            svg.selectAll("*").remove(); 
+
+            const container = svg.node().parentNode;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+            switch(pageNum) {
+                case 1: drawIntroGraph(svg, width, height); break;
+                case 2: drawStep1Graph(svg, width, height); break;
+                case 3: drawStep2Graph(svg, width, height); break;
+                case 4: drawComplexIntroGraph(svg, width, height); break;
+                case 5: drawComplexCalcGraph(svg, width, height); break;
+                case 6: drawPiecewiseGraph(svg, width, height); break;
+            }
+        }
+        
+        function drawIntroGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = Math.min(width/12, height/8, 52);
+            
+            // lim文本 - 向左移动
+            g.append("text")
+                .attr("x", -width/4)
+                .attr("y", 0)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("lim");
+            
+            // x→∞下标
+            g.append("text")
+                .attr("x", -width/4)
+                .attr("y", fontSize * 0.7)
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .attr("text-anchor", "middle")
+                .text("x→∞");
+            
+            // 左括号
+            g.append("text")
+                .attr("x", -width/8)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.2 + "px")
+                .attr("fill", "white")
+                .text("(");
+                
+            // 第一个分式 1/(x-1)
+            const frac1 = g.append("g").attr("transform", `translate(${fontSize * 0.3}, 0)`);
+            frac1.append("text")
+                .attr("x", 0).attr("y", -fontSize/3)
+                .attr("font-size", fontSize * 0.8 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("1");
+            frac1.append("line")
+                .attr("x1", -fontSize * 0.8).attr("x2", fontSize * 0.8)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "white").attr("stroke-width", 3);
+            frac1.append("text")
+                .attr("x", 0).attr("y", fontSize/2.5 + 20)
+                .attr("font-size", fontSize * 0.7 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("x-1");
+                
+            // 减号
+            g.append("text")
+                .attr("x", fontSize * 1.3)
+                .attr("y", 0)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("-");
+                
+            // 第二个分式 1/(x+1)
+            const frac2 = g.append("g").attr("transform", `translate(${fontSize * 2.3}, 0)`);
+            frac2.append("text")
+                .attr("x", 0).attr("y", -fontSize/3)
+                .attr("font-size", fontSize * 0.8 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("1");
+            frac2.append("line")
+                .attr("x1", -fontSize * 0.8).attr("x2", fontSize * 0.8)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "white").attr("stroke-width", 3);
+            frac2.append("text")
+                .attr("x", 0).attr("y", fontSize/2.5 + 20)
+                .attr("font-size", fontSize * 0.7 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("x+1");
+                
+            // 右括号
+            g.append("text")
+                .attr("x", fontSize * 3.3)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.2 + "px")
+                .attr("fill", "white")
+                .text(")");
+            
+            g.selectAll("text, line").attr("opacity", 0).transition().duration(1000).attr("opacity", 1);
+        }
+
+        function drawStep1Graph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = Math.min(width/12, height/9, 48);
+
+            // lim部分 - 调整位置
+            g.append("text")
+                .attr("x", -width/2.8)
+                .attr("y", 0)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("lim");
+            
+            g.append("text")
+                .attr("x", -width/2.8)
+                .attr("y", fontSize * 0.7)
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .attr("text-anchor", "middle")
+                .text("x→∞");
+
+            // 分式部分 - 居中调整
+            const fracGroup = g.append("g").attr("transform", "translate(20, 0)");
+            
+            // 分子
+            const numerator = fracGroup.append("text")
+                .attr("x", 0).attr("y", -fontSize/1.8)
+                .attr("font-size", fontSize * 0.85 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("(x+1) - (x-1)");
+                
+            // 分数线 - 调整长度
+            const lineLength = Math.max(width/3, 200);
+            fracGroup.append("line")
+                .attr("x1", -lineLength/2).attr("x2", lineLength/2)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "white").attr("stroke-width", 3);
+                
+            // 分母
+            fracGroup.append("text")
+                .attr("x", 0).attr("y", fontSize/1.5 + 20)
+                .attr("font-size", fontSize * 0.85 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("(x-1)(x+1)");
+
+            // 简化后的分子
+            const simplifiedNum = fracGroup.append("text")
+                .attr("x", 0).attr("y", -fontSize/1.8)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "#81c784")
+                .attr("text-anchor", "middle")
+                .text("2")
+                .attr("opacity", 0);
+            
+            // 动画
+            numerator.attr("opacity", 0).transition().delay(500).duration(1000).attr("opacity", 1);
+            
+            setTimeout(() => {
+                numerator.transition().duration(1000).attr("opacity", 0);
+                simplifiedNum.transition().delay(500).duration(1000).attr("opacity", 1);
+            }, 2000);
+        }
+
+        function drawStep2Graph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = Math.min(width/10, height/7, 58);
+
+            // 分式 - 居中对齐
+            const fracGroup = g.append("g");
+            fracGroup.append("text")
+                .attr("x", 0).attr("y", -fontSize/2.2)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("2");
+                
+            fracGroup.append("line")
+                .attr("x1", -fontSize * 1.4).attr("x2", fontSize * 1.4)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "white").attr("stroke-width", 4);
+                
+            fracGroup.append("text")
+                .attr("x", 0).attr("y", fontSize/1.8 + 20)
+                .attr("font-size", fontSize * 0.9 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("x²-1");
+
+            // 箭头 - 调整位置
+            const arrow = g.append("text")
+                .attr("x", fontSize * 2.2)
+                .attr("y", 0)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .text("→")
+                .attr("opacity", 0);
+
+            // 结果
+            const result = g.append("text")
+                .attr("x", fontSize * 3.5)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.4 + "px")
+                .attr("fill", "#81c784")
+                .attr("text-anchor", "middle")
+                .text("0")
+                .attr("opacity", 0);
+
+            arrow.transition().delay(1000).duration(500).attr("opacity", 1);
+            result.transition().delay(1500).duration(1000).attr("opacity", 1);
+        }
+
+        function drawComplexIntroGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = Math.min(width/13, height/9, 46);
+
+            // lim部分 - 向左调整
+            g.append("text")
+                .attr("x", -width/3)
+                .attr("y", 0)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("lim");
+            
+            g.append("text")
+                .attr("x", -width/3)
+                .attr("y", fontSize * 0.7)
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .attr("text-anchor", "middle")
+                .text("x→1");
+            
+            // 左括号
+            g.append("text")
+                .attr("x", -width/6)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.2 + "px")
+                .attr("fill", "white")
+                .text("(");
+                
+            // 第一个分式 - 调整间距
+            const frac1 = g.append("g").attr("transform", `translate(${-fontSize/3}, 0)`);
+            frac1.append("text")
+                .attr("x", 0).attr("y", -fontSize/3)
+                .attr("font-size", fontSize * 0.8 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("1");
+            frac1.append("line")
+                .attr("x1", -fontSize * 0.7).attr("x2", fontSize * 0.7)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "white").attr("stroke-width", 3);
+            frac1.append("text")
+                .attr("x", 0).attr("y", fontSize/2.5 + 20)
+                .attr("font-size", fontSize * 0.7 + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("x-1");
+                
+            // 减号
+            g.append("text")
+                .attr("x", fontSize * 0.7)
+                .attr("y", 0)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("-");
+                
+            // 第二个分式 - 调整位置和颜色
+            const frac2 = g.append("g").attr("transform", `translate(${fontSize * 1.8}, 0)`);
+            frac2.append("text")
+                .attr("x", 0).attr("y", -fontSize/3)
+                .attr("font-size", fontSize * 0.8 + "px")
+                .attr("fill", "#f87171")
+                .attr("text-anchor", "middle")
+                .text("3");
+            frac2.append("line")
+                .attr("x1", -fontSize * 0.9).attr("x2", fontSize * 0.9)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "#f87171").attr("stroke-width", 3);
+            frac2.append("text")
+                .attr("x", 0).attr("y", fontSize/2.5 + 20)
+                .attr("font-size", fontSize * 0.7 + "px")
+                .attr("fill", "#f87171")
+                .attr("text-anchor", "middle")
+                .text("x³-1");
+                
+            // 右括号
+            g.append("text")
+                .attr("x", fontSize * 3.2)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.2 + "px")
+                .attr("fill", "white")
+                .text(")");
+            
+            g.selectAll("text, line").attr("opacity", 0).transition().duration(1000).attr("opacity", 1);
+        }
+
+        function drawComplexCalcGraph(svg, width, height) {
+            const g = svg.append("g").attr("transform", `translate(${width/2}, ${height/2})`);
+            const fontSize = Math.min(width/10, height/7, 56);
+
+            // 最终分式 - 完全居中，向左移动
+            const fracGroup = g.append("g").attr("transform", "translate(-60, 0)");
+            fracGroup.append("text")
+                .attr("x", 0).attr("y", -fontSize/2)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("x+2");
+                
+            const lineLength = fontSize * 2.5;
+            fracGroup.append("line")
+                .attr("x1", -lineLength/2).attr("x2", lineLength/2)
+                .attr("y1", 0).attr("y2", 0)
+                .attr("stroke", "white").attr("stroke-width", 4);
+                
+            fracGroup.append("text")
+                .attr("x", 0).attr("y", fontSize/1.6 + 20)
+                .attr("font-size", fontSize + "px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .text("x²+x+1");
+
+            // 箭头 - 调整间距
+            const arrow = g.append("text")
+                .attr("x", fontSize * 1.8)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.2 + "px")
+                .attr("fill", "white")
+                .text("→");
+
+            // 结果 - 调整位置
+            const result = g.append("text")
+                .attr("x", fontSize * 2.8)
+                .attr("y", 0)
+                .attr("font-size", fontSize * 1.5 + "px")
+                .attr("fill", "#81c784")
+                .attr("text-anchor", "middle")
+                .text("1");
+            
+            g.selectAll("text, line").attr("opacity", 0).transition().duration(1000).attr("opacity", 1);
+        }
+
+        function drawPiecewiseGraph(svg, width, height) {
+            // 缩小图形一倍，并上移100
+            const scale = 1;
+            const offsetY = -50;
+            const scaledWidth = width * scale;
+            const scaledHeight = height * scale;
+            
+            // 调整margin，让图形更紧凑
+            const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+            const w = scaledWidth - margin.left - margin.right;
+            const h = scaledHeight - margin.top - margin.bottom;
+            const g = svg.append("g").attr("transform", `translate(${(width-scaledWidth)/2 + margin.left}, ${(height-scaledHeight)/2 + margin.top + offsetY})`);
+            
+            // 缩小坐标轴范围，避免溢出
+            const x = d3.scaleLinear().domain([-1.5, 3]).range([0, w]);
+            const y = d3.scaleLinear().domain([0, 5]).range([h, 0]);
+            
+            // 坐标轴 - 简化样式
+            const xAxis = g.append("g")
+                .attr("transform", `translate(0,${y(0)})`)
+                .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format("d")));
+            xAxis.selectAll("path, line").attr("stroke", "#d1d5db").attr("stroke-width", 1.5);
+            xAxis.selectAll("text").attr("fill", "#d1d5db").attr("font-size", "12px");
+                
+            const yAxis = g.append("g")
+                .attr("transform", `translate(${x(0)},0)`)
+                .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format("d")));
+            yAxis.selectAll("path, line").attr("stroke", "#d1d5db").attr("stroke-width", 1.5);
+            yAxis.selectAll("text").attr("fill", "#d1d5db").attr("font-size", "12px");
+
+            // x^2 部分 (x < 1) - 限制在合理范围内
+            const line1 = d3.line()
+                .x(d => x(d))
+                .y(d => y(d*d))
+                .curve(d3.curveBasis);
+            
+            const data1 = d3.range(-1.5, 1, 0.05).filter(d => d*d <= 5);
+            g.append("path")
+                .datum(data1)
+                .attr("fill", "none")
+                .attr("stroke", "#ffab40")
+                .attr("stroke-width", 3)
+                .attr("d", line1);
+            
+            // 2x-1 部分 (x >= 1) - 限制范围
+            const line2 = d3.line()
+                .x(d => x(d))
+                .y(d => y(2*d-1));
+            
+            const data2 = d3.range(1, 3, 0.05).filter(d => 2*d-1 <= 5);
+            g.append("path")
+                .datum(data2)
+                .attr("fill", "none")
+                .attr("stroke", "#22d3ee")
+                .attr("stroke-width", 3)
+                .attr("d", line2);
+            
+            // 分段点 - 增强可见性
+            g.append("circle")
+                .attr("cx", x(1))
+                .attr("cy", y(1))
+                .attr("r", 6)
+                .attr("fill", "white")
+                .attr("stroke", "#333")
+                .attr("stroke-width", 2);
+                
+            // 垂直虚线
+            g.append("line")
+                .attr("x1", x(1)).attr("x2", x(1))
+                .attr("y1", 0).attr("y2", h)
+                .attr("stroke", "white")
+                .attr("stroke-width", 1.5)
+                .attr("stroke-dasharray", "5,3")
+                .attr("opacity", 0.8);
+
+            // 动画点 - 完全重新设计，确保在范围内
+            const leftDot = g.append("circle").attr("r", 8).attr("fill", "#ffab40");
+            const rightDot = g.append("circle").attr("r", 8).attr("fill", "#22d3ee");
+
+            function animate() {
+                // 左侧点：从 x=0.5 向 x=1 逼近
+                const startX = 0.5;
+                const endX = 0.98;
+                leftDot.attr("cx", x(startX)).attr("cy", y(startX*startX))
+                       .transition().duration(2500).ease(d3.easeCubicInOut)
+                       .attr("cx", x(endX)).attr("cy", y(endX*endX))
+                       .on("end", () => {
+                           leftDot.transition().duration(1500)
+                                  .attr("cx", x(startX)).attr("cy", y(startX*startX));
+                       });
+                
+                // 右侧点：从 x=2 向 x=1 逼近
+                const startX2 = 2;
+                const endX2 = 1.02;
+                rightDot.attr("cx", x(startX2)).attr("cy", y(2*startX2-1))
+                        .transition().duration(2500).ease(d3.easeCubicInOut)
+                        .attr("cx", x(endX2)).attr("cy", y(2*endX2-1))
+                        .on("end", () => {
+                            rightDot.transition().duration(1500)
+                                   .attr("cx", x(startX2)).attr("cy", y(2*startX2-1))
+                                   .on("end", animate);
+                        });
+            }
+            
+            // 延迟启动动画
+            setTimeout(animate, 800);
+        }
+
+        // 虚拟人控制 - 使用第二个文件的正确配置
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                // 创建虚拟人实例
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                // 设置事件监听
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        startBtn.disabled = false;
+                        
+                        setTimeout(() => {
+                            speakContent(1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '🎀 开始讲课';
+                        startBtn.disabled = false;
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                        isConnected = false;
+                    });
+
+                // 使用第二个文件的正确API配置
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',
+                    apiKey: '133adcc14bda6e315040f78700b38267',
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',
+                    sceneId: '216155854796361728',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                // 使用第二个文件的全局参数
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                // 启动虚拟人
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                
+                alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+            }
+        }
+
+        // 动作执行
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        // 动作映射
+        function getActionsForPage(pageNum) {
+            const actionMap = {
+                1: 'A_RLH_welcome_O',
+                2: 'A_LH_introduced_O', 
+                3: 'A_RH_please1_O',
+                4: 'A_RLH_emphasize_O',
+                5: 'A_U_No_pointing_O',
+                6: 'A_RLH_welcome_O'
+            };
+            return actionMap[pageNum];
+        }
+
+        // 语音播放
+        async function speakContent(pageNum) {
+            console.log(`🔍 检查播放条件: isTeaching=${isTeaching}, isConnected=${isConnected}, avatarPlatform=${!!avatarPlatform}`);
+            
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[pageNum];
+            if (!content) return;
+
+            try {
+                // 先执行动作
+                const actionId = getActionsForPage(pageNum);
+                if (actionId) {
+                    await performVirtualAction(actionId);
+                }
+
+                // 然后播放语音内容
+                await avatarPlatform.writeText(content, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 虚拟人讲解第${pageNum}页，动作: ${actionId}`);
+
+                // 更新字幕显示
+                updateSubtitle(content);
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        // 更新字幕显示
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        // 页面控制函数
+        function nextPage() { 
+            if (currentPage < totalPages) {
+                switchToPage(currentPage + 1); 
+            }
+        }
+        function previousPage() { 
+            if (currentPage > 1) {
+                switchToPage(currentPage - 1); 
+            }
+        }
+        function restart() { switchToPage(1); }
+        function updatePageInfo() { 
+            document.getElementById('currentPage').textContent = currentPage; 
+        }
+
+        // 获取页面标题
+        function getPageTitle(pageNum) {
+            return boardContent[pageNum - 1]?.title || `第${pageNum}页`;
+        }
+
+        // 自动播放功能
+        let isAutoPlaying = false;
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'connecting');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'connected');
+                document.body.classList.add('recording-mode');
+
+                // 如果虚拟人未连接，在后台尝试连接
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                // 逐页播放
+                for (let page = 1; page <= totalPages; page++) {
+                    try {
+                        if (!isAutoPlaying) break;
+
+                        console.log(`\n🎬 === 开始播放第${page}页/${totalPages}页 ===`);
+
+                        switchToPageSilent(page);
+                        updateStatus(`📖 第${page}页/${totalPages}页 - ${getPageTitle(page)}`, 'connected');
+
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            console.log(`🎵 播放第${page}页语音...`);
+                            try {
+                                await speakContent(page);
+                                const pageTime = autoPlayDurations[page];
+                                await new Promise(resolve => setTimeout(resolve, pageTime));
+                            } catch (error) {
+                                console.error(`❌ 第${page}页语音播放失败:`, error);
+                                const pageTime = autoPlayDurations[page];
+                                await new Promise(resolve => setTimeout(resolve, pageTime));
+                            }
+                        } else {
+                            const pageTime = autoPlayDurations[page];
+                            await new Promise(resolve => setTimeout(resolve, pageTime));
+                        }
+
+                        const waitTime = page === totalPages ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${page}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 页面关闭清理
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+    </script>
+</body>
+</html>

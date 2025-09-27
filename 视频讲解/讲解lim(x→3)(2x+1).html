@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极限求解：直接代入法</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: #1a1a2e;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .blackboard {
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a2e;
+            position: relative;
+            border: 10px solid #795548;
+            margin: 0;
+        }
+        .avatar-container {
+            position: fixed;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 750px; height: 850px;
+            overflow: hidden; z-index: 50;
+            pointer-events: none; background: transparent;
+            border: none; box-shadow: none;
+        }
+        .wrapper {
+            width: 100%; height: 100%;
+            background: transparent; pointer-events: auto;
+        }
+        .content-area {
+            position: absolute;
+            top: 20px; left: 50px; right: 50px; bottom: 120px;
+            z-index: 10; overflow: hidden;
+        }
+        .page {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0; visibility: hidden;
+            transition: all 0.7s ease-in-out;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 20px;
+            align-items: center;
+        }
+        .page.active {
+            opacity: 1; visibility: visible;
+        }
+        .chalk-text {
+            color: #ffffff;
+            font-family: 'Noto Serif SC', serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .page-title {
+            font-size: 2rem; font-weight: bold;
+            color: #e1bee7; margin-bottom: 1.5rem;
+        }
+        .text-medium {
+            font-size: 1.1rem; margin-bottom: 0.8rem;
+            line-height: 1.8; color: #f3e5f5; font-weight: 500;
+        }
+        .text-medium p {
+            margin-bottom: 1.5rem;
+        }
+        .text-medium strong {
+            color: #81c784;
+            font-weight: 600;
+        }
+        .graph-container {
+            background: transparent;
+            border: none;
+            padding: 10px;
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            overflow: visible;
+        }
+        .subtitle-area {
+            position: absolute;
+            bottom: 20px; left: 50px; right: 50px;
+            height: 50px; background: rgba(0,0,0,0.8);
+            border-radius: 8px; display: flex;
+            align-items: center; justify-content: center;
+            z-index: 60; color: white;
+            font-size: 0.9rem; text-align: center;
+            padding: 0 20px; line-height: 1.4;
+        }
+        .control-bar {
+            position: fixed; left: -220px; top: 50%;
+            transform: translateY(-50%); width: 250px;
+            background: rgba(30,30,30,0.95);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; z-index: 200;
+            border-radius: 0 15px 15px 0;
+            padding: 20px 15px; transition: left 0.3s ease;
+        }
+        .control-bar:hover { left: 0; }
+        .control-bar::before {
+            content: '▶️'; position: absolute;
+            top: 50%; right: -25px;
+            transform: translateY(-50%);
+            background: rgba(30,30,30,0.95);
+            padding: 10px 5px; border-radius: 0 10px 10px 0;
+            font-size: 0.8rem; writing-mode: vertical-lr;
+        }
+        .btn {
+            padding: 12px 20px; background: linear-gradient(135deg, #4a4a4a, #666);
+            color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 13px; font-weight: bold;
+            transition: all 0.3s ease; width: 100%; text-align: center;
+        }
+        .btn:hover { background: linear-gradient(135deg, #555, #777); transform: translateY(-2px); }
+        .btn.primary { background: linear-gradient(135deg, #FF69B4, #FF1493); }
+        
+        /* 统一将图中元素改为白色 */
+        .graph-container svg .axis path,
+        .graph-container svg .axis line {
+            stroke: #ffffff !important;
+            stroke-width: 2;
+        }
+        .graph-container svg .axis text {
+            fill: #ffffff !important;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .graph-container svg .label {
+            fill: #ffffff !important;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .graph-container svg .grid-line {
+            stroke: #ffffff !important;
+            stroke-width: 0.5;
+            stroke-opacity: 0.3;
+        }
+
+        /* 连接状态指示器 */
+        .status-indicator {
+            position: absolute;
+            top: 10px; right: 10px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.5);
+            color: white; border-radius: 5px;
+            font-size: 12px; z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+        .status-indicator.connected { background: rgba(76, 175, 80, 0.8); }
+        .status-indicator.error { background: rgba(244, 67, 54, 0.8); }
+        .status-indicator.connecting { background: rgba(255, 152, 0, 0.8); }
+
+        /* 录制模式下隐藏状态指示器和控制栏 */
+        .recording-mode .status-indicator {
+            opacity: 0; pointer-events: none;
+        }
+        .recording-mode .control-bar {
+            left: -300px; transition: left 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="blackboard">
+        <div id="statusIndicator" class="status-indicator">等待连接</div>
+        
+        <div class="avatar-container">
+            <div class="wrapper" id="avatarWrapper"></div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <!-- Pages will be dynamically generated here -->
+        </div>
+
+        <div class="subtitle-area" id="subtitleArea">
+            欢迎学习极限求解！点击"开始讲课"启动虚拟人讲师。
+        </div>
+
+        <div class="control-bar">
+            <div style="color: white; margin-bottom: 1rem; text-align: center; font-size: 12px;">
+                第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">5</span> 页
+            </div>
+            <div id="connectionStatus" style="color: #ffab40; margin-bottom: 1rem; text-align: center; font-size: 11px;">
+                虚拟人未连接
+            </div>
+            <button class="btn" onclick="previousPage()">⬅️ 上一页</button>
+            <button class="btn primary" onclick="startTeaching()" id="startBtn">🎀 开始讲课</button>
+            <button class="btn" onclick="nextPage()">下一页 ➡️</button>
+            <button class="btn" onclick="restart()">🔄 重新开始</button>
+            <button class="btn" onclick="startAutoPlay()" id="autoPlayBtn" style="background: linear-gradient(135deg, #2196f3, #1976d2);">🎬 自动播放</button>
+            <div style="color: #ffab40; margin-top: 0.5rem; text-align: center; font-size: 10px; line-height: 1.2;">
+                💡 录制提示：<br>
+                点击自动播放后立即开始录屏<br>
+                系统会自动完成全部演示
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                packages: ['base', 'ams']
+            },
+            startup: { 
+                pageReady: () => { 
+                    console.log('MathJax is ready.'); 
+                    return MathJax.startup.defaultPageReady(); 
+                } 
+            },
+            options: {
+                processHtmlClass: 'tex2jax_process',
+                ignoreHtmlClass: 'tex2jax_ignore'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- 讯飞官方SDK - 按照成功案例的加载方式 -->
+    <script type="module">
+        try {
+            // 根据成功案例，导入讯飞官方SDK
+            const { default: AvatarPlatform, SDKEvents, PlayerEvents, RecorderEvents, UserMedia } = await import('./avatar-sdk-web_3.1.2.1002/index.js');
+
+            // 挂载到全局对象
+            window.AvatarPlatform = AvatarPlatform;
+            window.SDKEvents = SDKEvents;
+            window.PlayerEvents = PlayerEvents;
+            window.RecorderEvents = RecorderEvents;
+            window.UserMedia = UserMedia;
+
+            console.log('✅ 讯飞官方SDK模块已加载');
+            console.log('SDK版本:', AvatarPlatform.getVersion());
+            console.log('可用事件:', { SDKEvents, PlayerEvents, RecorderEvents });
+
+        } catch (error) {
+            console.error('❌ SDK模块加载失败:', error);
+            // 降级处理：创建模拟的AvatarPlatform
+            window.AvatarPlatform = class {
+                constructor(options) {
+                    this.events = {};
+                    this.options = options;
+                    console.log("模拟SDK已初始化");
+                }
+                on(event, callback) {
+                    this.events[event] = callback;
+                    return this;
+                }
+                setApiInfo(info) {
+                    this.apiInfo = info;
+                    console.log("API Info set:", info);
+                }
+                setGlobalParams(params) {
+                    this.globalParams = params;
+                    console.log("Global Params set:", params);
+                }
+                async start(config) {
+                    console.log("模拟启动虚拟人");
+                    setTimeout(() => {
+                        this.events.connected?.({ message: "模拟连接成功" });
+                    }, 1000);
+                }
+                async writeText(text, options) {
+                    console.log("模拟播放文本:", text);
+                    return Promise.resolve();
+                }
+                async writeCmd(type, actionId) {
+                    console.log(`模拟执行动作: ${type} - ${actionId}`);
+                    return Promise.resolve();
+                }
+                stop() {
+                    console.log("模拟停止虚拟人");
+                }
+                destroy() {
+                    console.log("模拟销毁虚拟人");
+                }
+                static getVersion() {
+                    return "模拟版本 1.0.0";
+                }
+            };
+        }
+
+        // 触发自定义事件，通知SDK已准备就绪
+        window.dispatchEvent(new CustomEvent('sdkReady'));
+    </script>
+
+    <script>
+        let avatarPlatform = null;
+        let isConnected = false;
+        let isTeaching = false;
+        let currentPage = 1;
+        const totalPages = 5;
+
+        const boardContent = [
+            { 
+                title: "求解极限问题", 
+                text: "<p>我们今天要解决的问题是：</p><p>求函数 $f(x) = 2x+1$</p><p>当 $x$ 趋近于 $3$ 时的极限。</p><p><strong>数学表达式为：</strong></p><div class='tex2jax_process'>$$\\lim_{x \\to 3} (2x+1) = ?$$</div>" 
+            },
+            { 
+                title: "第一步：观察函数", 
+                text: "<p>函数 $f(x) = 2x+1$ 是一个简单的线性函数。</p><p>它的图像是一条<strong>连续的直线</strong>，在定义域内没有任何中断或跳跃。</p>" 
+            },
+            { 
+                title: "第二步：直接代入", 
+                text: "<p>对于这类连续函数，求解极限最直接的方法就是<strong>直接代入法</strong>。</p><p>我们将 $x$ 趋近的值 $3$，直接代入函数表达式中。</p>" 
+            },
+            { 
+                title: "第三步：进行计算", 
+                text: "<p>将 $x=3$ 代入 $f(x)=2x+1$：</p><p>$f(3) = 2 \\times (3) + 1$</p><p>$= 6 + 1$</p><p>$= 7$</p><p>我们得到了一个<strong>确定的数值</strong>。</p>" 
+            },
+            { 
+                title: "第四步：得出结论", 
+                text: "<p>因为我们通过直接代入得到了一个确定的值 $7$，所以这个值就是函数当 $x$ 趋近于 $3$ 时的极限。</p><p><strong>最终答案：</strong></p><div class='tex2jax_process'>$$\\lim_{x \\to 3} (2x+1) = 7$$</div>" 
+            }
+        ];
+
+        const subtitleScript = {
+            1: "同学们好，今天我们来求解一道具体的极限问题。我们要计算的是函数 f(x) = 2x+1，当x无限趋近于3时的极限值。",
+            2: "解题的第一步，是先观察这个函数。我们看到，f(x) = 2x+1 是一个线性函数，它的图像是一条连续不断的直线。这一点对于我们选择解法至关重要。",
+            3: "正因为函数是连续的，我们可以使用最简单的方法——直接代入法。动画演示了当x从两边无限靠近3时，函数上的点也随之运动。现在，我们就把3这个值，直接代入到函数表达式中。",
+            4: "我们来计算一下：把x替换成3，得到二乘以三，再加一。也就是六加一，结果等于七。看，我们得到了一个确定的、唯一的数值。",
+            5: "由于直接代入得到了一个确定的数值7，我们就可以得出结论：函数 2x+1 在 x 趋近于 3 时的极限就是7。这就是直接代入法的应用，非常直观。"
+        };
+        
+        const autoPlayDurations = {
+            1: 12000,  // 85字，问题介绍 - 12秒
+            2: 14000,  // 95字，函数图像分析 - 14秒
+            3: 15000,  // 105字，代入计算过程 - 15秒
+            4: 12000,  // 80字，验证结果 - 12秒
+            5: 12000   // 75字，得出结论 - 12秒
+        };
+
+        // 状态更新函数
+        function updateStatus(message, type = 'normal') {
+            const indicator = document.getElementById('statusIndicator');
+            const connectionStatus = document.getElementById('connectionStatus');
+            
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.className = 'status-indicator';
+                if (type === 'connected') {
+                    indicator.classList.add('connected');
+                } else if (type === 'error') {
+                    indicator.classList.add('error');
+                } else if (type === 'connecting') {
+                    indicator.classList.add('connecting');
+                }
+            }
+            
+            if (connectionStatus) {
+                connectionStatus.textContent = message;
+                connectionStatus.style.color = type === 'connected' ? '#81c784' : 
+                                              type === 'error' ? '#f44336' : '#ffab40';
+            }
+        }
+
+        // 等待SDK加载完成
+        function waitForSDK() {
+            return new Promise((resolve, reject) => {
+                if (typeof AvatarPlatform !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const timeout = setTimeout(() => {
+                    reject(new Error('SDK加载超时，请刷新页面重试'));
+                }, 10000);
+                
+                window.addEventListener('sdkReady', function handler() {
+                    clearTimeout(timeout);
+                    window.removeEventListener('sdkReady', handler);
+                    resolve();
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentArea = document.getElementById('contentArea');
+            boardContent.forEach((content, i) => {
+                const page = document.createElement('div');
+                page.className = 'page';
+                page.dataset.page = i + 1;
+                page.innerHTML = `
+                    <div class="chalk-text">
+                        <div class="page-title">${content.title}</div>
+                        <div class="text-medium">${content.text}</div>
+                    </div>
+                    <div class="graph-container">
+                        <svg id="viz-${i+1}" width="100%" height="100%"></svg>
+                    </div>
+                `;
+                contentArea.appendChild(page);
+            });
+            
+            // 设置总页数
+            document.getElementById('totalPages').textContent = totalPages;
+            switchToPage(1, false);
+            console.log('✨ 极限教学系统初始化完成');
+        });
+
+        function switchToPage(pageNum, shouldSpeak = true) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            currentPage = pageNum;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-page="${pageNum}"]`).classList.add('active');
+            updatePageInfo();
+            
+            setTimeout(() => {
+                drawPageGraph(pageNum);
+                if(window.MathJax && window.MathJax.typeset) {
+                    window.MathJax.typeset();
+                }
+            }, 50);
+
+            if (shouldSpeak && !isAutoPlaying) {
+                speakContent(pageNum);
+            }
+        }
+
+        // 静默页面切换 - 不播放语音，专用于自动播放
+        function switchToPageSilent(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) {
+                console.log(`❌ 页面切换失败：页码${pageNum}超出范围(1-${totalPages})`);
+                return;
+            }
+
+            console.log(`🔄 开始切换到第${pageNum}页...`);
+
+            const allPages = document.querySelectorAll('.page');
+            allPages.forEach(page => page.classList.remove('active'));
+
+            const targetPage = document.querySelector(`[data-page="${pageNum}"]`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageNum;
+                updatePageInfo();
+                console.log(`✅ 成功切换到第${pageNum}页`);
+
+                targetPage.offsetHeight; // 触发重绘
+
+                setTimeout(() => {
+                    drawPageGraph(pageNum);
+                    console.log(`🎨 第${pageNum}页图像绘制完成`);
+                }, 300);
+            } else {
+                console.log(`❌ 未找到第${pageNum}页的DOM元素`);
+            }
+        }
+        
+        function drawPageGraph(pageNum) {
+            const svg = d3.select(`#viz-${pageNum}`);
+            svg.selectAll("*").remove(); 
+
+            const container = svg.node().parentNode;
+            const width = Math.max(container.clientWidth - 20, 300);
+            const height = Math.max(container.clientHeight - 20, 200);
+            svg.attr('viewBox', `0 0 ${width} ${height}`)
+               .attr('preserveAspectRatio', 'xMidYMid meet');
+
+            switch(pageNum) {
+                case 1: drawIntroGraph(svg, width, height); break;
+                case 2: drawFunctionGraph(svg, width, height); break;
+                case 3: drawSubstitutionGraph(svg, width, height); break;
+                case 4: drawCalculationGraph(svg, width, height); break;
+                case 5: drawConclusionGraph(svg, width, height); break;
+            }
+        }
+        
+        function drawIntroGraph(svg, width, height) {
+            const fontSize = Math.min(width * 0.08, height * 0.12, 40);
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            const gradient = svg.append("defs").append("linearGradient")
+                .attr("id", "grad1")
+                .attr("x1", "0%").attr("y1", "0%")
+                .attr("x2", "100%").attr("y2", "0%");
+            gradient.append("stop").attr("offset", "0%").style("stop-color", "#e1bee7");
+            gradient.append("stop").attr("offset", "100%").style("stop-color", "#81c784");
+
+            const mathGroup = svg.append("g").attr("transform", `translate(${centerX}, ${centerY})`);
+            
+            const limText = mathGroup.append("text")
+                .attr("x", -fontSize * 1.5)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize + "px")
+                .attr("font-weight", "bold")
+                .attr("fill", "url(#grad1)")
+                .text("lim");
+
+            const subscript = mathGroup.append("text")
+                .attr("x", -fontSize * 1.5)
+                .attr("y", fontSize * 0.4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .text("x→3");
+
+            const funcText = mathGroup.append("text")
+                .attr("x", fontSize * 0.5)
+                .attr("y", -10)
+                .attr("text-anchor", "start")
+                .attr("font-size", fontSize + "px")
+                .attr("font-weight", "bold")
+                .attr("fill", "url(#grad1)")
+                .text("(2x+1) = ?");
+
+            mathGroup.attr("opacity", 0).transition().duration(1000).attr("opacity", 1);
+            subscript.attr("opacity", 0).transition().delay(500).duration(1000).attr("opacity", 1);
+        }
+
+        function drawFunctionGraph(svg, width, height) {
+            const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+            const w = width - margin.left - margin.right;
+            const h = height - margin.top - margin.bottom;
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const x = d3.scaleLinear().domain([-1, 5]).range([0, w]);
+            const y = d3.scaleLinear().domain([-1, 12]).range([h, 0]);
+            
+            // 添加网格线
+            const xTicks = x.ticks(6);
+            const yTicks = y.ticks(6);
+            
+            xTicks.forEach(d => {
+                g.append("line")
+                    .attr("x1", x(d)).attr("x2", x(d))
+                    .attr("y1", 0).attr("y2", h)
+                    .attr("stroke", "#ffffff")
+                    .attr("stroke-width", 0.5)
+                    .attr("stroke-opacity", 0.3);
+            });
+            
+            yTicks.forEach(d => {
+                g.append("line")
+                    .attr("x1", 0).attr("x2", w)
+                    .attr("y1", y(d)).attr("y2", y(d))
+                    .attr("stroke", "#ffffff")
+                    .attr("stroke-width", 0.5)
+                    .attr("stroke-opacity", 0.3);
+            });
+            
+            // 坐标轴
+            const xAxis = g.append("g")
+                .attr("transform", `translate(0,${y(0)})`)
+                .call(d3.axisBottom(x).tickSizeOuter(0));
+            xAxis.selectAll("path, line").attr("stroke", "#ffffff").attr("stroke-width", 2);
+            xAxis.selectAll("text").attr("fill", "#ffffff").attr("font-size", "16px");
+            
+            const yAxis = g.append("g")
+                .attr("transform", `translate(${x(0)},0)`)
+                .call(d3.axisLeft(y).tickSizeOuter(0));
+            yAxis.selectAll("path, line").attr("stroke", "#ffffff").attr("stroke-width", 2);
+            yAxis.selectAll("text").attr("fill", "#ffffff").attr("font-size", "16px");
+
+            // 函数线
+            const line = g.append("line")
+                .attr("x1", x(-1)).attr("y1", y(-1*2+1))
+                .attr("x2", x(5)).attr("y2", y(5*2+1))
+                .attr("stroke", "#81c784")
+                .attr("stroke-width", 4);
+                
+            // 函数标签
+            g.append("text")
+                .attr("x", x(4))
+                .attr("y", y(4*2+1 - 1))
+                .text("y = 2x+1")
+                .attr("fill", "#81c784")
+                .attr("font-size", "20px")
+                .attr("font-weight", "600");
+            
+            // 线条动画
+            const totalLength = line.node().getTotalLength();
+            line.attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition().duration(2000).ease(d3.easeLinear)
+                .attr("stroke-dashoffset", 0);
+        }
+
+        function drawSubstitutionGraph(svg, width, height) {
+            const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+            const w = width - margin.left - margin.right;
+            const h = height - margin.top - margin.bottom;
+            const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const x = d3.scaleLinear().domain([-1, 5]).range([0, w]);
+            const y = d3.scaleLinear().domain([-1, 12]).range([h, 0]);
+            
+            // 坐标轴
+            const xAxis = g.append("g")
+                .attr("transform", `translate(0,${y(0)})`)
+                .call(d3.axisBottom(x).tickSizeOuter(0));
+            xAxis.selectAll("path, line").attr("stroke", "#ffffff").attr("stroke-width", 2);
+            xAxis.selectAll("text").attr("fill", "#ffffff").attr("font-size", "16px");
+            
+            const yAxis = g.append("g")
+                .attr("transform", `translate(${x(0)},0)`)
+                .call(d3.axisLeft(y).tickSizeOuter(0));
+            yAxis.selectAll("path, line").attr("stroke", "#ffffff").attr("stroke-width", 2);
+            yAxis.selectAll("text").attr("fill", "#ffffff").attr("font-size", "16px");
+
+            const func = d => 2*d + 1;
+            
+            // 函数线
+            g.append("line")
+                .attr("x1", x(-1)).attr("y1", y(func(-1)))
+                .attr("x2", x(5)).attr("y2", y(func(5)))
+                .attr("stroke", "#81c784")
+                .attr("stroke-width", 4);
+            
+            // 动态点和辅助线
+            const dot = g.append("circle").attr("r", 8).attr("fill", "#ffab40");
+            const hLine = g.append("line")
+                .attr("stroke", "#e1bee7")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+            const vLine = g.append("line")
+                .attr("stroke", "#e1bee7")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            function animate() {
+                const startX = 0.5;
+                const endX = 3;
+                
+                dot.attr("cx", x(startX)).attr("cy", y(func(startX)))
+                   .transition().duration(3000).ease(d3.easeCubicInOut)
+                   .attr("cx", x(endX)).attr("cy", y(func(endX)))
+                   .on("end", () => {
+                       dot.transition().duration(3000).ease(d3.easeCubicInOut)
+                          .attr("cx", x(startX)).attr("cy", y(func(startX)))
+                          .on("end", animate);
+                   });
+                
+                hLine.attr("x1", x(startX)).attr("y1", y(func(startX)))
+                     .attr("x2", x(startX)).attr("y2", y(0))
+                     .transition().duration(3000).ease(d3.easeCubicInOut)
+                     .attr("x1", x(endX)).attr("y1", y(func(endX)))
+                     .attr("x2", x(endX)).attr("y2", y(0));
+                
+                vLine.attr("x1", x(0)).attr("y1", y(func(startX)))
+                     .attr("x2", x(startX)).attr("y2", y(func(startX)))
+                     .transition().duration(3000).ease(d3.easeCubicInOut)
+                     .attr("x1", x(0)).attr("y1", y(func(endX)))
+                     .attr("x2", x(endX)).attr("y2", y(func(endX)));
+            }
+            animate();
+        }
+
+        function drawCalculationGraph(svg, width, height) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const fontSize = Math.min(width * 0.06, height * 0.1, 32);
+            const resultFontSize = Math.min(width * 0.08, height * 0.12, 40);
+            const spacing = Math.min(width * 0.12, 80);
+
+            const g = svg.append("g").attr("transform", `translate(${centerX}, ${centerY})`);
+
+            // 计算步骤文本
+            const text1 = g.append("text")
+                .attr("x", -spacing * 1.5).attr("y", 0)
+                .text("2 ×").attr("font-size", fontSize + "px")
+                .attr("fill", "white").attr("text-anchor", "middle");
+                
+            const textX = g.append("text")
+                .attr("x", -spacing * 0.5).attr("y", 0)
+                .text("x").attr("font-size", fontSize + "px")
+                .attr("fill", "#ffab40").attr("text-anchor", "middle");
+                
+            const text2 = g.append("text")
+                .attr("x", spacing * 0.5).attr("y", 0)
+                .text("+ 1").attr("font-size", fontSize + "px")
+                .attr("fill", "white").attr("text-anchor", "middle");
+
+            const text3 = g.append("text")
+                .attr("x", -spacing * 0.5).attr("y", 0)
+                .text("3").attr("font-size", fontSize + "px")
+                .attr("fill", "#81c784").attr("text-anchor", "middle")
+                .attr("opacity", 0);
+
+            const resultText = g.append("text")
+                .attr("y", spacing)
+                .attr("font-size", resultFontSize + "px")
+                .attr("fill", "#e1bee7")
+                .attr("text-anchor", "middle");
+
+            // 动画序列
+            textX.transition().delay(1000).duration(1000)
+                 .attr("transform", `rotate(360, ${-spacing * 0.5}, 0)`)
+                 .attr("opacity", 0);
+                 
+            text3.transition().delay(1500).duration(1000)
+                 .attr("opacity", 1);
+
+            setTimeout(() => {
+                resultText.text("= 6 + 1")
+                    .attr("opacity", 0)
+                    .transition().duration(1000)
+                    .attr("opacity", 1);
+            }, 3000);
+
+            setTimeout(() => {
+                resultText.transition().duration(1000)
+                    .attr("y", spacing * 1.5)
+                    .text("= 7");
+            }, 4500);
+        }
+
+        function drawConclusionGraph(svg, width, height) {
+            const fontSize = Math.min(width * 0.08, height * 0.12, 40);
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            const gradient = svg.append("defs").append("linearGradient")
+                .attr("id", "grad5")
+                .attr("x1", "0%").attr("y1", "0%")
+                .attr("x2", "100%").attr("y2", "0%");
+            gradient.append("stop").attr("offset", "0%").style("stop-color", "#e1bee7");
+            gradient.append("stop").attr("offset", "100%").style("stop-color", "#81c784");
+
+            const mathGroup = svg.append("g").attr("transform", `translate(${centerX}, ${centerY})`);
+            
+            const limText = mathGroup.append("text")
+                .attr("x", -fontSize * 1.5)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize + "px")
+                .attr("font-weight", "bold")
+                .attr("fill", "url(#grad5)")
+                .text("lim");
+
+            const subscript = mathGroup.append("text")
+                .attr("x", -fontSize * 1.5)
+                .attr("y", fontSize * 0.4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", fontSize * 0.6 + "px")
+                .attr("fill", "#ffab40")
+                .text("x→3");
+
+            const funcText = mathGroup.append("text")
+                .attr("x", fontSize * 0.5)
+                .attr("y", -10)
+                .attr("text-anchor", "start")
+                .attr("font-size", fontSize + "px")
+                .attr("font-weight", "bold")
+                .attr("fill", "url(#grad5)")
+                .text("(2x+1) = 7");
+
+            mathGroup.attr("transform", "translate(" + centerX + "," + centerY + ") scale(0.5)")
+                .attr("opacity", 0)
+                .transition().duration(1500).ease(d3.easeElasticOut)
+                .attr("transform", "translate(" + centerX + "," + centerY + ") scale(1)")
+                .attr("opacity", 1);
+
+            subscript.attr("opacity", 0)
+                .transition().delay(800).duration(1000)
+                .attr("opacity", 1);
+        }
+
+        // --- 使用成功案例的虚拟人控制方式 ---
+        async function startTeaching() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.textContent = '🔄 启动中...';
+            startBtn.disabled = true;
+
+            try {
+                console.log('⏳ 等待SDK模块加载...');
+                updateStatus('等待SDK加载...', 'connecting');
+                await waitForSDK();
+                
+                console.log('✅ 讯飞官方SDK已加载');
+                updateStatus('SDK已加载', 'connecting');
+                
+                if(avatarPlatform) {
+                    avatarPlatform.destroy();
+                }
+
+                // 按照成功案例创建虚拟人实例
+                avatarPlatform = new AvatarPlatform({
+                    useInlinePlayer: true
+                });
+
+                // 按照成功案例设置事件监听
+                avatarPlatform
+                    .on('connected', (initResp) => {
+                        console.log('🎉 虚拟人连接成功！', initResp);
+                        isConnected = true;
+                        isTeaching = true;
+                        updateStatus('已连接', 'connected');
+                        startBtn.textContent = '💖 虚拟人已就绪';
+                        startBtn.disabled = false;
+                        
+                        setTimeout(() => {
+                            speakContent(1);
+                        }, 1000);
+                    })
+                    .on('disconnected', (err) => {
+                        console.log('🔌 虚拟人连接断开');
+                        isConnected = false;
+                        isTeaching = false;
+                        updateStatus('连接断开', 'error');
+                        startBtn.textContent = '🎀 开始讲课';
+                        startBtn.disabled = false;
+                        if (err) {
+                            console.error('❌ 连接异常断开:', err);
+                        }
+                    })
+                    .on('error', (error) => {
+                        console.error('❌ 虚拟人错误:', error);
+                        updateStatus('错误: ' + error.message, 'error');
+                        startBtn.textContent = '❌ 连接失败';
+                        startBtn.disabled = false;
+                        isTeaching = false;
+                        isConnected = false;
+                    });
+
+                // 按照成功案例设置API配置
+                avatarPlatform.setApiInfo({
+                    appId: '98c558c1',
+                    apiKey: '133adcc14bda6e315040f78700b38267',
+                    apiSecret: 'NjJmZmM5YTM2YzBhZTY3NzEzMGVmMDIy',
+                    sceneId: '216155854796361728',
+                    serverUrl: 'wss://avatar.cn-huadong-1.xf-yun.com/v1/interact'
+                });
+
+                // 按照成功案例设置全局参数
+                avatarPlatform.setGlobalParams({
+                    stream: {
+                        protocol: 'xrtc',
+                        alpha: 1,
+                        bitrate: 1000000,
+                        fps: 25
+                    },
+                    avatar: {
+                        avatar_id: '110332017',
+                        width: 1920,
+                        height: 1080,
+                        scale: 1,
+                        move_h: 0,
+                        move_v: 0,
+                        audio_format: 1
+                    },
+                    tts: {
+                        vcn: 'x4_yiting',
+                        speed: 50,
+                        pitch: 50,
+                        volume: 100
+                    },
+                    avatar_dispatch: {
+                        interactive_mode: 1,
+                        content_analysis: 0
+                    }
+                });
+
+                // 按照成功案例启动虚拟人
+                await avatarPlatform.start({
+                    wrapper: document.getElementById('avatarWrapper')
+                });
+
+                console.log('🎓 虚拟人教学系统启动完成');
+
+            } catch (error) {
+                console.error('❌ 启动失败:', error);
+                updateStatus('启动失败', 'error');
+                startBtn.textContent = '🔄 重试';
+                startBtn.disabled = false;
+                
+                alert(`启动失败：${error.message}\n\n请检查控制台获取详细错误信息。`);
+            }
+        }
+
+        // 按照成功案例的动作执行方式
+        async function performVirtualAction(actionId) {
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接，跳过动作执行');
+                return;
+            }
+
+            try {
+                await avatarPlatform.writeCmd("action", actionId);
+                console.log(`✅ 执行动作: ${actionId}`);
+            } catch (error) {
+                console.error(`❌ 动作执行失败 (${actionId}):`, error);
+            }
+        }
+
+        // 按照成功案例的动作映射
+        function getActionsForPage(pageNum) {
+            const actionMap = {
+                1: 'A_RLH_welcome_O',
+                2: 'A_LH_introduced_O',
+                3: 'A_RH_please1_O',
+                4: 'A_RLH_emphasize_O',
+                5: 'A_U_No_pointing_O'
+            };
+            return actionMap[pageNum];
+        }
+
+        // 按照成功案例的语音播放方式
+        async function speakContent(pageNum) {
+            console.log(`🔍 检查播放条件: isTeaching=${isTeaching}, isConnected=${isConnected}, avatarPlatform=${!!avatarPlatform}`);
+            
+            if (!isTeaching || !isConnected || !avatarPlatform) {
+                console.log('⚠️ 虚拟人未连接或未开始教学，跳过语音播报');
+                return;
+            }
+
+            const content = subtitleScript[pageNum];
+            if (!content) return;
+
+            try {
+                // 先执行动作
+                const actionId = getActionsForPage(pageNum);
+                if (actionId) {
+                    await performVirtualAction(actionId);
+                }
+
+                // 然后播放语音内容
+                await avatarPlatform.writeText(content, {
+                    nlp: false
+                });
+                
+                console.log(`✅ 虚拟人讲解第${pageNum}页，动作: ${actionId}`);
+
+                // 更新字幕显示
+                updateSubtitle(content);
+            } catch (error) {
+                console.error('❌ 虚拟人讲解失败:', error);
+            }
+        }
+
+        // 更新字幕显示
+        function updateSubtitle(text) {
+            const subtitleArea = document.getElementById('subtitleArea');
+            if (subtitleArea) {
+                subtitleArea.textContent = text;
+            }
+        }
+
+        // 页面控制函数
+        function nextPage() { 
+            if (currentPage < totalPages) {
+                switchToPage(currentPage + 1); 
+            }
+        }
+        function previousPage() { 
+            if (currentPage > 1) {
+                switchToPage(currentPage - 1); 
+            }
+        }
+        function restart() { switchToPage(1); }
+        function updatePageInfo() { 
+            document.getElementById('currentPage').textContent = currentPage; 
+        }
+
+        // 获取页面标题
+        function getPageTitle(pageNum) {
+            const titles = {
+                1: "求解极限问题",
+                2: "第一步：观察函数",
+                3: "第二步：直接代入",
+                4: "第三步：进行计算",
+                5: "第四步：得出结论"
+            };
+            return titles[pageNum] || `第${pageNum}页`;
+        }
+
+        // 自动播放功能
+        let isAutoPlaying = false;
+        async function startAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            try {
+                console.log('🎬 开始自动播放完整课程...');
+                isAutoPlaying = true;
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '⏹️ 停止播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #f44336, #d32f2f)';
+
+                updateStatus(`🎬 自动播放将在 1 秒后开始，请准备录屏！`, 'connecting');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateStatus('🎬 自动播放开始！', 'connected');
+                document.body.classList.add('recording-mode');
+
+                // 如果虚拟人未连接，在后台尝试连接
+                if (!isConnected) {
+                    console.log('🎬 后台尝试连接虚拟人...');
+                    startTeaching().catch(error => {
+                        console.log('⚠️ 虚拟人连接失败，继续页面播放:', error);
+                    });
+                }
+
+                // 逐页播放
+                for (let page = 1; page <= totalPages; page++) {
+                    try {
+                        if (!isAutoPlaying) break;
+
+                        console.log(`\n🎬 === 开始播放第${page}页/${totalPages}页 ===`);
+
+                        switchToPageSilent(page);
+                        updateStatus(`📖 第${page}页/${totalPages}页 - ${getPageTitle(page)}`, 'connected');
+
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        if (isConnected && isTeaching && avatarPlatform) {
+                            console.log(`🎵 播放第${page}页语音...`);
+                            try {
+                                await speakContent(page);
+                                const pageTime = autoPlayDurations[page];
+                                await new Promise(resolve => setTimeout(resolve, pageTime));
+                            } catch (error) {
+                                console.error(`❌ 第${page}页语音播放失败:`, error);
+                                const pageTime = autoPlayDurations[page];
+                                await new Promise(resolve => setTimeout(resolve, pageTime));
+                            }
+                        } else {
+                            const pageTime = autoPlayDurations[page];
+                            await new Promise(resolve => setTimeout(resolve, pageTime));
+                        }
+
+                        const waitTime = page === totalPages ? 2000 : 1000;
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    } catch (error) {
+                        console.error(`❌ 第${page}页播放过程出错:`, error);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+
+                if (isAutoPlaying) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    stopAutoPlay();
+                }
+
+            } catch (error) {
+                console.error('❌ 自动播放失败:', error);
+                updateStatus('自动播放失败: ' + error.message, 'error');
+                stopAutoPlay();
+            }
+        }
+
+        function stopAutoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                document.body.classList.remove('recording-mode');
+
+                const autoPlayBtn = document.getElementById('autoPlayBtn');
+                autoPlayBtn.textContent = '🎬 自动播放';
+                autoPlayBtn.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+
+                console.log('⏹️ 自动播放已停止');
+                updateStatus('自动播放已停止', 'normal');
+            }
+        }
+
+        // 页面关闭清理
+        window.addEventListener('beforeunload', function() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            }
+            
+            if (avatarPlatform && isConnected) {
+                avatarPlatform.stop();
+            }
+        });
+    </script>
+</body>
+</html>
